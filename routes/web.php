@@ -1,26 +1,28 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SoalController;
 
-// 🏠 Halaman default - redirect ke halaman soal
+// Home
 Route::get('/', function () {
-    return redirect()->route('soal.index');
-});
+    return view('home');
+})->name('home');
 
-// 📃 View utama tes interaktif
-Route::get('/soal', [SoalController::class, 'index'])->name('soal.index');
+// POST: Mulai ujian -> redirect ke soal
+Route::post('/mulai-ujian', function () {
+    return redirect()->route('soal');
+})->name('mulai-ujian');
 
-// 📦 API: Ambil soal berdasarkan nomor (dipanggil dari JS)
-Route::get('/api/soal/{test_id}/{packet_id}/{number}', [SoalController::class, 'getSoal'])->name('soal.ajax');
+// GET: Soal
+Route::get('/soal', function () {
+    return view('soal');
+})->name('soal');
 
-// 📮 Simpan jawaban setelah memilih opsi (optional, jika dipakai per soal)
-Route::post('/soal/simpan', [SoalController::class, 'simpanJawaban'])->name('soal.simpan');
+// POST: Submit jawaban -> redirect ke selesai
+Route::post('/soal/submit', function () {
+    return redirect()->route('tes.selesai');
+})->name('soal.submit');
 
-// 🚀 Submit saat waktu habis (auto-submit final)
-Route::post('/tes/{path}/submit', [SoalController::class, 'simpanJawaban'])->name('tes.submit');
-
-// 🧪 (Optional) View setelah tes selesai
+// GET: Tes selesai
 Route::get('/tes/selesai', function () {
-    return view('tes.selesai'); // Buat view ini untuk notifikasi akhir tes
+    return view('tes.selesai');
 })->name('tes.selesai');

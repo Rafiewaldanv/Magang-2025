@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Tes Selesai bang</title>
+    <title>Selamat Datang</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -32,26 +32,29 @@
             margin-bottom: 30px;
         }
 
-        a.button {
-            background-color: #3498db;
+        form button {
+            background-color: #2ecc71;
             color: white;
             padding: 12px 24px;
-            text-decoration: none;
+            border: none;
             border-radius: 8px;
             font-weight: bold;
+            cursor: pointer;
         }
 
-        a.button:hover {
-            background-color: #2980b9;
+        form button:hover {
+            background-color: #27ae60;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎉 Tes Telah Selesai!</h1>
-        <p>Terima kasih telah menyelesaikan tes ini.<br>
-        Silakan kembali ke dashboard atau keluar dari halaman ini.</p>
-        <a href="/" class="button">Kembali ke Halaman Utama</a>
+        <h1>📘 Selamat Datang di Tes Sederhana</h1>
+        <p>Tekan tombol di bawah untuk memulai ujian.</p>
+        <form method="POST" action="{{ route('mulai-ujian') }}">
+            @csrf
+            <button type="submit">Mulai Ujian</button>
+        </form>
     </div>
 </body>
 </html>
