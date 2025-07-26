@@ -1,28 +1,33 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\SoalController;
 
-// Home
+// 🏠 Halaman awal tes (home)
 Route::get('/', function () {
-    return view('home');
+    return view('home'); // tampilkan halaman home.blade.php
 })->name('home');
 
-// POST: Mulai ujian -> redirect ke soal
+// ▶️ Tombol "Mulai Tes" dari home (redirect ke halaman soal)
 Route::post('/mulai-ujian', function () {
     return redirect()->route('soal');
 })->name('mulai-ujian');
 
-// GET: Soal
-Route::get('/soal', function () {
-    return view('soal');
-})->name('soal');
+// 📃 Halaman soal utama
+Route::get('/soal', [SoalController::class, 'index'])->name('soal');
 
-// POST: Submit jawaban -> redirect ke selesai
+// 📦 API: Ambil soal by nomor via AJAX
+Route::get('/api/soal/{test_id}/{packet_id}/{number}', [SoalController::class, 'getSoal'])->name('soal.ajax');
+
+// 📝 Simpan jawaban ketika pilih opsi
+Route::post('/soal/simpan', [SoalController::class, 'simpanJawaban'])->name('soal.simpan');
+
+// 🚀 Submit seluruh tes (misal ketika klik "Kumpulkan Jawaban")
 Route::post('/soal/submit', function () {
     return redirect()->route('tes.selesai');
 })->name('soal.submit');
 
-// GET: Tes selesai
+// 🎉 Halaman selesai ujian
 Route::get('/tes/selesai', function () {
-    return view('tes.selesai');
+    return view('tes.selesai'); // view selesai.blade.php disimpan di resources/views/tes/selesai.blade.php
 })->name('tes.selesai');
