@@ -1,11 +1,10 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SoalController;
 
-// 🏠 Halaman default - redirect ke halaman soal
+// 🏠 Halaman default: Tampilkan homepage
 Route::get('/', function () {
-    return redirect()->route('soal.index');
+    return view('home'); // ⬅️ Menampilkan resources/views/home.blade.php
 });
 
 // 📃 View utama tes interaktif

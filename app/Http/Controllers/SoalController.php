@@ -16,29 +16,30 @@ class SoalController extends Controller
 {
     // Menampilkan seluruh soal
     public function index()
-    {
-        $test = Test::find(1); // Ganti 1 sesuai ID default atau gunakan dynamic jika diperlukan
+{
+    $test = Test::find(1); // Ganti 1 sesuai kebutuhan
 
-        if (!$test) {
-            abort(404, 'Data test tidak ditemukan.');
-        }
-
-        $packet = Packet::where('test_id', $test->id)->first();
-        if (!$packet) {
-            abort(404, 'Data packet tidak ditemukan.');
-        }
-
-        $soal = Question::where('packet_id', $packet->id)->get();
-        $jumlah_soal = $soal->count();
-        $part = $packet->part;
-        $path = $test->code;
-        $selection = null;
-
-        return view('soal.index', compact(
-            'soal', 'selection', 'path',
-            'packet', 'test', 'jumlah_soal', 'part'
-        ));
+    if (!$test) {
+        return view('soal.error', ['message' => 'Soal kamu belum ditemukan (data tes tidak ditemukan).']);
     }
+
+    $packet = Packet::where('test_id', $test->id)->first();
+    if (!$packet) {
+        return view('soal.error', ['message' => 'Soal kamu belum ditentukan (data paket tidak ditemukan).']);
+    }
+
+    $soal = Question::where('packet_id', $packet->id)->get();
+    $jumlah_soal = $soal->count();
+    $part = $packet->part;
+    $path = $test->code;
+    $selection = null;
+
+    return view('soal.index', compact(
+        'soal', 'selection', 'path',
+        'packet', 'test', 'jumlah_soal', 'part'
+    ));
+}
+
 
     // API: Ambil satu soal berdasarkan nomor
     public function getSoal($test_id, $packet_id, $number)
