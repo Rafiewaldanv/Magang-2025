@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Log;
 class SoalController extends Controller
 {
     // Menampilkan seluruh soal
+    
+
     public function index()
 {
     $test = Test::find(1); // Ganti 1 sesuai kebutuhan

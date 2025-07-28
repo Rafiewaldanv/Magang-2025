@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('test_temporary', function (Blueprint $table) {
+        Schema::create('options', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('id_user'); // ✅ WAJIB ada
-            $table->unsignedBigInteger('test_id');
-            $table->unsignedBigInteger('packet_id');
-            $table->integer('part');
-            $table->json('json')->nullable();
-            $table->json('result_temp')->nullable();
+            $table->foreignId('question_id')->constrained()->onDelete('cascade');
+            $table->string('code')->nullable();
+            $table->text('text')->nullable();
+            $table->string('image')->nullable();
             $table->timestamps();
         });
         
@@ -29,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('test_temporary');
+        Schema::dropIfExists('options');
     }
 };
