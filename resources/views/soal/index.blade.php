@@ -88,7 +88,8 @@
                     <a href="#" class="text-secondary" data-bs-toggle="modal" data-bs-target="#tutorialModal" title="Tutorial"><i class="fa fa-question-circle" style="font-size: 1.5rem"></i></a>
                 </li>
                 <li class="nav-item ms-3">
-                    <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase " id="btn-nextj" >Submit</button>
+                <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase" id="btn-nextj" disabled>Submit</button>
+
                     <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase " id="btn-submit" style="display: none">Submit</button>
                     <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase " id="btn-tiki" style="display: none">Submit</button>
                 </li>
@@ -122,7 +123,49 @@
 
 @section('js-extra')
 <script src="{{ asset('assets/js/quiz-render.js') }}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const jumlahSoal = parseInt(document.getElementById('jumlah_soal').value);
+    const btnSubmit = document.getElementById('btn-nextj');
+
+    function updateSubmitStatus() {
+        let totalTerjawab = 0;
+
+        for (let i = 1; i <= jumlahSoal; i++) {
+            const selector = `input[name="jawaban[${i}]"]:checked, input[name="jawaban[${i}][]"]:checked`;
+            if (document.querySelectorAll(selector).length > 0) {
+                totalTerjawab++;
+            }
+        }
+
+        // Update counter
+        document.getElementById('answered').innerText = totalTerjawab;
+
+        // Enable tombol kalau semua soal terjawab
+        btnSubmit.disabled = totalTerjawab < jumlahSoal;
+    }
+
+    // Jalankan saat load
+    updateSubmitStatus();
+
+    // Cek setiap kali user jawab soal
+    document.querySelectorAll('input[type=radio], input[type=checkbox]').forEach(function (input) {
+        input.addEventListener('change', updateSubmitStatus);
+    });
+
+    // Proteksi saat submit diklik
+    btnSubmit.addEventListener('click', function (e) {
+        const total = parseInt(document.getElementById('answered').innerText);
+        if (total < jumlahSoal) {
+            e.preventDefault();
+            alert(`Masih ada ${jumlahSoal - total} soal yang belum dijawab!`);
+        }
+    });
+});
+</script>
 @endsection
+
 
 @section('css-extra')
 

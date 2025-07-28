@@ -8,44 +8,41 @@ use App\Models\Option;
 use App\Models\TestTemporary;
 use App\Models\Packet;
 use App\Models\Result;
-use App\Models\Test; // ✅ Tambahkan import model Test
+use App\Models\Test;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log; 
+use Illuminate\Support\Facades\Log;
 
 class SoalController extends Controller
-
 {
-    // Menampilkan seluruh soal (jika non-AJAX)
+    // Menampilkan seluruh soal
     public function index()
-{
-    $test = Test::find(1); // Ganti '1' dengan ID yang pasti ada
-    if (!$test) {
-        abort(404, 'Data test tidak ditemukan.');
+    {
+        $test = Test::find(1); // Ganti 1 sesuai ID default atau gunakan dynamic jika diperlukan
+
+        if (!$test) {
+            abort(404, 'Data test tidak ditemukan.');
+        }
+
+        $packet = Packet::where('test_id', $test->id)->first();
+        if (!$packet) {
+            abort(404, 'Data packet tidak ditemukan.');
+        }
+
+        $soal = Question::where('packet_id', $packet->id)->get();
+        $jumlah_soal = $soal->count();
+        $part = $packet->part;
+        $path = $test->code;
+        $selection = null;
+
+        return view('soal.index', compact(
+            'soal', 'selection', 'path',
+            'packet', 'test', 'jumlah_soal', 'part'
+        ));
     }
 
-    $packet = Packet::where('test_id', $test->id)->first();
-    if (!$packet) {
-        abort(404, 'Data packet tidak ditemukan.');
-    }
-
-    $soal = Question::where('packet_id', $packet->id)->get();
-    $jumlah_soal = $soal->count();
-    $part = $packet->part;
-    $path = $test->code;
-    $selection = null;
-
-    return view('soal.index', compact(
-        'soal', 'selection', 'path',
-        'packet', 'test', 'jumlah_soal', 'part'
-    ));
-}
-
-
-
-    // ✅ API: Ambil 1 soal berdasarkan nomor & packet
+    // API: Ambil satu soal berdasarkan nomor
     public function getSoal($test_id, $packet_id, $number)
     {
-        // ✅ Logging parameter yang masuk
         Log::info('Debug getSoal() menerima:', [
             'test_id' => $test_id,
             'packet_id' => $packet_id,
@@ -60,7 +57,6 @@ class SoalController extends Controller
             return response()->json(['error' => 'Soal tidak ditemukan'], 404);
         }
 
-        // Ambil kode path dari tabel tests
         $test = Test::find($test_id);
         $pathFromCode = $test ? $test->code : null;
 
@@ -69,8 +65,8 @@ class SoalController extends Controller
             'questionText' => $question->description,
             'questionImage' => $question->image,
             'multiSelect' => $question->type === 'checkbox',
-            'selection' => null, // ✅ diset null default
-            'path' => $pathFromCode, // ✅ ambil dari field code di tests
+            'selection' => null,
+            'path' => $pathFromCode,
             'options' => $question->options->map(function ($opt) {
                 return [
                     'value' => $opt->code,
@@ -83,53 +79,63 @@ class SoalController extends Controller
         return response()->json($formatted);
     }
 
-    // ✅ Submit jawaban dari frontend (AJAX)
+    // Simpan jawaban (submit akhir)
     public function simpanJawaban(Request $request)
-{
-    $answers = $request->input('answers');
+    {
+        $answers = $request->input('answers'); // format: [1 => 'A', 2 => 'B', ...]
+        $jumlahSoal = $request->input('jumlah_soal');
 
-    // Filter hanya yang dijawab
-    $filteredAnswers = array_filter($answers, function ($value) {
-        return !is_null($value) && $value !== '';
-    });
+        // Filter hanya yang dijawab
+        $filteredAnswers = array_filter($answers, function ($value) {
+            return !is_null($value) && $value !== '';
+        });
 
-    $userId = Auth::id();
-    $packetId = $request->packet_id;
-    $testId = $request->test_id;
-    $part = $request->part;
+        // Validasi: semua soal harus terjawab
+        if (count($filteredAnswers) < $jumlahSoal) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Masih ada soal yang belum dijawab.'
+            ], 400);
+        }
 
-    // Cek apakah sudah pernah simpan
-    $existing = TestTemporary::where([
-        'user_id' => $userId,
-        'test_id' => $testId,
-        'packet_id' => $packetId,
-        'part' => $part,
-    ])->first();
+        $userId = Auth::id();
+        $packetId = $request->packet_id;
+        $testId = $request->test_id;
+        $part = $request->part;
 
-    if (!$existing) {
-        TestTemporary::create([
+        // Hindari duplikasi penyimpanan
+        $existing = TestTemporary::where([
             'user_id' => $userId,
             'test_id' => $testId,
             'packet_id' => $packetId,
             'part' => $part,
-            'json' => json_encode($filteredAnswers),
-            'result_temp' => count($filteredAnswers),
-        ]);
+        ])->first();
+
+        if (!$existing) {
+            TestTemporary::create([
+                'user_id' => $userId,
+                'test_id' => $testId,
+                'packet_id' => $packetId,
+                'part' => $part,
+                'json' => json_encode($filteredAnswers),
+                'result_temp' => count($filteredAnswers),
+            ]);
+        }
+
+        // Cek apakah part terakhir
+        $isLast = !Packet::where('test_id', $testId)
+                         ->where('part', '>', $part)
+                         ->exists();
+
+        if ($isLast) {
+            Result::create([
+                'user_id' => $userId,
+                'test_id' => $testId,
+                'json' => json_encode($filteredAnswers),
+                'score' => count($filteredAnswers),
+            ]);
+        }
+
+        return response()->json(['status' => 'berhasil']);
     }
-
-    // Jika part terakhir, simpan ke hasil akhir
-    $isLast = !Packet::where('test_id', $testId)->where('part', '>', $part)->exists();
-
-    if ($isLast) {
-        Result::create([
-            'user_id' => $userId,
-            'test_id' => $testId,
-            'json' => json_encode($filteredAnswers),
-            'score' => count($filteredAnswers),
-        ]);
-    }
-
-    return response()->json(['status' => 'berhasil']);
-}
-
 }
