@@ -6,12 +6,12 @@ const path = $('#form input[name="path"]').val();
 const jumlahSoal = parseInt($('#jumlah_soal').val());
 console.log('Mengirim request soal:', testID, packetID);
 
-// 🔥 Load soal via AJAX
+// Load soal via AJAX
 function loadQuestion(nomor) {
   $.ajax({
     url: `/api/soal/${testID}/${packetID}/${nomor}`,
     type: 'GET',
-    success: function(questionData) {
+    success: function (questionData) {
       renderQuestion(questionData);
       updateAnsweredCount();
       sessionStorage.setItem('currentQuestion', nomor);
@@ -27,23 +27,25 @@ function loadQuestion(nomor) {
   });
 }
 
-// ✅ Render komponen soal & pilihan
+// Render soal & opsi
 function renderQuestion(questionData) {
   const container = document.querySelector('.s');
   if (!container || !questionData) return;
 
   let html = '';
 
-  if (questionData.questionImage)
-    html += `<img src="../assets/images/gambar/${questionData.questionImage}" class="img-fluid mb-3">`;
+  if (questionData.questionImage) {
+    html += `<img src="/assets/images/gambar/${questionData.questionImage}" class="img-fluid mb-3">`;
+  }
 
-  if (questionData.questionText)
+  if (questionData.questionText) {
     html += `<p>${questionData.questionText}</p>`;
+  }
 
   questionData.options.forEach((opt, index) => {
     const inputType = questionData.multiSelect ? 'checkbox' : 'radio';
     const optionContent = opt.image
-      ? `<img src="../assets/images/gambar/${opt.image}" class="img-option">`
+      ? `<img src="/assets/images/gambar/${opt.image}" class="img-option">`
       : opt.text;
 
     const inputId = `opt-${questionData.number}-${index}`;
@@ -61,7 +63,7 @@ function renderQuestion(questionData) {
   localStorage.setItem('currentQuestion', questionData.number);
 }
 
-//  Tandai opsi terpilih
+// Tandai opsi terpilih
 function highlightSelectedOption(num) {
   const answers = JSON.parse(localStorage.getItem('answers') || '{}');
   const values = answers[num] || [];
@@ -79,7 +81,7 @@ function highlightSelectedOption(num) {
   });
 }
 
-//  Simpan jawaban saat memilih
+// Simpan jawaban saat memilih
 document.addEventListener("change", function (e) {
   if (!e.target.name.startsWith('option-')) return;
 
@@ -103,6 +105,7 @@ document.addEventListener("change", function (e) {
 
   highlightSelectedOption(num);
   updateAnsweredCount();
+  checkAllAnswered(); // Aktifkan tombol submit jika semua terjawab
 });
 
 // Hitung soal yang terjawab
@@ -112,13 +115,31 @@ function updateAnsweredCount() {
   document.getElementById('answered').textContent = totalAnswered;
 }
 
-//  Toggle tombol Next dan Prev
+// Cek apakah semua soal sudah terjawab
+function checkAllAnswered() {
+  const answers = JSON.parse(localStorage.getItem('answers') || '{}');
+  const totalAnswered = Object.values(answers).filter(val => val.length > 0).length;
+
+  if (totalAnswered === jumlahSoal) {
+    $('#btn-nextj').prop('disabled', false);
+  } else {
+    $('#btn-nextj').prop('disabled', true);
+  }
+}
+
+// Tombol Next dan Prev
 function updateNavButton(nomor, totalSoal) {
   $('#next').toggle(nomor < totalSoal);
   $('#prev').toggle(nomor > 1);
 }
 
-//  Auto-submit saat waktu habis
+// Navigasi nomor soal di sidebar
+$(document).on('click', '.nav-number', function () {
+  const nomor = $(this).data('num');
+  loadQuestion(nomor);
+});
+
+// Auto-submit saat waktu habis
 function handleTimeoutSubmit() {
   const answers = JSON.parse(localStorage.getItem('answers') || '{}');
 
@@ -131,7 +152,7 @@ function handleTimeoutSubmit() {
       test_id: testID,
       packet_id: packetID
     },
-    success: function() {
+    success: function () {
       localStorage.clear();
       sessionStorage.clear();
       window.location.href = '/tes/selesai';
@@ -142,13 +163,14 @@ function handleTimeoutSubmit() {
   });
 }
 
-//  Saat halaman dimuat, tampilkan soal terakhir
+// Saat halaman dimuat
 $(document).ready(function () {
   const currentNum = sessionStorage.getItem('currentQuestion') || 1;
   loadQuestion(currentNum);
+  checkAllAnswered();
 });
 
-// Backup saat keluar halaman
+// Backup jawaban sebelum keluar halaman
 window.addEventListener("beforeunload", function () {
   localStorage.setItem('answers_backup', localStorage.getItem('answers'));
 });

@@ -51,18 +51,19 @@ class SoalController extends Controller
             'packet_id' => $packet_id,
             'number' => $number,
         ]);
-
-        $question = Question::where('packet_id', $packet_id)
-                            ->where('number', $number)
-                            ->first();
-
+    
+        $question = Question::with('options')
+            ->where('packet_id', $packet_id)
+            ->where('number', $number)
+            ->first();
+    
         if (!$question) {
             return response()->json(['error' => 'Soal tidak ditemukan'], 404);
         }
-
+    
         $test = Test::find($test_id);
         $pathFromCode = $test ? $test->code : null;
-
+    
         $formatted = [
             'number' => $question->number,
             'questionText' => $question->description,
@@ -78,9 +79,10 @@ class SoalController extends Controller
                 ];
             })->toArray(),
         ];
-
+    
         return response()->json($formatted);
     }
+    
 
     // Simpan jawaban (submit akhir)
     public function simpanJawaban(Request $request)
