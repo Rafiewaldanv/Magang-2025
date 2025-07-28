@@ -85,44 +85,51 @@ class SoalController extends Controller
 
     // ✅ Submit jawaban dari frontend (AJAX)
     public function simpanJawaban(Request $request)
-    {
-        $answers = $request->input('answers');
-        $userId = Auth::id();
-        $packetId = $request->packet_id;
-        $testId = $request->test_id;
-        $part = $request->part;
+{
+    $answers = $request->input('answers');
 
-        // Hindari duplikasi simpan
-        $existing = TestTemporary::where([
+    // Filter hanya yang dijawab
+    $filteredAnswers = array_filter($answers, function ($value) {
+        return !is_null($value) && $value !== '';
+    });
+
+    $userId = Auth::id();
+    $packetId = $request->packet_id;
+    $testId = $request->test_id;
+    $part = $request->part;
+
+    // Cek apakah sudah pernah simpan
+    $existing = TestTemporary::where([
+        'user_id' => $userId,
+        'test_id' => $testId,
+        'packet_id' => $packetId,
+        'part' => $part,
+    ])->first();
+
+    if (!$existing) {
+        TestTemporary::create([
             'user_id' => $userId,
             'test_id' => $testId,
             'packet_id' => $packetId,
             'part' => $part,
-        ])->first();
-
-        if (!$existing) {
-            TestTemporary::create([
-                'user_id' => $userId,
-                'test_id' => $testId,
-                'packet_id' => $packetId,
-                'part' => $part,
-                'json' => json_encode($answers),
-                'result_temp' => count($answers),
-            ]);
-        }
-
-        // Cek apakah ini part terakhir
-        $isLast = !Packet::where('test_id', $testId)->where('part', '>', $part)->exists();
-
-        if ($isLast) {
-            Result::create([
-                'user_id' => $userId,
-                'test_id' => $testId,
-                'json' => json_encode($answers),
-                'score' => count($answers),
-            ]);
-        }
-
-        return response()->json(['status' => 'berhasil']);
+            'json' => json_encode($filteredAnswers),
+            'result_temp' => count($filteredAnswers),
+        ]);
     }
+
+    // Jika part terakhir, simpan ke hasil akhir
+    $isLast = !Packet::where('test_id', $testId)->where('part', '>', $part)->exists();
+
+    if ($isLast) {
+        Result::create([
+            'user_id' => $userId,
+            'test_id' => $testId,
+            'json' => json_encode($filteredAnswers),
+            'score' => count($filteredAnswers),
+        ]);
+    }
+
+    return response()->json(['status' => 'berhasil']);
+}
+
 }
