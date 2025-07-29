@@ -12,12 +12,11 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      */
     // database/seeders/DatabaseSeeder.php
-    public function run(): void
+    public function run()
     {
-        $this->call([
-            DummyTesSeeder::class,
-        ]);
+        $this->call(DummySoalSeeder::class);
     }
+    
     
 
     /*public function run(): void

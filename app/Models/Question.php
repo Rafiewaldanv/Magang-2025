@@ -2,15 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Question extends Model
 {
-    public function options()
-    {
-        return $this->hasMany(Option::class, 'question_id'); // Pastikan foreign key sesuai
-    }
-    
+    use HasFactory;
 
-    //
+    protected $fillable = [
+        'packet_id', 'number', 'text', 
+        'option_a', 'option_b', 'option_c', 
+        'option_d', 'correct_answer'
+    ];
+
+    public function packet()
+    {
+        return $this->belongsTo(Packet::class);
+    }
 }

@@ -7,19 +7,18 @@ Route::get('/', function () {
     return view('home'); // ⬅️ Menampilkan resources/views/home.blade.php
 });
 
-// 📃 View utama tes interaktif
+// Route utama tes
 Route::get('/soal', [SoalController::class, 'index'])->name('soal.index');
 
-// 📦 API: Ambil soal berdasarkan nomor (dipanggil dari JS)
+// Ambil soal by nomor
 Route::get('/api/soal/{test_id}/{packet_id}/{number}', [SoalController::class, 'getSoal'])->name('soal.ajax');
 
-// 📮 Simpan jawaban setelah memilih opsi (optional, jika dipakai per soal)
+// Simpan jawaban per soal
 Route::post('/soal/simpan', [SoalController::class, 'simpanJawaban'])->name('soal.simpan');
 
-// 🚀 Submit saat waktu habis (auto-submit final)
+// Submit otomatis di akhir tes
 Route::post('/tes/{path}/submit', [SoalController::class, 'simpanJawaban'])->name('tes.submit');
 
-// 🧪 (Optional) View setelah tes selesai
-Route::get('/tes/selesai', function () {
-    return view('tes.selesai'); // Buat view ini untuk notifikasi akhir tes
-})->name('tes.selesai');
+// Selesai
+Route::get('/tes/selesai', fn() => view('tes.selesai'))->name('tes.selesai');
+

@@ -9,17 +9,27 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::create('questions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('packet_id')->constrained('packets')->onDelete('cascade');
-            $table->integer('number');
-            $table->text('description');
-            $table->integer('is_example')->default(0);
-            $table->timestamps();
-        });
-    }
+    public function up()
+{
+    Schema::create('questions', function (Blueprint $table) {
+        $table->id();
+        $table->unsignedBigInteger('packet_id');
+$table->foreign('packet_id')->references('id')->on('packets')->onDelete('cascade');
+
+        $table->text('text');
+        $table->string('option_a');
+        $table->string('option_b');
+        $table->string('option_c');
+        $table->string('option_d');
+        $table->enum('correct_answer', ['A', 'B', 'C', 'D']);
+        $table->timestamps();
+$table->integer('number'); // nomor urut soal
+$table->text('description');
+$table->boolean('is_example')->default(false);
+
+    });
+}
+
 
     /**
      * Reverse the migrations.

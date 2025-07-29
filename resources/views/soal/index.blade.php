@@ -131,12 +131,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const soalNumber = document.querySelector('.soal_number .num');
     const formNavigasi = document.getElementById('form');
     const containerNav = document.getElementById('soal-container');
+  const testID = {{ $test->id }};
+  const packetID = {{ $packet->id }};
+
+
+
+
 
     let current = 1;
     let soalData = {};
 
     // Ambil soal via AJAX saat halaman siap
-    fetch(`/tes/ajax/{{ $path }}`)
+    fetch(`/api/soal/${testID}/${packetID}/${soalNumber}`)
         .then(response => response.json())
         .then(data => {
             soalData = data;

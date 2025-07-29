@@ -7,22 +7,22 @@ const jumlahSoal = parseInt($('#jumlah_soal').val());
 console.log('Mengirim request soal:', testID, packetID);
 
 // Load soal via AJAX
-function loadQuestion(nomor) {
+function loadQuestion(number) {
   $.ajax({
-    url: `/api/soal/${testID}/${packetID}/${nomor}`,
+    url: `/api/soal/${testID}/${packetID}/${number}`,
     type: 'GET',
     success: function (questionData) {
       renderQuestion(questionData);
       updateAnsweredCount();
-      sessionStorage.setItem('currentQuestion', nomor);
-      updateNavButton(nomor, jumlahSoal);
+      sessionStorage.setItem('currentQuestion', number);
+      updateNavButton(number, jumlahSoal);
 
       // Update sidebar nomor soal aktif
       $('.nav-number').removeClass('active');
-      $(`.nav-number[data-num="${nomor}"]`).addClass('active');
+      $(`.nav-number[data-num="${number}"]`).addClass('active');
     },
     error: function () {
-      alert('Gagal memuat soal.');
+      alert('Gagal memuat soal ini dari quiz render.');
     }
   });
 }
@@ -105,7 +105,7 @@ document.addEventListener("change", function (e) {
 
   highlightSelectedOption(num);
   updateAnsweredCount();
-  checkAllAnswered(); // Aktifkan tombol submit jika semua terjawab
+  checkAllAnswered();
 });
 
 // Hitung soal yang terjawab
@@ -128,15 +128,15 @@ function checkAllAnswered() {
 }
 
 // Tombol Next dan Prev
-function updateNavButton(nomor, totalSoal) {
-  $('#next').toggle(nomor < totalSoal);
-  $('#prev').toggle(nomor > 1);
+function updateNavButton(number, totalSoal) {
+  $('#next').toggle(number < totalSoal);
+  $('#prev').toggle(number > 1);
 }
 
 // Navigasi nomor soal di sidebar
 $(document).on('click', '.nav-number', function () {
-  const nomor = $(this).data('num');
-  loadQuestion(nomor);
+  const number = $(this).data('num');
+  loadQuestion(number);
 });
 
 // Auto-submit saat waktu habis

@@ -9,21 +9,22 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
+    public function up()
+{
     Schema::create('packets', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('test_id')->constrained('tests')->onDelete('cascade');
-            $table->integer('part');
-            $table->string('name');
-            $table->text('description')->nullable();
-            $table->string('type'); 
-            $table->integer('amount');
-            $table->boolean('status')->default(1); 
-            $table->timestamps();
-});
+        $table->id();
+        $table->foreignId('test_id')->constrained()->onDelete('cascade');
+        $table->string('name');
+        $table->string('part')->nullable();
+        $table->timestamps();
+        $table->string('description')->nullable();
+$table->string('type')->default('pilihan_ganda');
+$table->integer('amount')->default(0);
+$table->boolean('status')->default(1);
 
-    }
+    });
+}
+
 
     /**
      * Reverse the migrations.
