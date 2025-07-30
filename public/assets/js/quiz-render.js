@@ -3,7 +3,9 @@ $(document).ready(function () {
     const packetId = $('#form input[name="packet_id"]').val();
     const jumlahSoal = parseInt($('#jumlah_soal').val());
     let current = 1;
-    const jawabanSementara = {};
+
+    // Load jawaban dari sessionStorage jika ada
+    let jawabanSementara = JSON.parse(sessionStorage.getItem('jawabanSementara')) || {};
 
     getSoal(current);
 
@@ -30,7 +32,8 @@ $(document).ready(function () {
                 $('#overlay-loading').hide();
                 tampilkanSoal(res, nomor);
                 updateNavigasi(nomor);
-                updatePanelNavigasi(); // update warna nav tombol
+                updatePanelNavigasi();
+                updateSoalTerjawab(); // update submit tombol saat load soal
             },
             error: function () {
                 $('#overlay-loading').hide();
@@ -65,7 +68,7 @@ $(document).ready(function () {
             </div>
         `);
 
-        // Event listener simpan jawaban
+        // Event listener untuk menyimpan jawaban
         $(`input[name^="answer_${data.number}"]`).change(function () {
             if (data.multiSelect) {
                 const selected = [];
@@ -80,17 +83,23 @@ $(document).ready(function () {
                 updateJawabanForm(data.number, selected);
             }
 
+            // Simpan ke sessionStorage
+            sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
+
             updateSoalTerjawab();
         });
 
-        // Tambahkan hidden input jika belum ada
         if (!$(`#form input[name="answer_${data.number}"]`).length) {
             $('#form').append(`<input type="hidden" name="answer_${data.number}" value="">`);
         }
 
-        // Set ulang nilai hidden dari jawaban sebelumnya
         if (jawabanSementara[data.number]) {
-            updateJawabanForm(data.number, Array.isArray(jawabanSementara[data.number]) ? jawabanSementara[data.number].join(',') : jawabanSementara[data.number]);
+            updateJawabanForm(
+                data.number,
+                Array.isArray(jawabanSementara[data.number])
+                    ? jawabanSementara[data.number].join(',')
+                    : jawabanSementara[data.number]
+            );
         }
     }
 
@@ -108,8 +117,14 @@ $(document).ready(function () {
         $('#totals').text(jumlahSoal);
 
         const sudahSemua = totalJawab === jumlahSoal;
-        $('#btn-submit').prop('disabled', !sudahSemua).toggle(sudahSemua);
-        $('#btn-nextj').prop('disabled', sudahSemua).toggle(!sudahSemua);
+
+
+        // Hanya tombol #btn-nextj yang digunakan
+        $('#btn-nextj').hide();
+    
+        // Sembunyikan tombol lain
+        $('#btn-submit').show().prop('disabled', !sudahSemua);
+        $('#btn-tiki').hide()
 
         updatePanelNavigasi();
     }
