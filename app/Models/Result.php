@@ -2,25 +2,32 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Result extends Model
 {
-    protected $fillable = [
-        'company_id',
-        'user_id',
-        'test_id',
-        'json',
-        'score',
-    ];
+    use HasFactory;
+
+    protected $fillable = ['user_id', 'company_id', 'test_id', 'packet_id', 'result'];
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
     public function test()
     {
         return $this->belongsTo(Test::class);
+    }
+
+    public function packet()
+    {
+        return $this->belongsTo(Packet::class);
     }
 }
