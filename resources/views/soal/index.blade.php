@@ -6,7 +6,7 @@
     <div class="spinner"></div>
 </div>
 
-<div class="bg-theme-1 bg-header">
+<div class="bg-header" style="background-color: rgb(255, 165, 0);">
     <div class="container text-center text-white">
         <h2 id="timer">00:00</h2>
     </div>

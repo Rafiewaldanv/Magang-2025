@@ -20,17 +20,18 @@ class DatabaseSeeder extends Seeder
             CompanySeeder::class,
             // ... seeder lain
         ]);
+
         // User
         $user = User::create([
-            'name' => 'Dummy User',
-            'email' => 'user@example.com',
+            'name' => 'Farhan',
+            'email' => 'farhan@example.com',
             'password' => Hash::make('password'),
         ]);
 
         // Test
         $test = Test::create([
-            'name' => 'Tes Logika',
-            'code' => 'LOG123',
+            'name' => 'Tes Penalaran Umum',
+            'code' => 'PU123',
             'num_order' => 1,
         ]);
 
@@ -39,44 +40,41 @@ class DatabaseSeeder extends Seeder
             'test_id' => $test->id,
             'part' => 'A',
             'name' => 'Bagian A',
-            'description' => 'Soal dasar logika',
+            'description' => 'Soal penalaran umum logika dan analisis',
             'type' => 'PG',
-            'amount' => 2,
+            'amount' => 30,
             'status' => 'active',
         ]);
 
-        // Questions & Options
-        for ($i = 1; $i <= 2; $i++) {
+        // Questions & Options (30 soal)
+        $tempAnswers = [];
+        for ($i = 1; $i <= 30; $i++) {
             $question = Question::create([
                 'packet_id' => $packet->id,
                 'number' => $i,
-                'description' => "Pertanyaan ke-$i",
+                'description' => "Jika semua A adalah B dan semua B adalah C, maka apakah semua A adalah C? (Soal ke-$i)",
                 'is_example' => false,
             ]);
 
-            Option::create([
-                'question_id' => $question->id,
-                'text' => 'Jawaban A',
-                'is_correct' => false,
-            ]);
+            $options = [
+                ['text' => 'Ya, selalu benar', 'is_correct' => false],
+                ['text' => 'Tidak, tidak selalu', 'is_correct' => false],
+                ['text' => 'Benar jika C adalah A', 'is_correct' => false],
+                ['text' => 'Benar, karena hubungan transitif', 'is_correct' => false],
+            ];
 
-            Option::create([
-                'question_id' => $question->id,
-                'text' => 'Jawaban B',
-                'is_correct' => true,
-            ]);
+            $correctIndex = rand(0, 3);
+            $options[$correctIndex]['is_correct'] = true;
+            $correctLabel = ['A', 'B', 'C', 'D'][$correctIndex];
+            $tempAnswers[(string)$i] = $correctLabel;
 
-            Option::create([
-                'question_id' => $question->id,
-                'text' => 'Jawaban C',
-                'is_correct' => false,
-            ]);
-
-            Option::create([
-                'question_id' => $question->id,
-                'text' => 'Jawaban D',
-                'is_correct' => false,
-            ]);
+            foreach ($options as $opt) {
+                Option::create([
+                    'question_id' => $question->id,
+                    'text' => $opt['text'],
+                    'is_correct' => $opt['is_correct'],
+                ]);
+            }
         }
 
         // Result
@@ -85,7 +83,7 @@ class DatabaseSeeder extends Seeder
             'company_id' => 1,
             'test_id' => $test->id,
             'packet_id' => $packet->id,
-            'result' => 80,
+            'result' => 90,
         ]);
 
         // TestTemporary
@@ -94,8 +92,8 @@ class DatabaseSeeder extends Seeder
             'test_id' => $test->id,
             'packet_id' => $packet->id,
             'part' => 'A',
-            'json' => json_encode(['1' => 'B', '2' => 'B']),
-            'result_temp' => 2,
+            'json' => json_encode($tempAnswers),
+            'result_temp' => count($tempAnswers),
         ]);
     }
 }
