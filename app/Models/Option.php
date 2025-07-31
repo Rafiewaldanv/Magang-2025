@@ -9,7 +9,8 @@ class Option extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['question_id', 'text', 'is_correct'];
+    protected $fillable = ['question_id', 'label', 'value', 'is_correct'];
+
 
     public function question()
     {

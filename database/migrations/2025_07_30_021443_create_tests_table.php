@@ -14,6 +14,9 @@ class CreateTestsTable extends Migration
             $table->string('code', 255)->unique(); // code test uniq untuk get data tes
             $table->integer('num_order'); // urutan, default biasanya 0
             $table->timestamps(); // created_at dan updated_at
+            $table->text('description')->nullable();
+            $table->integer('test_time')->nullable(); // dan ini
+
         });
     }
 
