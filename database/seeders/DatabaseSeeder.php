@@ -23,12 +23,9 @@ class DatabaseSeeder extends Seeder
 
             // ... seeder lain
         ]);
-        $this->call([
-            SoalContohSeeder::class, // panggil seeder buatanmu di sini
-        ]);
 
         // User
-        /*$user = User::create([
+        $user = User::create([
             'name' => 'Farhan',
             'email' => 'farhan@example.com',
             'password' => Hash::make('password'),
@@ -100,6 +97,6 @@ class DatabaseSeeder extends Seeder
             'part' => 'A',
             'json' => json_encode($tempAnswers),
             'result_temp' => count($tempAnswers),
-        ]);*/
+        ]);
     }
 }
