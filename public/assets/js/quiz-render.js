@@ -45,6 +45,7 @@ $(document).ready(function () {
     }
 
     function tampilkanSoal(data, nomor) {
+        
         $('.soal_number .num').text(`Soal Nomor ${nomor}`);
         $('.s').html(`
             <p>${data.questionText}</p>
@@ -68,6 +69,11 @@ $(document).ready(function () {
                     `;
                 }).join('')}
             </div>
+    <div class="text-end mt-2">
+        <button type="button" class="btn btn-danger btn-sm batal-jawab" data-nomor="${nomor}">
+            Batal Pilihan
+        </button>
+    </div>
         `);
     
         // Event listener
@@ -100,6 +106,23 @@ $(document).ready(function () {
                 }, 300);
             }
         });
+        $('.batal-jawab').click(function () {
+            const nomorSoal = $(this).data('nomor');
+        
+            // Kosongkan jawaban
+            delete jawabanSementara[nomorSoal];
+            sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
+        
+            // Kosongkan input hidden
+            updateJawabanForm(nomorSoal, '');
+        
+            // Uncheck semua input
+            $(`input[name^="answer_${nomorSoal}"]`).prop('checked', false);
+        
+            updateSoalTerjawab();
+            updatePanelNavigasi();
+        });
+        
     
         // Hidden input jika belum ada
         if (!$(`#form input[name="answer_${nomor}"]`).length) {
