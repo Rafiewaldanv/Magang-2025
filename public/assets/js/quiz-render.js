@@ -1,3 +1,5 @@
+
+
 $(document).ready(function () {
     const testId = $('#form input[name="test_id"]').val();
     const packetId = $('#form input[name="packet_id"]').val();
@@ -50,14 +52,14 @@ $(document).ready(function () {
             <div class="list-group">
                 ${data.options.map(opt => {
                     const isChecked = (
-                        Array.isArray(jawabanSementara[data.number])
-                            ? jawabanSementara[data.number].includes(opt.value)
-                            : jawabanSementara[data.number] === opt.value
+                        Array.isArray(jawabanSementara[nomor])
+                            ? jawabanSementara[nomor].includes(opt.value)
+                            : jawabanSementara[nomor] === opt.value
                     ) ? 'checked' : '';
                     return `
                         <label class="list-group-item">
                             <input type="${data.multiSelect ? 'checkbox' : 'radio'}"
-                                name="answer_${data.number}${data.multiSelect ? '[]' : ''}" 
+                                name="answer_${nomor}${data.multiSelect ? '[]' : ''}" 
                                 value="${opt.value}"
                                 class="form-check-input me-1"
                                 ${isChecked}>
@@ -67,46 +69,62 @@ $(document).ready(function () {
                 }).join('')}
             </div>
         `);
-
-        // Event listener untuk menyimpan jawaban
-        $(`input[name^="answer_${data.number}"]`).change(function () {
+    
+        // Event listener
+        $(`input[name^="answer_${nomor}"]`).change(function () {
             if (data.multiSelect) {
                 const selected = [];
-                $(`input[name="answer_${data.number}[]"]:checked`).each(function () {
+                $(`input[name="answer_${nomor}[]"]:checked`).each(function () {
                     selected.push($(this).val());
                 });
-                jawabanSementara[data.number] = selected;
-                updateJawabanForm(data.number, selected.join(','));
+                jawabanSementara[nomor] = selected;
+                updateJawabanForm(nomor, selected.join(','));
             } else {
                 const selected = $(this).val();
-                jawabanSementara[data.number] = selected;
-                updateJawabanForm(data.number, selected);
+                console.log('Nomor:', nomor, 'Selected:', selected);
+
+                if (selected !== null && selected !== undefined) {
+                    jawabanSementara[nomor] = selected;
+                    updateJawabanForm(nomor, selected);
+                }
             }
-
-            // Simpan ke sessionStorage
+    
             sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
-
             updateSoalTerjawab();
+    
+            // Auto Next
+            if (!data.multiSelect && current < jumlahSoal) {
+                setTimeout(() => {
+                    current++;
+                    getSoal(current);
+                }, 300);
+            }
         });
-
-        if (!$(`#form input[name="answer_${data.number}"]`).length) {
-            $('#form').append(`<input type="hidden" name="answer_${data.number}" value="">`);
+    
+        // Hidden input jika belum ada
+        if (!$(`#form input[name="answer_${nomor}"]`).length) {
+            $('#form').append(`<input type="hidden" name="answer_${nomor}" value="">`);
         }
-
-        if (jawabanSementara[data.number]) {
+    
+        if (jawabanSementara[nomor]) {
             updateJawabanForm(
-                data.number,
-                Array.isArray(jawabanSementara[data.number])
-                    ? jawabanSementara[data.number].join(',')
-                    : jawabanSementara[data.number]
+                nomor,
+                Array.isArray(jawabanSementara[nomor])
+                    ? jawabanSementara[nomor].join(',')
+                    : jawabanSementara[nomor]
             );
         }
     }
-
+    
     function updateJawabanForm(qid, val) {
-        $(`#form input[name="answer_${qid}"]`).val(val);
+        const inputField = $(`#form input[name="answer_${qid}"]`);
+        if (val === null || val === "null") {
+            inputField.val('');
+        } else {
+            inputField.val(val);
+        }
     }
-
+    
     function updateSoalTerjawab() {
         const totalJawab = Object.keys(jawabanSementara).filter(k => {
             const val = jawabanSementara[k];
@@ -134,20 +152,29 @@ $(document).ready(function () {
         $('#next').toggle(nomor < jumlahSoal);
     }
 
-    function updatePanelNavigasi() {
-        let html = '';
-        for (let i = 1; i <= jumlahSoal; i++) {
-            const isAnswered = jawabanSementara[i];
-            const hasAnswer = Array.isArray(isAnswered) ? isAnswered.length > 0 : !!isAnswered;
-            const btnClass = hasAnswer ? 'btn-success' : 'btn-outline-secondary';
-            html += `<button type="button" class="btn ${btnClass} btn-sm m-1 nav-soal" data-index="${i}">${i}</button>`;
-        }
-        $('#soal-container').html(html);
+   function updatePanelNavigasi() {
+    let html = '';
+    for (let i = 1; i <= jumlahSoal; i++) {
+        const isCurrent = i === current;
+        const isAnswered = jawabanSementara[i];
+        const hasAnswer = Array.isArray(isAnswered) ? isAnswered.length > 0 : !!isAnswered;
 
-        $('.nav-soal').click(function () {
-            const index = $(this).data('index');
-            current = index;
-            getSoal(current);
-        });
+        let btnClass = 'btn-outline-secondary'; // default (abu)
+        if (isCurrent) {
+            btnClass = 'btn-success'; // soal yang sedang ditampilkan
+        } else if (hasAnswer) {
+            btnClass = 'btn-warning'; // soal sudah dijawab
+        }
+
+        html += `<button type="button" class="btn ${btnClass} btn-sm m-1 nav-soal" data-index="${i}">${i}</button>`;
     }
+    $('#soal-container').html(html);
+
+    $('.nav-soal').click(function () {
+        const index = $(this).data('index');
+        current = index;
+        getSoal(current);
+    });
+}
+
 });
