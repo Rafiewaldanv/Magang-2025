@@ -66,7 +66,7 @@ class SoalController extends Controller
             'path' => $test ? $test->code : null,
             'options' => $question->options->map(function ($opt) {
                 return [
-                    'value' => $opt->code,
+                    'value' => $opt->value,
                     'text' => $opt->text,
                     'image' => $opt->image,
                 ];

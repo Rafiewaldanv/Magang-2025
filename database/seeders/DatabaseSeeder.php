@@ -18,13 +18,10 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             CompanySeeder::class,
-
-          
-
-            // ... seeder lain
+            // Tambahkan seeder lain jika ada
         ]);
 
-        // User
+        // User dummy
         $user = User::create([
             'name' => 'Farhan',
             'email' => 'farhan@example.com',
@@ -45,12 +42,14 @@ class DatabaseSeeder extends Seeder
             'name' => 'Bagian A',
             'description' => 'Soal penalaran umum logika dan analisis',
             'type' => 'PG',
-            'amount' => 10,
+            'amount' => 15,
             'status' => 'active',
         ]);
 
-        // Questions & Options (30 soal)
+        // Soal dan opsi
+        $labels = ['A', 'B', 'C', 'D'];
         $tempAnswers = [];
+
         for ($i = 1; $i <= 15; $i++) {
             $question = Question::create([
                 'packet_id' => $packet->id,
@@ -66,21 +65,23 @@ class DatabaseSeeder extends Seeder
                 ['text' => 'Benar, karena hubungan transitif', 'is_correct' => false],
             ];
 
+            // Random jawaban benar
             $correctIndex = rand(0, 3);
             $options[$correctIndex]['is_correct'] = true;
-            $correctLabel = ['A', 'B', 'C', 'D'][$correctIndex];
-            $tempAnswers[(string)$i] = $correctLabel;
 
-            foreach ($options as $opt) {
+            foreach ($options as $index => $opt) {
                 Option::create([
                     'question_id' => $question->id,
                     'text' => $opt['text'],
+                    'value' => $labels[$index], // WAJIB: untuk frontend!
                     'is_correct' => $opt['is_correct'],
                 ]);
             }
+
+            $tempAnswers[(string)$i] = $labels[$correctIndex]; // simpan jawaban benar
         }
 
-        // Result
+        // Hasil akhir dummy
         Result::create([
             'user_id' => $user->id,
             'company_id' => 1,
@@ -89,7 +90,7 @@ class DatabaseSeeder extends Seeder
             'result' => 90,
         ]);
 
-        // TestTemporary
+        // Jawaban sementara dummy
         TestTemporary::create([
             'id_user' => $user->id,
             'test_id' => $test->id,

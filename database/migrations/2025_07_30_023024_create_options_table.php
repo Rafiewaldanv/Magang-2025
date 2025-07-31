@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->boolean('is_correct')->default(false);
             $table->timestamps();
            //table->string('label'); // <-- Pastikan baris ini ADA
-           //table->string('value'); // <-- Pastikan baris ini ADA
+            $table->string('value')->nullable();//n baris ini ADA
             $table->foreign('question_id')->references('id')->on('questions')->onDelete('cascade');
         });
     }

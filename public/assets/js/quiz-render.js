@@ -1,5 +1,3 @@
-
-
 $(document).ready(function () {
     const testId = $('#form input[name="test_id"]').val();
     const packetId = $('#form input[name="packet_id"]').val();
@@ -8,6 +6,7 @@ $(document).ready(function () {
 
     // Load jawaban dari sessionStorage jika ada
     let jawabanSementara = JSON.parse(sessionStorage.getItem('jawabanSementara')) || {};
+    Object.keys(jawabanSementara).forEach(k => { if (jawabanSementara[k] === "null") delete jawabanSementara[k]; });
 
     getSoal(current);
 
@@ -30,12 +29,12 @@ $(document).ready(function () {
         $.ajax({
             url: `/api/soal/${testId}/${packetId}/${nomor}`,
             type: 'GET',
-            success: function (res) {
+            success: function (data) {
                 $('#overlay-loading').hide();
-                tampilkanSoal(res, nomor);
+                tampilkanSoal(data, nomor);
                 updateNavigasi(nomor);
                 updatePanelNavigasi();
-                updateSoalTerjawab(); // update submit tombol saat load soal
+                updateSoalTerjawab();
             },
             error: function () {
                 $('#overlay-loading').hide();
@@ -45,129 +44,93 @@ $(document).ready(function () {
     }
 
     function tampilkanSoal(data, nomor) {
-        
         $('.soal_number .num').text(`Soal Nomor ${nomor}`);
+    
+        // Cek apakah sudah ada jawaban
+        const answered = jawabanSementara[nomor] !== undefined && jawabanSementara[nomor] !== "";
+    
+        // Render opsi jawaban
+        const opsiHtml = data.options.map(opt => {
+            const isChecked = (
+                Array.isArray(jawabanSementara[nomor])
+                    ? jawabanSementara[nomor].includes(opt.value)
+                    : jawabanSementara[nomor] === opt.value
+            ) ? 'checked' : '';
+    
+            return `
+                <label class="list-group-item">
+                    <input type="${data.multiSelect ? 'checkbox' : 'radio'}"
+                        name="answer_${nomor}${data.multiSelect ? '[]' : ''}" 
+                        value="${opt.value}"
+                        class="form-check-input me-1"
+                        ${isChecked}>
+                    ${opt.text}
+                </label>`;
+        }).join('');
+    
+        // Jika sudah jawab, tampilkan tombol batal
+        const batalButtonHtml = answered ? `
+            <div class="text-start mt-2">
+                <button type="button" class="btn btn-danger btn-sm batal-jawab" data-nomor="${nomor}">
+                    Batal Pilihan
+                </button>
+            </div>` : '';
+    
         $('.s').html(`
             <p>${data.questionText}</p>
             ${data.questionImage ? `<img src="/storage/${data.questionImage}" class="img-fluid mb-2">` : ''}
             <div class="list-group">
-                ${data.options.map(opt => {
-                    const isChecked = (
-                        Array.isArray(jawabanSementara[nomor])
-                            ? jawabanSementara[nomor].includes(opt.value)
-                            : jawabanSementara[nomor] === opt.value
-                    ) ? 'checked' : '';
-                    return `
-                        <label class="list-group-item">
-                            <input type="${data.multiSelect ? 'checkbox' : 'radio'}"
-                                name="answer_${nomor}${data.multiSelect ? '[]' : ''}" 
-                                value="${opt.value}"
-                                class="form-check-input me-1"
-                                ${isChecked}>
-                            ${opt.text}
-                        </label>
-                    `;
-                }).join('')}
+                ${opsiHtml}
             </div>
-    <div class="text-end mt-2">
-        <button type="button" class="btn btn-danger btn-sm batal-jawab" data-nomor="${nomor}">
-            Batal Pilihan
-        </button>
-    </div>
+            ${batalButtonHtml}
         `);
     
-        // Event listener
-        $(`input[name^="answer_${nomor}"]`).change(function () {
+        // Listener: input berubah (simpan jawaban)
+        $(`input[name^="answer_${nomor}"]`).off('change').on('change', function () {
             if (data.multiSelect) {
                 const selected = [];
                 $(`input[name="answer_${nomor}[]"]:checked`).each(function () {
                     selected.push($(this).val());
                 });
                 jawabanSementara[nomor] = selected;
-                updateJawabanForm(nomor, selected.join(','));
             } else {
-                const selected = $(this).val();
-                console.log('Nomor:', nomor, 'Selected:', selected);
-
-                if (selected !== null && selected !== undefined) {
-                    jawabanSementara[nomor] = selected;
-                    updateJawabanForm(nomor, selected);
-                }
+                jawabanSementara[nomor] = $(this).val();
             }
     
             sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
             updateSoalTerjawab();
+            updatePanelNavigasi();
     
-            // Auto Next
+            // Auto Next (opsional)
             if (!data.multiSelect && current < jumlahSoal) {
-                setTimeout(() => {
-                    current++;
-                    getSoal(current);
-                }, 300);
+                setTimeout(() => getSoal(++current), 300);
             }
         });
-        $('.batal-jawab').click(function () {
+    
+        // Listener: tombol batal
+        $('.batal-jawab').off('click').on('click', function () {
             const nomorSoal = $(this).data('nomor');
-        
-            // Kosongkan jawaban
             delete jawabanSementara[nomorSoal];
             sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
-        
-            // Kosongkan input hidden
-            updateJawabanForm(nomorSoal, '');
-        
-            // Uncheck semua input
-            $(`input[name^="answer_${nomorSoal}"]`).prop('checked', false);
-        
+            tampilkanSoal(data, nomorSoal); // render ulang soal
             updateSoalTerjawab();
             updatePanelNavigasi();
         });
-        
-    
-        // Hidden input jika belum ada
-        if (!$(`#form input[name="answer_${nomor}"]`).length) {
-            $('#form').append(`<input type="hidden" name="answer_${nomor}" value="">`);
-        }
-    
-        if (jawabanSementara[nomor]) {
-            updateJawabanForm(
-                nomor,
-                Array.isArray(jawabanSementara[nomor])
-                    ? jawabanSementara[nomor].join(',')
-                    : jawabanSementara[nomor]
-            );
-        }
-    }
-    
-    function updateJawabanForm(qid, val) {
-        const inputField = $(`#form input[name="answer_${qid}"]`);
-        if (val === null || val === "null") {
-            inputField.val('');
-        } else {
-            inputField.val(val);
-        }
     }
     
     function updateSoalTerjawab() {
         const totalJawab = Object.keys(jawabanSementara).filter(k => {
             const val = jawabanSementara[k];
-            return Array.isArray(val) ? val.length > 0 : val !== '';
+            return Array.isArray(val) ? val.length > 0 : val !== undefined && val !== '';
         }).length;
 
         $('#answered').text(totalJawab);
         $('#totals').text(jumlahSoal);
 
         const sudahSemua = totalJawab === jumlahSoal;
-
-
-        // Hanya tombol #btn-nextj yang digunakan
         $('#btn-nextj').hide();
-    
-        // Sembunyikan tombol lain
         $('#btn-submit').show().prop('disabled', !sudahSemua);
-        $('#btn-tiki').hide()
-
-        updatePanelNavigasi();
+        $('#btn-tiki').hide();
     }
 
     function updateNavigasi(nomor) {
@@ -175,29 +138,20 @@ $(document).ready(function () {
         $('#next').toggle(nomor < jumlahSoal);
     }
 
-   function updatePanelNavigasi() {
-    let html = '';
-    for (let i = 1; i <= jumlahSoal; i++) {
-        const isCurrent = i === current;
-        const isAnswered = jawabanSementara[i];
-        const hasAnswer = Array.isArray(isAnswered) ? isAnswered.length > 0 : !!isAnswered;
-
-        let btnClass = 'btn-outline-secondary'; // default (abu)
-        if (isCurrent) {
-            btnClass = 'btn-success'; // soal yang sedang ditampilkan
-        } else if (hasAnswer) {
-            btnClass = 'btn-warning'; // soal sudah dijawab
+    function updatePanelNavigasi() {
+        let html = '';
+        for (let i = 1; i <= jumlahSoal; i++) {
+            const isCurrent = i === current;
+            const hasAnswer = Array.isArray(jawabanSementara[i]) ? jawabanSementara[i].length > 0 : !!jawabanSementara[i];
+            let btnClass = 'btn-outline-secondary';
+            if (isCurrent) btnClass = 'btn-success';
+            else if (hasAnswer) btnClass = 'btn-warning';
+            html += `<button type="button" class="btn ${btnClass} btn-sm m-1 nav-soal" data-index="${i}">${i}</button>`;
         }
-
-        html += `<button type="button" class="btn ${btnClass} btn-sm m-1 nav-soal" data-index="${i}">${i}</button>`;
+        $('#soal-container').html(html);
+        $('.nav-soal').off('click').on('click', function () {
+            current = $(this).data('index');
+            getSoal(current);
+        });
     }
-    $('#soal-container').html(html);
-
-    $('.nav-soal').click(function () {
-        const index = $(this).data('index');
-        current = index;
-        getSoal(current);
-    });
-}
-
 });
