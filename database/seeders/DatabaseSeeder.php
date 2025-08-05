@@ -51,11 +51,14 @@ class DatabaseSeeder extends Seeder
         $tempAnswers = [];
 
         for ($i = 1; $i <= 15; $i++) {
+            $imagepath = "cat1/a.jpeg";
             $question = Question::create([
                 'packet_id' => $packet->id,
                 'number' => $i,
                 'description' => "Jika semua A adalah B dan semua B adalah C, maka apakah semua A adalah C? (Soal ke-$i)",
                 'is_example' => false,
+                'image' => $imagepath, // Simpan path gambar jika ada
+                
             ]);
 
             $options = [

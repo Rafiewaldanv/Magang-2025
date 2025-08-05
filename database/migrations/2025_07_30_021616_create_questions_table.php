@@ -15,6 +15,7 @@ class CreateQuestionsTable extends Migration
             $table->text('description'); // isi soal
             $table->unsignedInteger('is_example')->default(0); // 0 = bukan contoh
             $table->timestamps(); // created_at dan updated_at
+            $table->string('image')->nullable(); // created_at dan updated_at
             $table->foreign('packet_id')->references('id')->on('packets')->onDelete('cascade');
 
 
