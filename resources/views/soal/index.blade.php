@@ -78,10 +78,11 @@
                 </a>
             </li>
             <li class="nav-item ms-3">
-                <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase" id="btn-nextj" disabled>Submit</button>
-                <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase" id="btn-submit" style="display: none">Submit</button>
-                <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase" id="btn-tiki" style="display: none">Submit</button>
-            </li>
+    <button type="button" class="btn btn-md btn-primary text-uppercase" id="btn-submit">
+        Kumpulkan Jawaban
+    </button>
+</li>
+
         </ul>
     </div>
 </nav>
@@ -111,6 +112,26 @@
 
     @endif
 </div>
+
+<!-- Modal Konfirmasi Submit -->
+<div class="modal fade" id="konfirmasiModal" tabindex="-1" aria-labelledby="konfirmasiLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="konfirmasiLabel">Konfirmasi Submit</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body">
+        Masih ada soal yang belum dijawab. Yakin ingin mengumpulkan sekarang?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary" id="confirm-submit">Ya, Kirim Jawaban</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 @endsection
 
 @section('js-extra')

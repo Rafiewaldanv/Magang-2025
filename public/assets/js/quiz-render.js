@@ -4,20 +4,19 @@ $(document).ready(function () {
     const jumlahSoal = parseInt($('#jumlah_soal').val());
     let current = 1;
 
-    // Load jawaban dari sessionStorage jika ada
     let jawabanSementara = JSON.parse(sessionStorage.getItem('jawabanSementara')) || {};
     Object.keys(jawabanSementara).forEach(k => { if (jawabanSementara[k] === "null") delete jawabanSementara[k]; });
 
     getSoal(current);
 
-    $('#next').click(function () {
+    $('#next').click(() => {
         if (current < jumlahSoal) {
             current++;
             getSoal(current);
         }
     });
 
-    $('#prev').click(function () {
+    $('#prev').click(() => {
         if (current > 1) {
             current--;
             getSoal(current);
@@ -26,66 +25,51 @@ $(document).ready(function () {
 
     function getSoal(nomor) {
         $('#overlay-loading').show();
-        $.ajax({
-            url: `/api/soal/${testId}/${packetId}/${nomor}`,
-            type: 'GET',
-            success: function (data) {
-                $('#overlay-loading').hide();
-                tampilkanSoal(data, nomor);
-                updateNavigasi(nomor);
-                updatePanelNavigasi();
-                updateSoalTerjawab();
-            },
-            error: function () {
-                $('#overlay-loading').hide();
-                alert("Gagal memuat soal. Silakan refresh halaman.");
-            }
+        $.get(`/api/soal/${testId}/${packetId}/${nomor}`, function (data) {
+            $('#overlay-loading').hide();
+            tampilkanSoal(data, nomor);
+            updateNavigasi(nomor);
+            updatePanelNavigasi();
+            updateSoalTerjawab();
+        }).fail(function () {
+            $('#overlay-loading').hide();
+            alert("Gagal memuat soal. Silakan refresh halaman.");
         });
     }
 
     function tampilkanSoal(data, nomor) {
         $('.soal_number .num').text(`Soal Nomor ${nomor}`);
-    
-        // Cek apakah sudah ada jawaban
         const answered = jawabanSementara[nomor] !== undefined && jawabanSementara[nomor] !== "";
-    
-        // Render opsi jawaban
+
         const opsiHtml = data.options.map(opt => {
             const isChecked = (
                 Array.isArray(jawabanSementara[nomor])
                     ? jawabanSementara[nomor].includes(opt.value)
                     : jawabanSementara[nomor] === opt.value
             ) ? 'checked' : '';
-    
+
             return `
                 <label class="list-group-item">
                     <input type="${data.multiSelect ? 'checkbox' : 'radio'}"
                         name="answer_${nomor}${data.multiSelect ? '[]' : ''}" 
-                        value="${opt.value}"
-                        class="form-check-input me-1"
-                        ${isChecked}>
+                        value="${opt.value}" class="form-check-input me-1" ${isChecked}>
                     ${opt.text}
                 </label>`;
         }).join('');
-    
-        // Jika sudah jawab, tampilkan tombol batal
-        const batalButtonHtml = answered ? `
+
+        const batalHtml = answered ? `
             <div class="text-start mt-2">
                 <button type="button" class="btn btn-danger btn-sm batal-jawab" data-nomor="${nomor}">
                     Batal Pilihan
                 </button>
             </div>` : '';
-    
+
         $('.s').html(`
             <p>${data.questionText}</p>
             ${data.questionImage ? `<img src="/storage/${data.questionImage}" class="img-fluid mb-2">` : ''}
-            <div class="list-group">
-                ${opsiHtml}
-            </div>
-            ${batalButtonHtml}
+            <div class="list-group">${opsiHtml}</div>${batalHtml}
         `);
-    
-        // Listener: input berubah (simpan jawaban)
+
         $(`input[name^="answer_${nomor}"]`).off('change').on('change', function () {
             if (data.multiSelect) {
                 const selected = [];
@@ -96,42 +80,61 @@ $(document).ready(function () {
             } else {
                 jawabanSementara[nomor] = $(this).val();
             }
-    
+
             sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
             updateSoalTerjawab();
             updatePanelNavigasi();
-    
-            // Auto Next (opsional)
             if (!data.multiSelect && current < jumlahSoal) {
                 setTimeout(() => getSoal(++current), 300);
             }
         });
-    
-        // Listener: tombol batal
+
         $('.batal-jawab').off('click').on('click', function () {
-            const nomorSoal = $(this).data('nomor');
-            delete jawabanSementara[nomorSoal];
+            delete jawabanSementara[$(this).data('nomor')];
             sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
-            tampilkanSoal(data, nomorSoal); // render ulang soal
+            tampilkanSoal(data, nomor);
             updateSoalTerjawab();
             updatePanelNavigasi();
         });
     }
-    
+
     function updateSoalTerjawab() {
         const totalJawab = Object.keys(jawabanSementara).filter(k => {
             const val = jawabanSementara[k];
             return Array.isArray(val) ? val.length > 0 : val !== undefined && val !== '';
         }).length;
-
+    
         $('#answered').text(totalJawab);
         $('#totals').text(jumlahSoal);
-
-        const sudahSemua = totalJawab === jumlahSoal;
-        $('#btn-nextj').hide();
-        $('#btn-submit').show().prop('disabled', !sudahSemua);
-        $('#btn-tiki').hide();
+    
+        $('#btn-submit').show().prop('disabled', false);
+    
+        if (!$('#btn-submit').data('bound')) {
+            $('#btn-submit').data('bound', true).on('click', function () {
+                // 🧠 HITUNG ULANG DI SINI
+                const currentJawab = Object.keys(jawabanSementara).filter(k => {
+                    const val = jawabanSementara[k];
+                    return Array.isArray(val) ? val.length > 0 : val !== undefined && val !== '';
+                }).length;
+    
+                const modalBody = currentJawab < jumlahSoal
+                    ? 'Masih ada soal yang belum dijawab. Yakin ingin mengumpulkan sekarang?'
+                    : 'Apakah Anda yakin ingin mengumpulkan semua jawaban?';
+                $('#konfirmasiModal .modal-body').text(modalBody);
+                $('#konfirmasiModal').modal('show');
+            });
+        }
+    
+        if (!$('#confirm-submit').data('bound')) {
+            $('#confirm-submit').data('bound', true).on('click', function () {
+                $('#konfirmasiModal').modal('hide');
+                kirimJawaban();
+            });
+        }
     }
+    
+    
+    
 
     function updateNavigasi(nomor) {
         $('#prev').toggle(nomor > 1);
@@ -143,9 +146,7 @@ $(document).ready(function () {
         for (let i = 1; i <= jumlahSoal; i++) {
             const isCurrent = i === current;
             const hasAnswer = Array.isArray(jawabanSementara[i]) ? jawabanSementara[i].length > 0 : !!jawabanSementara[i];
-            let btnClass = 'btn-outline-secondary';
-            if (isCurrent) btnClass = 'btn-success';
-            else if (hasAnswer) btnClass = 'btn-warning';
+            let btnClass = isCurrent ? 'btn-success' : (hasAnswer ? 'btn-warning' : 'btn-outline-secondary');
             html += `<button type="button" class="btn ${btnClass} btn-sm m-1 nav-soal" data-index="${i}">${i}</button>`;
         }
         $('#soal-container').html(html);
@@ -153,5 +154,35 @@ $(document).ready(function () {
             current = $(this).data('index');
             getSoal(current);
         });
+    }
+
+    // Tombol Submit diklik
+    
+
+    function kirimJawaban() {
+        const jumlah = jumlahSoal;
+        const pilihan = jawabanSementara;
+
+        const form = $('<form>', {
+            method: 'POST',
+            action: '/soal/store'
+        });
+
+        const token = $('meta[name="csrf-token"]').attr('content');
+        form.append($('<input>', { type: 'hidden', name: '_token', value: token }));
+        form.append($('<input>', { type: 'hidden', name: 'jumlah', value: jumlah }));
+        form.append($('<input>', { type: 'hidden', name: 'test_id', value: testId }));
+
+        for (let i = 1; i <= jumlah; i++) {
+            form.append($('<input>', { type: 'hidden', name: `id[]`, value: i }));
+            form.append($('<input>', {
+                type: 'hidden',
+                name: `pilihan[${i}]`,
+                value: Array.isArray(pilihan[i]) ? pilihan[i].join(',') : (pilihan[i] || '')
+            }));
+        }
+
+        $('body').append(form);
+        form.submit();
     }
 });
