@@ -15,32 +15,57 @@ use Illuminate\Support\Facades\Log;
 class SoalController extends Controller
 {
     // Halaman awal soal
-    public function index()
-    {
-        $userId = Auth::id() ?? 1;
-        $test = Test::first(); // atau pakai session/request jika ada
 
-        if (!$test) {
-            return view('soal.error', ['message' => 'Tes tidak ditemukan.']);
-        }
+    // Tampilkan daftar tes
+public function pilihTes()
+{
+    $tests = Test::all();
+    return view('soal.pilih-tes', compact('tests'));
+}
 
-        $packet = Packet::where('test_id', $test->id)->first();
-        if (!$packet) {
-            return view('soal.error', ['message' => 'Paket soal belum tersedia.']);
-        }
+// Mulai tes berdasarkan ID yang dipilih user
+public function prepareTes(Request $request)
+{
+    // Simpan ID tes ke session
+    session(['selected_test_id' => $request->test_id]);
+    return redirect()->route('soal.index');
+}
 
-        $jumlah_soal = Question::where('packet_id', $packet->id)->count();
-
-        return view('soal.index', [
-            'soal' => [], // soal akan dimuat via JS
-            'selection' => null,
-            'path' => $test->code,
-            'packet' => $packet,
-            'test' => $test,
-            'jumlah_soal' => $jumlah_soal,
-            'part' => $packet->part
-        ]);
+public function mulaiTes($id)
+{
+    // Cegah akses langsung
+    if (!session()->has('selected_test_id')) {
+        return redirect()->route('soal.pilih-tes')->with('error', 'Silakan pilih tes terlebih dahulu.');
     }
+
+    $testId = session('selected_test_id');
+    session()->forget('selected_test_id'); // Sekali pakai, hapus langsung
+
+    $test = Test::find($id);
+    if (!$test) {
+        return view('soal.error', ['message' => 'Tes tidak ditemukan.']);
+    }
+
+    $packet = Packet::where('test_id', $test->id)->first();
+    if (!$packet) {
+        return view('soal.error', ['message' => 'Paket soal belum tersedia untuk tes ini.']);
+    }
+
+    $jumlah_soal = Question::where('packet_id', $packet->id)->count();
+
+    return view('soal.index', [
+        'soal' => [],
+        'selection' => null,
+        'path' => $test->code,
+        'packet' => $packet,
+        'test' => $test,
+        'jumlah_soal' => $jumlah_soal,
+        'part' => $packet->part
+    ]);
+}
+
+
+
 
     // API: Ambil soal by nomor
     public function getSoal($test_id, $packet_id, $number)
