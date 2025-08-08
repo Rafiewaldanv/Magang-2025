@@ -39,9 +39,12 @@
                                 <p class="card-text text-muted small">{{ $test->description }}</p>
                                 <pre>{{ var_dump($test->id) }}</pre>
 
-                                <<a href="{{ route('soal.index', ['id' => $test->id]) }}" class="btn btn-warning">
-    Mulai Tes
-</a>
+                                <form method="POST" action="{{ route('soal.start') }}">
+    @csrf
+    <input type="hidden" name="test_id" value="{{ $test->id }}">
+    <button type="submit" class="btn btn-warning">Mulai Tes</button>
+</form>
+
 
 
                             </div>

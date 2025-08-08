@@ -26,10 +26,17 @@ public function pilihTes()
 // Mulai tes berdasarkan ID yang dipilih user
 public function prepareTes(Request $request)
 {
-    // Simpan ID tes ke session
-    session(['selected_test_id' => $request->test_id]);
-    return redirect()->route('soal.index');
+    $testId = $request->input('test_id');
+
+    if (!$testId || !Test::find($testId)) {
+        return redirect()->route('soal.pilih-tes')->with('error', 'Tes tidak valid.');
+    }
+
+    session(['selected_test_id' => $testId]);
+
+    return redirect()->route('soal.index', ['id' => $testId]);
 }
+
 
 public function mulaiTes($id)
 {

@@ -163,10 +163,11 @@ $(document).ready(function () {
         const jumlah = jumlahSoal;
         const pilihan = jawabanSementara;
 
-        const form = $('<form>', {
+        form = $('<form>', {
             method: 'POST',
-            action: '/soal/store'
+            action: `/tes/${$('input[name="path"]').val()}/submit` // ✅ Sesuai route yang ada
         });
+        
 
         const token = $('meta[name="csrf-token"]').attr('content');
         form.append($('<input>', { type: 'hidden', name: '_token', value: token }));

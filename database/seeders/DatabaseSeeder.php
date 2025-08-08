@@ -18,24 +18,28 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             CompanySeeder::class,
-            // Tambahkan seeder lain jika ada
         ]);
 
         // User dummy
-        $user = User::create([
-            'name' => 'Farhan',
+        $user = User::firstOrCreate([
             'email' => 'farhan@example.com',
+        ], [
+            'name' => 'Farhan',
             'password' => Hash::make('password'),
         ]);
 
-        // Test
-        $test = Test::create([
+        $this->generateTesPenalaranUmum($user);
+        $this->generateTesPengetahuanUmum($user);
+    }
+
+    private function generateTesPenalaranUmum($user)
+    {
+        $test = Test::firstOrCreate([
             'name' => 'Tes Penalaran Umum',
             'code' => 'PU123',
             'num_order' => 1,
         ]);
 
-        // Packet
         $packet = Packet::create([
             'test_id' => $test->id,
             'part' => 'A',
@@ -46,29 +50,51 @@ class DatabaseSeeder extends Seeder
             'status' => 'active',
         ]);
 
-        // Soal dan opsi
+        $this->generateSoal($user, $test, $packet, 'cat1/a.jpeg');
+    }
+
+    private function generateTesPengetahuanUmum($user)
+    {
+        $test = Test::create([
+            'name' => 'Tes Pengetahuan Umum',
+            'code' => 'TPU456',
+            'num_order' => 2,
+        ]);
+
+        $packet = Packet::create([
+            'test_id' => $test->id,
+            'part' => 'A',
+            'name' => 'Pengetahuan Umum A',
+            'description' => 'Soal tentang wawasan umum dan nasional',
+            'type' => 'PG',
+            'amount' => 10,
+            'status' => 'active',
+        ]);
+
+        $this->generateSoal($user, $test, $packet, 'cat2/b.jpeg', 10);
+    }
+
+    private function generateSoal($user, $test, $packet, $imagepath, $jumlah = 15)
+    {
         $labels = ['A', 'B', 'C', 'D'];
         $tempAnswers = [];
 
-        for ($i = 1; $i <= 15; $i++) {
-            $imagepath = "cat1/a.jpeg";
+        for ($i = 1; $i <= $jumlah; $i++) {
             $question = Question::create([
                 'packet_id' => $packet->id,
                 'number' => $i,
-                'description' => "Jika semua A adalah B dan semua B adalah C, maka apakah semua A adalah C? (Soal ke-$i)",
+                'description' => "Contoh soal ke-$i untuk tes {$test->name}",
                 'is_example' => false,
-                'image' => $imagepath, // Simpan path gambar jika ada
-                
+                'image' => $imagepath,
             ]);
 
             $options = [
-                ['text' => 'Ya, selalu benar', 'is_correct' => false],
-                ['text' => 'Tidak, tidak selalu', 'is_correct' => false],
-                ['text' => 'Benar jika C adalah A', 'is_correct' => false],
-                ['text' => 'Benar, karena hubungan transitif', 'is_correct' => false],
+                ['text' => 'Pilihan A', 'is_correct' => false],
+                ['text' => 'Pilihan B', 'is_correct' => false],
+                ['text' => 'Pilihan C', 'is_correct' => false],
+                ['text' => 'Pilihan D', 'is_correct' => false],
             ];
 
-            // Random jawaban benar
             $correctIndex = rand(0, 3);
             $options[$correctIndex]['is_correct'] = true;
 
@@ -76,29 +102,27 @@ class DatabaseSeeder extends Seeder
                 Option::create([
                     'question_id' => $question->id,
                     'text' => $opt['text'],
-                    'value' => $labels[$index], // WAJIB: untuk frontend!
+                    'value' => $labels[$index],
                     'is_correct' => $opt['is_correct'],
                 ]);
             }
 
-            $tempAnswers[(string)$i] = $labels[$correctIndex]; // simpan jawaban benar
+            $tempAnswers[(string)$i] = $labels[$correctIndex];
         }
 
-        // Hasil akhir dummy
         Result::create([
             'user_id' => $user->id,
             'company_id' => 1,
             'test_id' => $test->id,
             'packet_id' => $packet->id,
-            'result' => 90,
+            'result' => rand(60, 100),
         ]);
 
-        // Jawaban sementara dummy
         TestTemporary::create([
             'id_user' => $user->id,
             'test_id' => $test->id,
             'packet_id' => $packet->id,
-            'part' => 'A',
+            'part' => $packet->part,
             'json' => json_encode($tempAnswers),
             'result_temp' => count($tempAnswers),
         ]);

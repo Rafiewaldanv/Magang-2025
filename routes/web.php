@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SoalController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+
 
 // 🏠 Halaman default
 Route::get('/', function () {
@@ -11,8 +14,6 @@ Route::get('/login', function () {
     return view('auth.login');
 })->name('login');
 
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
 
 Route::post('/auth', function (Request $request) {
     $credentials = $request->only('email', 'password'); // ✅ BENAR
