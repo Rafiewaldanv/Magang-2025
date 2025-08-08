@@ -165,7 +165,8 @@ $(document).ready(function () {
 
         form = $('<form>', {
             method: 'POST',
-            action: `/tes/${$('input[name="path"]').val()}/submit` // ✅ Sesuai route yang ada
+            action: '/soal/store'
+
         });
         
 
@@ -183,7 +184,9 @@ $(document).ready(function () {
             }));
         }
 
-        $('body').append(form);
-        form.submit();
+        sessionStorage.removeItem('jawabanSementara'); // ⬅️ tambahkan ini dulu
+$('body').append(form);
+form.submit();
+
     }
 });

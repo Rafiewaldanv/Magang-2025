@@ -200,7 +200,8 @@ public function mulaiTes($id)
             ['user_id' => $userId, 'test_id' => $request->input('test_id')],
             ['json' => json_encode($answers), 'score' => $score]
         );
+        $test = Test::find($request->input('test_id'));
 
-        return view('soal.results', compact('benar', 'salah', 'kosong', 'score'));
+        return view('soal.results', compact('benar', 'salah', 'kosong', 'score', 'test'));
     }
 }

@@ -54,10 +54,10 @@
                 <div class="container">
                     <ul class="navbar-nav ms-auto align-items-center">
                         <li class="nav-item me-3">
-                            <a href="{{ route('soal.index') }}"
-                               class="btn btn-md btn-warning text-uppercase">
-                                Ulangi Tes
-                            </a>
+                        <a href="{{ route('soal.index', ['id' => $test->id]) }}" class="btn btn-md btn-warning text-uppercase">
+    Ulangi Tes
+</a>
+
                         </li>
                         <li class="nav-item">
                             <a href="{{ url('/') }}"
