@@ -1,6 +1,9 @@
 @extends('template/main')
 
 @section('content')
+
+
+
 <!-- Overlay Loading -->
 <div id="overlay-loading" style="display: none;">
     <div class="spinner"></div>
@@ -26,40 +29,47 @@
             <br>
             <a href="{{ route('login') }}" class="btn btn-warning mt-3">Login Sekarang</a>
         </div>
-    @else
-        @if(count($tests) > 0)
-            <div class="row">
-            @foreach($tests as $test)
-    @php
-        $packet = $test->packets->first(); // Ambil 1 packet pertama
-    @endphp
-
-    <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <h5 class="card-title">{{ $test->name }}</h5>
-                <p class="card-text mb-1"><strong>Jumlah Soal:</strong> {{ $packet?->amount ?? '-' }}</p>
-                <p class="card-text mb-1"><strong>Durasi:</strong> {{ $test->test_time ?? '-' }} menit</p>
-                <p class="card-text text-muted small">{{ $packet?->description ?? '' }}</p>
-                <pre>{{ var_dump($test->id) }}</pre>
-
-                <form method="POST" action="{{ route('soal.start') }}">
-                    @csrf
-                    <input type="hidden" name="test_id" value="{{ $test->id }}">
-                    <button type="submit" class="btn btn-warning">Mulai Tes</button>
-                </form>
-            </div>
-        </div>
-    </div>
-@endforeach
-
-            </div>
         @else
-            <div class="alert alert-info text-center">
-                Tidak ada tes yang tersedia saat ini.
-            </div>
-        @endif
-    @endguest
+    {{-- Tombol History Tes --}}
+    <div class="mb-4 text-end">
+    <a href="{{ route('soal.history') }}" class="btn btn-outline-primary">
+        <i class="bi bi-clock-history"></i> History Tes
+    </a>
+</div>
+
+
+    @if(count($tests) > 0)
+        <div class="row">
+            @foreach($tests as $test)
+                @php
+                    $packet = $test->packets->first();
+                @endphp
+
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ $test->name }}</h5>
+                            <p class="card-text mb-1"><strong>Jumlah Soal:</strong> {{ $packet?->amount ?? '-' }}</p>
+                            <p class="card-text mb-1"><strong>Durasi:</strong> {{ $test->test_time ?? '-' }} menit</p>
+                            <p class="card-text text-muted small">{{ $packet?->description ?? '' }}</p>
+
+                            <form method="POST" action="{{ route('soal.start') }}">
+                                @csrf
+                                <input type="hidden" name="test_id" value="{{ $test->id }}">
+                                <button type="submit" class="btn btn-warning">Mulai Tes</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @else
+        <div class="alert alert-info text-center">
+            Tidak ada tes yang tersedia saat ini.
+        </div>
+    @endif
+@endguest
+
 </div>
 @endsection
 

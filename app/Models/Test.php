@@ -15,7 +15,11 @@ class Test extends Model
     {
         return $this->hasMany(Packet::class);
     }
-
+    public function histories()
+    {
+        return $this->hasMany(TestHistory::class);
+    }
+    
     public function results()
     {
         return $this->hasMany(Result::class);

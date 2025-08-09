@@ -50,6 +50,9 @@ Route::post('/tes/{path}/submit', [SoalController::class, 'simpanJawaban'])->nam
 
 // Koreksi dan Simpan Skor
 Route::post('/soal/store', [SoalController::class, 'store'])->name('soal.store');
+Route::get('/history', [SoalController::class, 'history'])->name('soal.history');
+Route::get('/history/{id}', [SoalController::class, 'historyDetail'])->name('soal.results');
+
 
 Route::post('/logout', function () {
     Auth::logout();

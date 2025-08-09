@@ -23,8 +23,32 @@ class SoalController extends Controller
         return view('soal.pilih-tes', compact('tests'));
     }
     
+    public function historyDetail($id)
+    {
+        $result = Result::findOrFail($id);
 
+        // Kirim ke results.blade.php
+        return view('soal.results', [
+            'benar' => $result->score, // Asumsi score adalah jumlah benar
+            'salah' => 0, // Tidak ada data salah di sini
+            'kosong' => 0, // Tidak ada data kosong di sini
+            'score' => $result->score,
+            'test' => $result->test,
+            'timeTaken' => $result->time_taken, // Pastikan kolom ini ada di tabel results
+        ]);
+    }
+    
 // Mulai tes berdasarkan ID yang dipilih user
+public function history()
+{
+    $results = Result::with(['test', 'packet'])
+        ->where('user_id', auth()->id())
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    return view('soal.history', compact('results'));
+}
+
 public function prepareTes(Request $request)
 {
     $testId = $request->input('test_id');

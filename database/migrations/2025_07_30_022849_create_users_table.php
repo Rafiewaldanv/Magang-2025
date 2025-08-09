@@ -17,7 +17,11 @@ return new class extends Migration {
             $table->timestamps();
         });
     }
-
+    public function histories()
+    {
+        return $this->hasMany(TestHistory::class);
+    }
+    
     public function down(): void
     {
         Schema::dropIfExists('users');
