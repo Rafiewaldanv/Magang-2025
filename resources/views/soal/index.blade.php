@@ -140,4 +140,45 @@
 
 @section('css-extra')
 <!-- Optional: custom styling -->
+<style>
+    /* Kotak navigasi soal */
+    .nav-soal {
+        width: 40px;
+        height: 30px;
+        border-radius: 4px;
+        font-weight: bold;
+        text-align: center;
+        line-height: 20px;
+        cursor: pointer;
+        margin: 3px;
+        border: 2px solid #ccc;
+        transition: all 0.2s ease-in-out;
+    }
+
+    /* Soal aktif */
+    .nav-soal.active {
+        background-color: #0d6efd;
+        color: white;
+        border-color: #0a58ca;
+    }
+
+    /* Sudah dijawab */
+    .nav-soal.answered {
+        background-color: #198754;
+        color: white;
+        border-color: #146c43;
+    }
+
+    /* Belum dijawab */
+    .nav-soal.unanswered {
+        background-color: #dc3545;
+        color: white;
+        border-color: #b02a37;
+    }
+
+    /* Hover effect */
+    .nav-soal:hover {
+        transform: scale(1.1);
+    }
+</style>
 @endsection
