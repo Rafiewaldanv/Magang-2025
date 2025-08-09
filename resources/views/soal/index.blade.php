@@ -136,6 +136,43 @@
 
 @section('js-extra')
 <script src="{{ asset('assets/js/quiz-render.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const totalTime = 15 * 60 * 1000; // 15 menit dalam ms
+    const timerDisplay = document.getElementById('timer');
+    const form = document.getElementById('form');
+
+    // Ambil atau set waktu mulai
+    let startTime = localStorage.getItem('quizStartTime');
+    if (!startTime) {
+        startTime = new Date().getTime();
+        localStorage.setItem('quizStartTime', startTime);
+    } else {
+        startTime = parseInt(startTime);
+    }
+
+    function updateTimer() {
+        const now = new Date().getTime();
+        const elapsed = now - startTime;
+        const remaining = totalTime - elapsed;
+
+        if (remaining <= 0) {
+            timerDisplay.innerText = "00:00";
+            localStorage.removeItem('quizStartTime');
+            form.submit();
+            return;
+        }
+
+        const minutes = Math.floor((remaining / 1000) / 60);
+        const seconds = Math.floor((remaining / 1000) % 60);
+        timerDisplay.innerText =
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    setInterval(updateTimer, 1000);
+    updateTimer();
+});
+</script>
 @endsection
 
 @section('css-extra')

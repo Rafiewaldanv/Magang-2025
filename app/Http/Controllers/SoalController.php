@@ -17,11 +17,12 @@ class SoalController extends Controller
     // Halaman awal soal
 
     // Tampilkan daftar tes
-public function pilihTes()
-{
-    $tests = Test::all();
-    return view('soal.pilih-tes', compact('tests'));
-}
+    public function pilihTes()
+    {
+        $tests = Test::with('packets')->get();
+        return view('soal.pilih-tes', compact('tests'));
+    }
+    
 
 // Mulai tes berdasarkan ID yang dipilih user
 public function prepareTes(Request $request)
@@ -167,41 +168,53 @@ public function mulaiTes($id)
 
     // Koreksi akhir & tampilkan hasil
     public function store(Request $request)
-    {
-        $userId = Auth::id() ?? 1;
-        $answers = $request->input('pilihan'); // e.g. ['1' => 'A']
-        $id_soal = $request->input('id');
-        $jumlah = $request->input('jumlah');
+{
+    $userId = Auth::id() ?? 1;
+    $answers = $request->input('pilihan'); // e.g. ['1' => 'A']
+    $id_soal = $request->input('id');
+    $jumlah = $request->input('jumlah');
 
-        $benar = $salah = $kosong = 0;
+    $benar = $salah = $kosong = 0;
 
-        for ($i = 0; $i < $jumlah; $i++) {
-            $nomor = $id_soal[$i];
-            $jawaban = $answers[$nomor] ?? null;
+    for ($i = 0; $i < $jumlah; $i++) {
+        $nomor = $id_soal[$i];
+        $jawaban = $answers[$nomor] ?? null;
 
-            $question = Question::with('options')->find($nomor);
+        $question = Question::with('options')->find($nomor);
 
-            if (!$jawaban) {
-                $kosong++;
-            } elseif ($question) {
-                $kunci = $question->options->where('is_correct', true)->first();
-                if ($kunci && $jawaban === $kunci->value) {
-                    $benar++;
-                } else {
-                    $salah++;
-                }
+        if (!$jawaban) {
+            $kosong++;
+        } elseif ($question) {
+            $kunci = $question->options->where('is_correct', true)->first();
+            if ($kunci && $jawaban === $kunci->value) {
+                $benar++;
+            } else {
+                $salah++;
             }
         }
-
-        $score = $benar * 10;
-
-        // Simpan hasil (opsional)
-        Result::updateOrCreate(
-            ['user_id' => $userId, 'test_id' => $request->input('test_id')],
-            ['json' => json_encode($answers), 'score' => $score]
-        );
-        $test = Test::find($request->input('test_id'));
-
-        return view('soal.results', compact('benar', 'salah', 'kosong', 'score', 'test'));
     }
+
+    $score = $benar * 10;
+
+    // Ambil waktu yang digunakan (dikirim dari JS)
+    $timeTaken = $request->input('time_taken'); // dalam detik atau menit
+
+    // Simpan hasil
+    Result::updateOrCreate(
+        ['user_id' => $userId, 'test_id' => $request->input('test_id')],
+        [
+            'json' => json_encode($answers),
+            'score' => $score,
+            'time_taken' => $timeTaken // pastikan kolom ini ada di tabel results
+        ]
+    );
+
+    // Reset timer di sisi sessionStorage (frontend nanti yang hapus)
+    session()->forget('quiz_timer_' . $request->input('test_id'));
+
+    $test = Test::find($request->input('test_id'));
+
+    return view('soal.results', compact('benar', 'salah', 'kosong', 'score', 'test', 'timeTaken'));
+}
+
 }

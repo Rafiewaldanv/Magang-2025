@@ -29,28 +29,30 @@
     @else
         @if(count($tests) > 0)
             <div class="row">
-                @foreach($tests as $test)
-                    <div class="col-md-6 col-lg-4 mb-4">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ $test->name }}</h5>
-                                <p class="card-text mb-1"><strong>Jumlah Soal:</strong> {{ $test->total_questions }}</p>
-                                <p class="card-text mb-1"><strong>Durasi:</strong> {{ $test->duration }} menit</p>
-                                <p class="card-text text-muted small">{{ $test->description }}</p>
-                                <pre>{{ var_dump($test->id) }}</pre>
+            @foreach($tests as $test)
+    @php
+        $packet = $test->packets->first(); // Ambil 1 packet pertama
+    @endphp
 
-                                <form method="POST" action="{{ route('soal.start') }}">
-    @csrf
-    <input type="hidden" name="test_id" value="{{ $test->id }}">
-    <button type="submit" class="btn btn-warning">Mulai Tes</button>
-</form>
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ $test->name }}</h5>
+                <p class="card-text mb-1"><strong>Jumlah Soal:</strong> {{ $packet?->amount ?? '-' }}</p>
+                <p class="card-text mb-1"><strong>Durasi:</strong> {{ $test->test_time ?? '-' }} menit</p>
+                <p class="card-text text-muted small">{{ $packet?->description ?? '' }}</p>
+                <pre>{{ var_dump($test->id) }}</pre>
 
+                <form method="POST" action="{{ route('soal.start') }}">
+                    @csrf
+                    <input type="hidden" name="test_id" value="{{ $test->id }}">
+                    <button type="submit" class="btn btn-warning">Mulai Tes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+@endforeach
 
-
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
             </div>
         @else
             <div class="alert alert-info text-center">

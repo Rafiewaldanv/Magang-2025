@@ -46,6 +46,9 @@
                             <span>Skor Akhir</span>
                             <span class="fw-bold">{{ $score }}</span>
                         </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Waktu yang Digunakan</span>
+                            <span class="fw-bold">{{ $timeTaken }}</span>
                     </ul>
                 </div>
             </div>
