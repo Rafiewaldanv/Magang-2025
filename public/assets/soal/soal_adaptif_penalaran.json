@@ -1,0 +1,75 @@
+{
+  "soal": [
+    "adaptif_penalaran_1a.png : adaptif_penalaran_1b.png : adaptif_penalaran_1c.png : adaptif_penalaran_1d.png",
+    "adaptif_penalaran_2a.png : adaptif_penalaran_2b.png : adaptif_penalaran_2c.png : adaptif_penalaran_2d.png",
+    "adaptif_penalaran_3a.png : adaptif_penalaran_3b.png : adaptif_penalaran_3c.png : adaptif_penalaran_3d.png",
+    "adaptif_penalaran_4a.png : adaptif_penalaran_4b.png : adaptif_penalaran_4c.png : adaptif_penalaran_4d.png",
+    "adaptif_penalaran_5a.png : adaptif_penalaran_5b.png : adaptif_penalaran_5c.png : adaptif_penalaran_5d.png",
+    "adaptif_penalaran_6a.png : adaptif_penalaran_6b.png : adaptif_penalaran_6c.png : adaptif_penalaran_6d.png",
+    "adaptif_penalaran_7a.png : adaptif_penalaran_7b.png : adaptif_penalaran_7c.png : adaptif_penalaran_7d.png",
+    "adaptif_penalaran_8a.png : adaptif_penalaran_8b.png : adaptif_penalaran_8c.png : adaptif_penalaran_8d.png",
+    "adaptif_penalaran_9a.png : adaptif_penalaran_9b.png : adaptif_penalaran_9c.png : adaptif_penalaran_9d.png",
+    "adaptif_penalaran_10a.png : adaptif_penalaran_10b.png : adaptif_penalaran_10c.png : adaptif_penalaran_10d.png",
+    "adaptif_penalaran_11a.png : adaptif_penalaran_11b.png : adaptif_penalaran_11c.png : adaptif_penalaran_11d.png",
+    "adaptif_penalaran_12a.png : adaptif_penalaran_12b.png : adaptif_penalaran_12c.png : adaptif_penalaran_12d.png",
+    "adaptif_penalaran_13a.png : adaptif_penalaran_13b.png : adaptif_penalaran_13c.png : adaptif_penalaran_13d.png",
+    "adaptif_penalaran_14a.png : adaptif_penalaran_14b.png : adaptif_penalaran_14c.png : adaptif_penalaran_14d.png",
+    "adaptif_penalaran_15a.png : adaptif_penalaran_15b.png : adaptif_penalaran_15c.png : adaptif_penalaran_15d.png",
+    "adaptif_penalaran_16a.png : adaptif_penalaran_16b.png : adaptif_penalaran_16c.png : adaptif_penalaran_16d.png",
+    "adaptif_penalaran_17a.png : adaptif_penalaran_17b.png : adaptif_penalaran_17c.png : adaptif_penalaran_17d.png",
+    "adaptif_penalaran_18a.png : adaptif_penalaran_18b.png : adaptif_penalaran_18c.png : adaptif_penalaran_18d.png",
+    "adaptif_penalaran_19a.png : adaptif_penalaran_19b.png : adaptif_penalaran_19c.png : adaptif_penalaran_19d.png",
+    "adaptif_penalaran_20a.png : adaptif_penalaran_20b.png : adaptif_penalaran_20c.png : adaptif_penalaran_20d.png",
+    "adaptif_penalaran_21a.png : adaptif_penalaran_21b.png : adaptif_penalaran_21c.png : adaptif_penalaran_21d.png",
+    "adaptif_penalaran_22a.png : adaptif_penalaran_22b.png : adaptif_penalaran_22c.png : adaptif_penalaran_22d.png",
+    "adaptif_penalaran_23a.png : adaptif_penalaran_23b.png : adaptif_penalaran_23c.png : adaptif_penalaran_23d.png",
+    "adaptif_penalaran_24a.png : adaptif_penalaran_24b.png : adaptif_penalaran_24c.png : adaptif_penalaran_24d.png",
+    "adaptif_penalaran_25a.png : adaptif_penalaran_25b.png : adaptif_penalaran_25c.png : adaptif_penalaran_25d.png",
+    "adaptif_penalaran_26a.png : adaptif_penalaran_26b.png : adaptif_penalaran_26c.png : adaptif_penalaran_26d.png"
+  ],
+  "option_a": [
+    "adaptif_penalaran-a1.png", "adaptif_penalaran-a2.png", "adaptif_penalaran-a3.png", "adaptif_penalaran-a4.png", "adaptif_penalaran-a5.png",
+    "adaptif_penalaran-a6.png", "adaptif_penalaran-a7.png", "adaptif_penalaran-a8.png", "adaptif_penalaran-a9.png", "adaptif_penalaran-a10.png",
+    "adaptif_penalaran-a11.png", "adaptif_penalaran-a12.png", "adaptif_penalaran-a13.png", "adaptif_penalaran-a14.png", "adaptif_penalaran-a15.png",
+    "adaptif_penalaran-a16.png", "adaptif_penalaran-a17.png", "adaptif_penalaran-a18.png", "adaptif_penalaran-a19.png", "adaptif_penalaran-a20.png",
+    "adaptif_penalaran-a21.png", "adaptif_penalaran-a22.png", "adaptif_penalaran-a23.png", "adaptif_penalaran-a24.png", "adaptif_penalaran-a25.png",
+    "adaptif_penalaran-a26.png"
+  ],
+  "option_b": [
+    "adaptif_penalaran-b1.png", "adaptif_penalaran-b2.png", "adaptif_penalaran-b3.png", "adaptif_penalaran-b4.png", "adaptif_penalaran-b5.png",
+    "adaptif_penalaran-b6.png", "adaptif_penalaran-b7.png", "adaptif_penalaran-b8.png", "adaptif_penalaran-b9.png", "adaptif_penalaran-b10.png",
+    "adaptif_penalaran-b11.png", "adaptif_penalaran-b12.png", "adaptif_penalaran-b13.png", "adaptif_penalaran-b14.png", "adaptif_penalaran-b15.png",
+    "adaptif_penalaran-b16.png", "adaptif_penalaran-b17.png", "adaptif_penalaran-b18.png", "adaptif_penalaran-b19.png", "adaptif_penalaran-b20.png",
+    "adaptif_penalaran-b21.png", "adaptif_penalaran-b22.png", "adaptif_penalaran-b23.png", "adaptif_penalaran-b24.png", "adaptif_penalaran-b25.png",
+    "adaptif_penalaran-b26.png"
+  ],
+  "option_c": [
+    "adaptif_penalaran-c1.png", "adaptif_penalaran-c2.png", "adaptif_penalaran-c3.png", "adaptif_penalaran-c4.png", "adaptif_penalaran-c5.png",
+    "adaptif_penalaran-c6.png", "adaptif_penalaran-c7.png", "adaptif_penalaran-c8.png", "adaptif_penalaran-c9.png", "adaptif_penalaran-c10.png",
+    "adaptif_penalaran-c11.png", "adaptif_penalaran-c12.png", "adaptif_penalaran-c13.png", "adaptif_penalaran-c14.png", "adaptif_penalaran-c15.png",
+    "adaptif_penalaran-c16.png", "adaptif_penalaran-c17.png", "adaptif_penalaran-c18.png", "adaptif_penalaran-c19.png", "adaptif_penalaran-c20.png",
+    "adaptif_penalaran-c21.png", "adaptif_penalaran-c22.png", "adaptif_penalaran-c23.png", "adaptif_penalaran-c24.png", "adaptif_penalaran-c25.png",
+    "adaptif_penalaran-c26.png"
+  ],
+  "option_d": [
+    "adaptif_penalaran-d1.png", "adaptif_penalaran-d2.png", "adaptif_penalaran-d3.png", "adaptif_penalaran-d4.png", "adaptif_penalaran-d5.png",
+    "adaptif_penalaran-d6.png", "adaptif_penalaran-d7.png", "adaptif_penalaran-d8.png", "adaptif_penalaran-d9.png", "adaptif_penalaran-d10.png",
+    "adaptif_penalaran-d11.png", "adaptif_penalaran-d12.png", "adaptif_penalaran-d13.png", "adaptif_penalaran-d14.png", "adaptif_penalaran-d15.png",
+    "adaptif_penalaran-d16.png", "adaptif_penalaran-d17.png", "adaptif_penalaran-d18.png", "adaptif_penalaran-d19.png", "adaptif_penalaran-d20.png",
+    "adaptif_penalaran-d21.png", "adaptif_penalaran-d22.png", "adaptif_penalaran-d23.png", "adaptif_penalaran-d24.png", "adaptif_penalaran-d25.png",
+    "adaptif_penalaran-d26.png"
+  ],
+  "option_e": [
+    "adaptif_penalaran-e1.png", "adaptif_penalaran-e2.png", "adaptif_penalaran-e3.png", "adaptif_penalaran-e4.png", "adaptif_penalaran-e5.png",
+    "adaptif_penalaran-e6.png", "adaptif_penalaran-e7.png", "adaptif_penalaran-e8.png", "adaptif_penalaran-e9.png", "adaptif_penalaran-e10.png",
+    "adaptif_penalaran-e11.png", "adaptif_penalaran-e12.png", "adaptif_penalaran-e13.png", "adaptif_penalaran-e14.png", "adaptif_penalaran-e15.png",
+    "adaptif_penalaran-e16.png", "adaptif_penalaran-e17.png", "adaptif_penalaran-e18.png", "adaptif_penalaran-e19.png", "adaptif_penalaran-e20.png",
+    "adaptif_penalaran-e21.png", "adaptif_penalaran-e22.png", "adaptif_penalaran-e23.png", "adaptif_penalaran-e24.png", "adaptif_penalaran-e25.png",
+    "adaptif_penalaran-e26.png"
+  ],
+  "kunci": [
+    "B", "C", "D", "C", "E", "B", "A", "C", "B", "D",
+    "E", "D", "C", "A", "B", "D", "B", "A", "C", "D",
+    "B", "C", "A", "E", "D", "A"
+  ]
+}

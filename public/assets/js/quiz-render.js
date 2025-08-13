@@ -18,8 +18,7 @@ function loadQuestion(nomor) {
       updateNavButton(nomor, jumlahSoal);
 
       // Update sidebar nomor soal aktif
-      $('.nav-number').removeClass('active');
-      $(`.nav-number[data-num="${nomor}"]`).addClass('active');
+      renderSidebar(jumlahSoal, nomor);
     },
     error: function () {
       alert('Gagal memuat soal.');
@@ -111,6 +110,32 @@ function updateAnsweredCount() {
   const totalAnswered = Object.values(answers).filter(val => val.length > 0).length;
   document.getElementById('answered').textContent = totalAnswered;
 }
+//  Render sidebar dengan nomor soal
+//  Menampilkan nomor soal di sidebar
+function renderSidebar(total, current) {
+  const container = document.getElementById('soal-container');
+  const answers = JSON.parse(localStorage.getItem('answers') || '{}');
+
+  let html = '';
+  for (let i = 1; i <= total; i++) {
+    const isAnswered = answers[i] && answers[i].length > 0;
+    const isCurrent = parseInt(current) === i;
+
+    let classes = 'nav-number';
+    if (isAnswered) classes += ' answered';
+    if (isCurrent) classes += ' active';
+
+    html += `<div class="${classes}" data-num="${i}">${i}</div>`;
+  }
+
+  container.innerHTML = html;
+
+  // 🎯 Enable klik nomor soal
+  $('.nav-number').on('click', function () {
+    const nomor = $(this).data('num');
+    loadQuestion(nomor);
+  });
+}
 
 //  Toggle tombol Next dan Prev
 function updateNavButton(nomor, totalSoal) {
@@ -145,10 +170,73 @@ function handleTimeoutSubmit() {
 //  Saat halaman dimuat, tampilkan soal terakhir
 $(document).ready(function () {
   const currentNum = sessionStorage.getItem('currentQuestion') || 1;
+  renderSidebar(jumlahSoal);
   loadQuestion(currentNum);
 });
 
 // Backup saat keluar halaman
 window.addEventListener("beforeunload", function () {
   localStorage.setItem('answers_backup', localStorage.getItem('answers'));
+});
+
+// ✅ Ambil nilai part dari input hidden
+function getCurrentPart() {
+  return parseInt($('#form input[name="part"]').val());
+}
+
+// ✅ Cek apakah semua soal sudah dijawab
+function isAllAnswered() {
+  const answers = JSON.parse(localStorage.getItem('answers') || '{}');
+  for (let i = 1; i <= jumlahSoal; i++) {
+    if (!answers[i] || answers[i].length === 0) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// ✅ Fungsi manual submit (dari tombol submit)
+function handleManualSubmit() {
+  const answers = JSON.parse(localStorage.getItem('answers') || '{}');
+
+  if (!isAllAnswered()) {
+    alert('Masih ada soal yang belum dijawab.');
+    return;
+  }
+
+  $.ajax({
+    url: `/tes/${path}/submit`,
+    type: 'POST',
+    data: {
+      answers: answers,
+      _token: $('meta[name="csrf-token"]').attr('content'),
+      test_id: testID,
+      packet_id: packetID,
+      part: getCurrentPart()
+    },
+    success: function (res) {
+      if (res.status === 'selesai') {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = res.redirect;
+      } else if (res.status === 'lanjut') {
+        window.location.href = `/soal?packet_id=${res.next_packet_id}&part=${res.next_part}`;
+      } else if (res.status === 'belum_lengkap') {
+        alert(res.message);
+      }
+    },
+    error: function () {
+      alert('Gagal submit jawaban.');
+    }
+  });
+}
+
+// ✅ Kaitkan tombol submit (jika ada tombol dengan id="submit-btn")
+$(document).ready(function () {
+  $('#submit-btn').on('click', handleManualSubmit);
+});
+// ⏺️ Gantikan tombol submit dengan tombol dari atasan (#btn-nextj)
+$('#btn-nextj').on('click', function (e) {
+  e.preventDefault();
+  handleManualSubmit(); 
 });

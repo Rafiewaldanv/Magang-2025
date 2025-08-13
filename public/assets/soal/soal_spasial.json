@@ -1,0 +1,55 @@
+{
+  "soal": [
+    "spasial_1.png", "spasial_2.png", "spasial_3.png", "spasial_4.png", "spasial_5.png",
+    "spasial_6.png", "spasial_7.png", "spasial_8.png", "spasial_9.png", "spasial_10.png",
+    "spasial_11.png", "spasial_12.png", "spasial_13.png", "spasial_14.png", "spasial_15.png",
+    "spasial_16.png", "spasial_17.png", "spasial_18.png", "spasial_19.png", "spasial_20.png",
+    "spasial_21.png", "spasial_22.png", "spasial_23.png", "spasial_24.png", "spasial_25.png",
+    "spasial_26.png", "spasial_27.png", "spasial_28.png", "spasial_29.png", "spasial_30.png"
+  ],
+  "option_a": [
+    "spasial-a1.png", "spasial-a2.png", "spasial-a3.png", "spasial-a4.png", "spasial-a5.png",
+    "spasial-a6.png", "spasial-a7.png", "spasial-a8.png", "spasial-a9.png", "spasial-a10.png",
+    "spasial-a11.png", "spasial-a12.png", "spasial-a13.png", "spasial-a14.png", "spasial-a15.png",
+    "spasial-a16.png", "spasial-a17.png", "spasial-a18.png", "spasial-a19.png", "spasial-a20.png",
+    "spasial-a21.png", "spasial-a22.png", "spasial-a23.png", "spasial-a24.png", "spasial-a25.png",
+    "spasial-a26.png", "spasial-a27.png", "spasial-a28.png", "spasial-a29.png", "spasial-a30.png"
+  ],
+  "option_b": [
+    "spasial-b1.png", "spasial-b2.png", "spasial-b3.png", "spasial-b4.png", "spasial-b5.png",
+    "spasial-b6.png", "spasial-b7.png", "spasial-b8.png", "spasial-b9.png", "spasial-b10.png",
+    "spasial-b11.png", "spasial-b12.png", "spasial-b13.png", "spasial-b14.png", "spasial-b15.png",
+    "spasial-b16.png", "spasial-b17.png", "spasial-b18.png", "spasial-b19.png", "spasial-b20.png",
+    "spasial-b21.png", "spasial-b22.png", "spasial-b23.png", "spasial-b24.png", "spasial-b25.png",
+    "spasial-b26.png", "spasial-b27.png", "spasial-b28.png", "spasial-b29.png", "spasial-b30.png"
+  ],
+  "option_c": [
+    "spasial-c1.png", "spasial-c2.png", "spasial-c3.png", "spasial-c4.png", "spasial-c5.png",
+    "spasial-c6.png", "spasial-c7.png", "spasial-c8.png", "spasial-c9.png", "spasial-c10.png",
+    "spasial-c11.png", "spasial-c12.png", "spasial-c13.png", "spasial-c14.png", "spasial-c15.png",
+    "spasial-c16.png", "spasial-c17.png", "spasial-c18.png", "spasial-c19.png", "spasial-c20.png",
+    "spasial-c21.png", "spasial-c22.png", "spasial-c23.png", "spasial-c24.png", "spasial-c25.png",
+    "spasial-c26.png", "spasial-c27.png", "spasial-c28.png", "spasial-c29.png", "spasial-c30.png"
+  ],
+  "option_d": [
+    "spasial-d1.png", "spasial-d2.png", "spasial-d3.png", "spasial-d4.png", "spasial-d5.png",
+    "spasial-d6.png", "spasial-d7.png", "spasial-d8.png", "spasial-d9.png", "spasial-d10.png",
+    "spasial-d11.png", "spasial-d12.png", "spasial-d13.png", "spasial-d14.png", "spasial-d15.png",
+    "spasial-d16.png", "spasial-d17.png", "spasial-d18.png", "spasial-d19.png", "spasial-d20.png",
+    "spasial-d21.png", "spasial-d22.png", "spasial-d23.png", "spasial-d24.png", "spasial-d25.png",
+    "spasial-d26.png", "spasial-d27.png", "spasial-d28.png", "spasial-d29.png", "spasial-d30.png"
+  ],
+  "option_e": [
+    "spasial-e1.png", "spasial-e2.png", "spasial-e3.png", "spasial-e4.png", "spasial-e5.png",
+    "spasial-e6.png", "spasial-e7.png", "spasial-e8.png", "spasial-e9.png", "spasial-e10.png",
+    "spasial-e11.png", "spasial-e12.png", "spasial-e13.png", "spasial-e14.png", "spasial-e15.png",
+    "spasial-e16.png", "spasial-e17.png", "spasial-e18.png", "spasial-e19.png", "spasial-e20.png",
+    "spasial-e21.png", "spasial-e22.png", "spasial-e23.png", "spasial-e24.png", "spasial-e25.png",
+    "spasial-e26.png", "spasial-e27.png", "spasial-e28.png", "spasial-e29.png", "spasial-e30.png"
+  ],
+  "kunci": [
+    "A", "B", "C", "D", "E", "A", "B", "C", "D", "E",
+    "A", "B", "C", "D", "E", "A", "B", "C", "D", "E",
+    "A", "B", "C", "D", "E", "A", "B", "C", "D", "E"
+  ]
+}

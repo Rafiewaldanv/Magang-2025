@@ -1,0 +1,56 @@
+{
+  "soal": [
+    "adaptif_spasial_1.png", "adaptif_spasial_2.png", "adaptif_spasial_3.png", "adaptif_spasial_4.png",
+    "adaptif_spasial_5.png", "adaptif_spasial_6.png", "adaptif_spasial_7.png", "adaptif_spasial_8.png",
+    "adaptif_spasial_9.png", "adaptif_spasial_10.png", "adaptif_spasial_11.png", "adaptif_spasial_12.png",
+    "adaptif_spasial_13.png", "adaptif_spasial_14.png", "adaptif_spasial_15.png", "adaptif_spasial_16.png",
+    "adaptif_spasial_17.png", "adaptif_spasial_18.png", "adaptif_spasial_19.png", "adaptif_spasial_20.png",
+    "adaptif_spasial_21.png", "adaptif_spasial_22.png", "adaptif_spasial_23.png", "adaptif_spasial_24.png",
+    "adaptif_spasial_25.png", "adaptif_spasial_26.png"
+  ],
+  "option_a": [
+    "adaptif_spasial-a1.png", "adaptif_spasial-a2.png", "adaptif_spasial-a3.png", "adaptif_spasial-a4.png", "adaptif_spasial-a5.png",
+    "adaptif_spasial-a6.png", "adaptif_spasial-a7.png", "adaptif_spasial-a8.png", "adaptif_spasial-a9.png", "adaptif_spasial-a10.png",
+    "adaptif_spasial-a11.png", "adaptif_spasial-a12.png", "adaptif_spasial-a13.png", "adaptif_spasial-a14.png", "adaptif_spasial-a15.png",
+    "adaptif_spasial-a16.png", "adaptif_spasial-a17.png", "adaptif_spasial-a18.png", "adaptif_spasial-a19.png", "adaptif_spasial-a20.png",
+    "adaptif_spasial-a21.png", "adaptif_spasial-a22.png", "adaptif_spasial-a23.png", "adaptif_spasial-a24.png", "adaptif_spasial-a25.png",
+    "adaptif_spasial-a26.png"
+  ],
+  "option_b": [
+    "adaptif_spasial-b1.png", "adaptif_spasial-b2.png", "adaptif_spasial-b3.png", "adaptif_spasial-b4.png", "adaptif_spasial-b5.png",
+    "adaptif_spasial-b6.png", "adaptif_spasial-b7.png", "adaptif_spasial-b8.png", "adaptif_spasial-b9.png", "adaptif_spasial-b10.png",
+    "adaptif_spasial-b11.png", "adaptif_spasial-b12.png", "adaptif_spasial-b13.png", "adaptif_spasial-b14.png", "adaptif_spasial-b15.png",
+    "adaptif_spasial-b16.png", "adaptif_spasial-b17.png", "adaptif_spasial-b18.png", "adaptif_spasial-b19.png", "adaptif_spasial-b20.png",
+    "adaptif_spasial-b21.png", "adaptif_spasial-b22.png", "adaptif_spasial-b23.png", "adaptif_spasial-b24.png", "adaptif_spasial-b25.png",
+    "adaptif_spasial-b26.png"
+  ],
+  "option_c": [
+    "adaptif_spasial-c1.png", "adaptif_spasial-c2.png", "adaptif_spasial-c3.png", "adaptif_spasial-c4.png", "adaptif_spasial-c5.png",
+    "adaptif_spasial-c6.png", "adaptif_spasial-c7.png", "adaptif_spasial-c8.png", "adaptif_spasial-c9.png", "adaptif_spasial-c10.png",
+    "adaptif_spasial-c11.png", "adaptif_spasial-c12.png", "adaptif_spasial-c13.png", "adaptif_spasial-c14.png", "adaptif_spasial-c15.png",
+    "adaptif_spasial-c16.png", "adaptif_spasial-c17.png", "adaptif_spasial-c18.png", "adaptif_spasial-c19.png", "adaptif_spasial-c20.png",
+    "adaptif_spasial-c21.png", "adaptif_spasial-c22.png", "adaptif_spasial-c23.png", "adaptif_spasial-c24.png", "adaptif_spasial-c25.png",
+    "adaptif_spasial-c26.png"
+  ],
+  "option_d": [
+    "adaptif_spasial-d1.png", "adaptif_spasial-d2.png", "adaptif_spasial-d3.png", "adaptif_spasial-d4.png", "adaptif_spasial-d5.png",
+    "adaptif_spasial-d6.png", "adaptif_spasial-d7.png", "adaptif_spasial-d8.png", "adaptif_spasial-d9.png", "adaptif_spasial-d10.png",
+    "adaptif_spasial-d11.png", "adaptif_spasial-d12.png", "adaptif_spasial-d13.png", "adaptif_spasial-d14.png", "adaptif_spasial-d15.png",
+    "adaptif_spasial-d16.png", "adaptif_spasial-d17.png", "adaptif_spasial-d18.png", "adaptif_spasial-d19.png", "adaptif_spasial-d20.png",
+    "adaptif_spasial-d21.png", "adaptif_spasial-d22.png", "adaptif_spasial-d23.png", "adaptif_spasial-d24.png", "adaptif_spasial-d25.png",
+    "adaptif_spasial-d26.png"
+  ],
+  "option_e": [
+    "adaptif_spasial-e1.png", "adaptif_spasial-e2.png", "adaptif_spasial-e3.png", "adaptif_spasial-e4.png", "adaptif_spasial-e5.png",
+    "adaptif_spasial-e6.png", "adaptif_spasial-e7.png", "adaptif_spasial-e8.png", "adaptif_spasial-e9.png", "adaptif_spasial-e10.png",
+    "adaptif_spasial-e11.png", "adaptif_spasial-e12.png", "adaptif_spasial-e13.png", "adaptif_spasial-e14.png", "adaptif_spasial-e15.png",
+    "adaptif_spasial-e16.png", "adaptif_spasial-e17.png", "adaptif_spasial-e18.png", "adaptif_spasial-e19.png", "adaptif_spasial-e20.png",
+    "adaptif_spasial-e21.png", "adaptif_spasial-e22.png", "adaptif_spasial-e23.png", "adaptif_spasial-e24.png", "adaptif_spasial-e25.png",
+    "adaptif_spasial-e26.png"
+  ],
+  "kunci": [
+    "B", "C", "D", "C", "E", "B", "A", "C", "B", "D",
+    "E", "D", "C", "A", "B", "D", "B", "A", "C", "D",
+    "B", "C", "A", "E", "D", "A"
+  ]
+}

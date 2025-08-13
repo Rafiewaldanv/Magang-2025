@@ -1,0 +1,83 @@
+{
+ "soal": [
+    "penalaran_1a.png : penalaran_1b.png : penalaran_1c.png : penalaran_1d.png",
+    "penalaran_2a.png : penalaran_2b.png : penalaran_2c.png : penalaran_2d.png",
+    "penalaran_3a.png : penalaran_3b.png : penalaran_3c.png : penalaran_3d.png",
+    "penalaran_4a.png : penalaran_4b.png : penalaran_4c.png : penalaran_4d.png",
+    "penalaran_5a.png : penalaran_5b.png : penalaran_5c.png : penalaran_5d.png",
+    "penalaran_6a.png : penalaran_6b.png : penalaran_6c.png : penalaran_6d.png",
+    "penalaran_7a.png : penalaran_7b.png : penalaran_7c.png : penalaran_7d.png",
+    "penalaran_8a.png : penalaran_8b.png : penalaran_8c.png : penalaran_8d.png",
+    "penalaran_9a.png : penalaran_9b.png : penalaran_9c.png : penalaran_9d.png",
+    "penalaran_10a.png : penalaran_10b.png : penalaran_10c.png : penalaran_10d.png",
+    "penalaran_11a.png : penalaran_11b.png : penalaran_11c.png : penalaran_11d.png",
+    "penalaran_12a.png : penalaran_12b.png : penalaran_12c.png : penalaran_12d.png",
+    "penalaran_13a.png : penalaran_13b.png : penalaran_13c.png : penalaran_13d.png",
+    "penalaran_14a.png : penalaran_14b.png : penalaran_14c.png : penalaran_14d.png",
+    "penalaran_15a.png : penalaran_15b.png : penalaran_15c.png : penalaran_15d.png",
+    "penalaran_16a.png : penalaran_16b.png : penalaran_16c.png : penalaran_16d.png",
+    "penalaran_17a.png : penalaran_17b.png : penalaran_17c.png : penalaran_17d.png",
+    "penalaran_18a.png : penalaran_18b.png : penalaran_18c.png : penalaran_18d.png",
+    "penalaran_19a.png : penalaran_19b.png : penalaran_19c.png : penalaran_19d.png",
+    "penalaran_20a.png : penalaran_20b.png : penalaran_20c.png : penalaran_20d.png",
+    "penalaran_21a.png : penalaran_21b.png : penalaran_21c.png : penalaran_21d.png",
+    "penalaran_22a.png : penalaran_22b.png : penalaran_22c.png : penalaran_22d.png",
+    "penalaran_23a.png : penalaran_23b.png : penalaran_23c.png : penalaran_23d.png",
+    "penalaran_24a.png : penalaran_24b.png : penalaran_24c.png : penalaran_24d.png",
+    "penalaran_25a.png : penalaran_25b.png : penalaran_25c.png : penalaran_25d.png",
+    "penalaran_26a.png : penalaran_26b.png : penalaran_26c.png : penalaran_26d.png",
+    "penalaran_27a.png : penalaran_27b.png : penalaran_27c.png : penalaran_27d.png",
+    "penalaran_28a.png : penalaran_28b.png : penalaran_28c.png : penalaran_28d.png",
+    "penalaran_29a.png : penalaran_29b.png : penalaran_29c.png : penalaran_29d.png",
+    "penalaran_30a.png : penalaran_30b.png : penalaran_30c.png : penalaran_30d.png"
+  ],
+  "option_a": [
+    "penalaran-a1.png", "penalaran-a2.png", "penalaran-a3.png", "penalaran-a4.png", "penalaran-a5.png",
+    "penalaran-a6.png", "penalaran-a7.png", "penalaran-a8.png", "penalaran-a9.png", "penalaran-a10.png",
+    "penalaran-a11.png", "penalaran-a12.png", "penalaran-a13.png", "penalaran-a14.png", "penalaran-a15.png",
+    "penalaran-a16.png", "penalaran-a17.png", "penalaran-a18.png", "penalaran-a19.png", "penalaran-a20.png",
+    "penalaran-a21.png", "penalaran-a22.png", "penalaran-a23.png", "penalaran-a24.png", "penalaran-a25.png",
+    "penalaran-a26.png", "penalaran-a27.png", "penalaran-a28.png", "penalaran-a29.png", "penalaran-a30.png"
+  ],
+  "option_b": [
+    "penalaran-b1.png", "penalaran-b2.png", "penalaran-b3.png", "penalaran-b4.png", "penalaran-b5.png",
+    "penalaran-b6.png", "penalaran-b7.png", "penalaran-b8.png", "penalaran-b9.png", "penalaran-b10.png",
+    "penalaran-b11.png", "penalaran-b12.png", "penalaran-b13.png", "penalaran-b14.png", "penalaran-b15.png",
+    "penalaran-b16.png", "penalaran-b17.png", "penalaran-b18.png", "penalaran-b19.png", "penalaran-b20.png",
+    "penalaran-b21.png", "penalaran-b22.png", "penalaran-b23.png", "penalaran-b24.png", "penalaran-b25.png",
+    "penalaran-b26.png", "penalaran-b27.png", "penalaran-b28.png", "penalaran-b29.png", "penalaran-b30.png"
+  ],
+  "option_c": [
+    "penalaran-c1.png", "penalaran-c2.png", "penalaran-c3.png", "penalaran-c4.png", "penalaran-c5.png",
+    "penalaran-c6.png", "penalaran-c7.png", "penalaran-c8.png", "penalaran-c9.png", "penalaran-c10.png",
+    "penalaran-c11.png", "penalaran-c12.png", "penalaran-c13.png", "penalaran-c14.png", "penalaran-c15.png",
+    "penalaran-c16.png", "penalaran-c17.png", "penalaran-c18.png", "penalaran-c19.png", "penalaran-c20.png",
+    "penalaran-c21.png", "penalaran-c22.png", "penalaran-c23.png", "penalaran-c24.png", "penalaran-c25.png",
+    "penalaran-c26.png", "penalaran-c27.png", "penalaran-c28.png", "penalaran-c29.png", "penalaran-c30.png"
+  ],
+  "option_d": [
+    "penalaran-d1.png", "penalaran-d2.png", "penalaran-d3.png", "penalaran-d4.png", "penalaran-d5.png",
+    "penalaran-d6.png", "penalaran-d7.png", "penalaran-d8.png", "penalaran-d9.png", "penalaran-d10.png",
+    "penalaran-d11.png", "penalaran-d12.png", "penalaran-d13.png", "penalaran-d14.png", "penalaran-d15.png",
+    "penalaran-d16.png", "penalaran-d17.png", "penalaran-d18.png", "penalaran-d19.png", "penalaran-d20.png",
+    "penalaran-d21.png", "penalaran-d22.png", "penalaran-d23.png", "penalaran-d24.png", "penalaran-d25.png",
+    "penalaran-d26.png", "penalaran-d27.png", "penalaran-d28.png", "penalaran-d29.png", "penalaran-d30.png"
+  ],
+  "option_e": [
+    "penalaran-e1.png", "penalaran-e2.png", "penalaran-e3.png", "penalaran-e4.png", "penalaran-e5.png",
+    "penalaran-e6.png", "penalaran-e7.png", "penalaran-e8.png", "penalaran-e9.png", "penalaran-e10.png",
+    "penalaran-e11.png", "penalaran-e12.png", "penalaran-e13.png", "penalaran-e14.png", "penalaran-e15.png",
+    "penalaran-e16.png", "penalaran-e17.png", "penalaran-e18.png", "penalaran-e19.png", "penalaran-e20.png",
+    "penalaran-e21.png", "penalaran-e22.png", "penalaran-e23.png", "penalaran-e24.png", "penalaran-e25.png",
+    "penalaran-e26.png", "penalaran-e27.png", "penalaran-e28.png", "penalaran-e29.png", "penalaran-e30.png"
+    ],
+
+  "option_f": [
+    "penalaran-f1.png", "penalaran-f2.png", "penalaran-f3.png", "penalaran-f4.png", "penalaran-f5.png",
+    "penalaran-f6.png", "penalaran-f7.png", "penalaran-f8.png", "penalaran-f9.png", "penalaran-f10.png",
+    "penalaran-f11.png", "penalaran-f12.png", "penalaran-f13.png", "penalaran-f14.png", "penalaran-f15.png",
+    "penalaran-f16.png", "penalaran-f17.png", "penalaran-f18.png", "penalaran-f19.png", "penalaran-f20.png",
+    "penalaran-f21.png", "penalaran-f22.png", "penalaran-f23.png", "penalaran-f24.png", "penalaran-f25.png",
+    "penalaran-f26.png", "penalaran-f27.png", "penalaran-f28.png", "penalaran-f29.png", "penalaran-f30.png"
+  ]
+}
