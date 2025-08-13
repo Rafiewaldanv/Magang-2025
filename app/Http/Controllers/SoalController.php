@@ -8,12 +8,11 @@ use App\Models\Option;
 use App\Models\TestTemporary;
 use App\Models\Packet;
 use App\Models\Result;
-use App\Models\Test; // ✅ Tambahkan import model Test
+use App\Models\Test;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log; 
 use Illuminate\Support\Facades\Storage;
 class SoalController extends Controller
-
 {
 public function SoalAdaptifAnalogi()
 {
@@ -369,11 +368,12 @@ public function SoalToeic()
 }
     // Menampilkan seluruh soal (jika non-AJAX)
     public function index()
-{
-    $test = Test::find(1); // Ganti '1' dengan ID yang pasti ada
-    if (!$test) {
-        abort(404, 'Data test tidak ditemukan.');
-    }
+    {
+        $test = Test::find(1); // Ganti 1 sesuai ID default atau gunakan dynamic jika diperlukan
+
+        if (!$test) {
+            abort(404, 'Data test tidak ditemukan.');
+        }
 
     $packet = Packet::where('test_id', $test->id)->first();
     if (!$packet) {
@@ -385,15 +385,13 @@ public function SoalToeic()
     $path = $test->code;
     $selection = null;
 
-    return view('soal.index', compact(
-        'soal', 'selection', 'path',
-        'packet', 'test', 'jumlah_soal', 'part'
-    ));
-}
+        return view('soal.index', compact(
+            'soal', 'selection', 'path',
+            'packet', 'test', 'jumlah_soal', 'part'
+        ));
+    }
 
-
-
-    // ✅ API: Ambil 1 soal berdasarkan nomor & packet
+    // API: Ambil satu soal berdasarkan nomor
     public function getSoal($test_id, $packet_id, $number)
 {
     Log::info('Debug getSoal() menerima:', [
