@@ -2,7 +2,7 @@
 
 @section('content')
 <!-- Overlay Loading -->
-<div id="overlay-loading">
+<div id="overlay-loading" style="display: none;">
     <div class="spinner"></div>
 </div>
 
@@ -43,15 +43,24 @@
                         </thead>
                         <tbody>
                             @foreach($results as $index => $result)
+                                @php
+                                    // Ambil score: prioritas kolom score, lalu parse dari json jika perlu
+                                    $scoreDisplay = $result->score ?? null;
+                                    if (is_null($scoreDisplay) && $result->json) {
+                                        $decoded = json_decode($result->json, true);
+                                        $scoreDisplay = $decoded['score'] ?? $decoded['total_correct'] ?? null;
+                                    }
+                                    // format tanggal aman
+                                    $created = $result->created_at ? $result->created_at->format('d M Y H:i') : '-';
+                                @endphp
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td>{{ $result->test->name ?? '-' }}</td>
-                                    <td>{{ $result->packet->name ?? '-' }}</td>
-                                    <td>{{ $result->result }}</td>
-                                    <td>{{ $result->created_at->format('d M Y H:i') }}</td>
+                                    <td>{{ $result->packet->name ?? ($result->packet->part ?? '-') }}</td>
+                                    <td>{{ $scoreDisplay ?? '-' }}</td>
+                                    <td>{{ $created }}</td>
                                     <td>
-                                    <a href="{{ route('soal.results', $result->id) }}">Lihat Detail</a>
-
+                                        <a href="{{ route('soal.results', $result->id) }}">Lihat Detail</a>
                                     </td>
                                 </tr>
                             @endforeach

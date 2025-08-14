@@ -1,0 +1,55 @@
+{
+  "soal": [
+    "spasial_3d_1.png", "spasial_3d_2.png", "spasial_3d_3.png", "spasial_3d_4.png", "spasial_3d_5.png",
+    "spasial_3d_6.png", "spasial_3d_7.png", "spasial_3d_8.png", "spasial_3d_9.png", "spasial_3d_10.png",
+    "spasial_3d_11.png", "spasial_3d_12.png", "spasial_3d_13.png", "spasial_3d_14.png", "spasial_3d_15.png",
+    "spasial_3d_16.png", "spasial_3d_17.png", "spasial_3d_18.png", "spasial_3d_19.png", "spasial_3d_20.png",
+    "spasial_3d_21.png", "spasial_3d_22.png", "spasial_3d_23.png", "spasial_3d_24.png", "spasial_3d_25.png",
+    "spasial_3d_26.png", "spasial_3d_27.png", "spasial_3d_28.png", "spasial_3d_29.png", "spasial_3d_30.png"
+  ],
+  "option_a": [
+    "spasial_3d-a1.png", "spasial_3d-a2.png", "spasial_3d-a3.png", "spasial_3d-a4.png", "spasial_3d-a5.png",
+    "spasial_3d-a6.png", "spasial_3d-a7.png", "spasial_3d-a8.png", "spasial_3d-a9.png", "spasial_3d-a10.png",
+    "spasial_3d-a11.png", "spasial_3d-a12.png", "spasial_3d-a13.png", "spasial_3d-a14.png", "spasial_3d-a15.png",
+    "spasial_3d-a16.png", "spasial_3d-a17.png", "spasial_3d-a18.png", "spasial_3d-a19.png", "spasial_3d-a20.png",
+    "spasial_3d-a21.png", "spasial_3d-a22.png", "spasial_3d-a23.png", "spasial_3d-a24.png", "spasial_3d-a25.png",
+    "spasial_3d-a26.png", "spasial_3d-a27.png", "spasial_3d-a28.png", "spasial_3d-a29.png", "spasial_3d-a30.png"
+  ],
+  "option_b": [
+    "spasial_3d-b1.png", "spasial_3d-b2.png", "spasial_3d-b3.png", "spasial_3d-b4.png", "spasial_3d-b5.png",
+    "spasial_3d-b6.png", "spasial_3d-b7.png", "spasial_3d-b8.png", "spasial_3d-b9.png", "spasial_3d-b10.png",
+    "spasial_3d-b11.png", "spasial_3d-b12.png", "spasial_3d-b13.png", "spasial_3d-b14.png", "spasial_3d-b15.png",
+    "spasial_3d-b16.png", "spasial_3d-b17.png", "spasial_3d-b18.png", "spasial_3d-b19.png", "spasial_3d-b20.png",
+    "spasial_3d-b21.png", "spasial_3d-b22.png", "spasial_3d-b23.png", "spasial_3d-b24.png", "spasial_3d-b25.png",
+    "spasial_3d-b26.png", "spasial_3d-b27.png", "spasial_3d-b28.png", "spasial_3d-b29.png", "spasial_3d-b30.png"
+  ],
+  "option_c": [
+    "spasial_3d-c1.png", "spasial_3d-c2.png", "spasial_3d-c3.png", "spasial_3d-c4.png", "spasial_3d-c5.png",
+    "spasial_3d-c6.png", "spasial_3d-c7.png", "spasial_3d-c8.png", "spasial_3d-c9.png", "spasial_3d-c10.png",
+    "spasial_3d-c11.png", "spasial_3d-c12.png", "spasial_3d-c13.png", "spasial_3d-c14.png", "spasial_3d-c15.png",
+    "spasial_3d-c16.png", "spasial_3d-c17.png", "spasial_3d-c18.png", "spasial_3d-c19.png", "spasial_3d-c20.png",
+    "spasial_3d-c21.png", "spasial_3d-c22.png", "spasial_3d-c23.png", "spasial_3d-c24.png", "spasial_3d-c25.png",
+    "spasial_3d-c26.png", "spasial_3d-c27.png", "spasial_3d-c28.png", "spasial_3d-c29.png", "spasial_3d-c30.png"
+  ],
+  "option_d": [
+    "spasial_3d-d1.png", "spasial_3d-d2.png", "spasial_3d-d3.png", "spasial_3d-d4.png", "spasial_3d-d5.png",
+    "spasial_3d-d6.png", "spasial_3d-d7.png", "spasial_3d-d8.png", "spasial_3d-d9.png", "spasial_3d-d10.png",
+    "spasial_3d-d11.png", "spasial_3d-d12.png", "spasial_3d-d13.png", "spasial_3d-d14.png", "spasial_3d-d15.png",
+    "spasial_3d-d16.png", "spasial_3d-d17.png", "spasial_3d-d18.png", "spasial_3d-d19.png", "spasial_3d-d20.png",
+    "spasial_3d-d21.png", "spasial_3d-d22.png", "spasial_3d-d23.png", "spasial_3d-d24.png", "spasial_3d-d25.png",
+    "spasial_3d-d26.png", "spasial_3d-d27.png", "spasial_3d-d28.png", "spasial_3d-d29.png", "spasial_3d-d30.png"
+  ],
+  "option_e": [
+    "spasial_3d-e1.png", "spasial_3d-e2.png", "spasial_3d-e3.png", "spasial_3d-e4.png", "spasial_3d-e5.png",
+    "spasial_3d-e6.png", "spasial_3d-e7.png", "spasial_3d-e8.png", "spasial_3d-e9.png", "spasial_3d-e10.png",
+    "spasial_3d-e11.png", "spasial_3d-e12.png", "spasial_3d-e13.png", "spasial_3d-e14.png", "spasial_3d-e15.png",
+    "spasial_3d-e16.png", "spasial_3d-e17.png", "spasial_3d-e18.png", "spasial_3d-e19.png", "spasial_3d-e20.png",
+    "spasial_3d-e21.png", "spasial_3d-e22.png", "spasial_3d-e23.png", "spasial_3d-e24.png", "spasial_3d-e25.png",
+    "spasial_3d-e26.png", "spasial_3d-e27.png", "spasial_3d-e28.png", "spasial_3d-e29.png", "spasial_3d-e30.png"
+  ],
+  "kunci": [
+    "A", "B", "C", "D", "E", "A", "B", "C", "D", "E",
+    "A", "B", "C", "D", "E", "A", "B", "C", "D", "E",
+    "A", "B", "C", "D", "E", "A", "B", "C", "D", "E"
+  ]
+}

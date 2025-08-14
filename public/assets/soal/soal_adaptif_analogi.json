@@ -1,0 +1,70 @@
+{
+  "soal": [
+    "adaptif_analogi_1a.png : adaptif_analogi_1b.png : adaptif_analogi_1c.png : adaptif_analogi_1d.png",
+    "adaptif_analogi_2a.png : adaptif_analogi_2b.png : adaptif_analogi_2c.png : adaptif_analogi_2d.png",
+    "adaptif_analogi_3a.png : adaptif_analogi_3b.png : adaptif_analogi_3c.png : adaptif_analogi_3d.png",
+    "adaptif_analogi_4a.png : adaptif_analogi_4b.png : adaptif_analogi_4c.png : adaptif_analogi_4d.png",
+    "adaptif_analogi_5a.png : adaptif_analogi_5b.png : adaptif_analogi_5c.png : adaptif_analogi_5d.png",
+    "adaptif_analogi_6a.png : adaptif_analogi_6b.png : adaptif_analogi_6c.png : adaptif_analogi_6d.png",
+    "adaptif_analogi_7a.png : adaptif_analogi_7b.png : adaptif_analogi_7c.png : adaptif_analogi_7d.png",
+    "adaptif_analogi_8a.png : adaptif_analogi_8b.png : adaptif_analogi_8c.png : adaptif_analogi_8d.png",
+    "adaptif_analogi_9a.png : adaptif_analogi_9b.png : adaptif_analogi_9c.png : adaptif_analogi_9d.png",
+    "adaptif_analogi_10a.png : adaptif_analogi_10b.png : adaptif_analogi_10c.png : adaptif_analogi_10d.png",
+    "adaptif_analogi_11a.png : adaptif_analogi_11b.png : adaptif_analogi_11c.png : adaptif_analogi_11d.png",
+    "adaptif_analogi_12a.png : adaptif_analogi_12b.png : adaptif_analogi_12c.png : adaptif_analogi_12d.png",
+    "adaptif_analogi_13a.png : adaptif_analogi_13b.png : adaptif_analogi_13c.png : adaptif_analogi_13d.png",
+    "adaptif_analogi_14a.png : adaptif_analogi_14b.png : adaptif_analogi_14c.png : adaptif_analogi_14d.png",
+    "adaptif_analogi_15a.png : adaptif_analogi_15b.png : adaptif_analogi_15c.png : adaptif_analogi_15d.png",
+    "adaptif_analogi_16a.png : adaptif_analogi_16b.png : adaptif_analogi_16c.png : adaptif_analogi_16d.png",
+    "adaptif_analogi_17a.png : adaptif_analogi_17b.png : adaptif_analogi_17c.png : adaptif_analogi_17d.png",
+    "adaptif_analogi_18a.png : adaptif_analogi_18b.png : adaptif_analogi_18c.png : adaptif_analogi_18d.png",
+    "adaptif_analogi_19a.png : adaptif_analogi_19b.png : adaptif_analogi_19c.png : adaptif_analogi_19d.png",
+    "adaptif_analogi_20a.png : adaptif_analogi_20b.png : adaptif_analogi_20c.png : adaptif_analogi_20d.png",
+    "adaptif_analogi_21a.png : adaptif_analogi_21b.png : adaptif_analogi_21c.png : adaptif_analogi_21d.png",
+    "adaptif_analogi_22a.png : adaptif_analogi_22b.png : adaptif_analogi_22c.png : adaptif_analogi_22d.png",
+    "adaptif_analogi_23a.png : adaptif_analogi_23b.png : adaptif_analogi_23c.png : adaptif_analogi_23d.png",
+    "adaptif_analogi_24a.png : adaptif_analogi_24b.png : adaptif_analogi_24c.png : adaptif_analogi_24d.png",
+    "adaptif_analogi_25a.png : adaptif_analogi_25b.png : adaptif_analogi_25c.png : adaptif_analogi_25d.png",
+    "adaptif_analogi_26a.png : adaptif_analogi_26b.png : adaptif_analogi_26c.png : adaptif_analogi_26d.png"
+  ],
+  "option_a": [
+    "adaptif_analogi-a1.png", "adaptif_analogi-a2.png", "adaptif_analogi-a3.png", "adaptif_analogi-a4.png", "adaptif_analogi-a5.png",
+    "adaptif_analogi-a6.png", "adaptif_analogi-a7.png", "adaptif_analogi-a8.png", "adaptif_analogi-a9.png", "adaptif_analogi-a10.png",
+    "adaptif_analogi-a11.png", "adaptif_analogi-a12.png", "adaptif_analogi-a13.png", "adaptif_analogi-a14.png", "adaptif_analogi-a15.png",
+    "adaptif_analogi-a16.png", "adaptif_analogi-a17.png", "adaptif_analogi-a18.png", "adaptif_analogi-a19.png", "adaptif_analogi-a20.png",
+    "adaptif_analogi-a21.png", "adaptif_analogi-a22.png", "adaptif_analogi-a23.png", "adaptif_analogi-a24.png", "adaptif_analogi-a25.png",
+    "adaptif_analogi-a26.png"
+  ],
+  "option_b": [
+    "adaptif_analogi-b1.png", "adaptif_analogi-b2.png", "adaptif_analogi-b3.png", "adaptif_analogi-b4.png", "adaptif_analogi-b5.png",
+    "adaptif_analogi-b6.png", "adaptif_analogi-b7.png", "adaptif_analogi-b8.png", "adaptif_analogi-b9.png", "adaptif_analogi-b10.png",
+    "adaptif_analogi-b11.png", "adaptif_analogi-b12.png", "adaptif_analogi-b13.png", "adaptif_analogi-b14.png", "adaptif_analogi-b15.png",
+    "adaptif_analogi-b16.png", "adaptif_analogi-b17.png", "adaptif_analogi-b18.png", "adaptif_analogi-b19.png", "adaptif_analogi-b20.png",
+    "adaptif_analogi-b21.png", "adaptif_analogi-b22.png", "adaptif_analogi-b23.png", "adaptif_analogi-b24.png", "adaptif_analogi-b25.png",
+    "adaptif_analogi-b26.png"
+  ],
+  "option_c": [
+    "adaptif_analogi-c1.png", "adaptif_analogi-c2.png", "adaptif_analogi-c3.png", "adaptif_analogi-c4.png", "adaptif_analogi-c5.png",
+    "adaptif_analogi-c6.png", "adaptif_analogi-c7.png", "adaptif_analogi-c8.png", "adaptif_analogi-c9.png", "adaptif_analogi-c10.png",
+    "adaptif_analogi-c11.png", "adaptif_analogi-c12.png", "adaptif_analogi-c13.png", "adaptif_analogi-c14.png", "adaptif_analogi-c15.png",
+    "adaptif_analogi-c16.png", "adaptif_analogi-c17.png", "adaptif_analogi-c18.png", "adaptif_analogi-c19.png", "adaptif_analogi-c20.png",
+    "adaptif_analogi-c21.png", "adaptif_analogi-c22.png", "adaptif_analogi-c23.png", "adaptif_analogi-c24.png", "adaptif_analogi-c25.png",
+    "adaptif_analogi-c26.png"
+  ],
+  "option_d": [
+    "adaptif_analogi-d1.png", "adaptif_analogi-d2.png", "adaptif_analogi-d3.png", "adaptif_analogi-d4.png", "adaptif_analogi-d5.png",
+    "adaptif_analogi-d6.png", "adaptif_analogi-d7.png", "adaptif_analogi-d8.png", "adaptif_analogi-d9.png", "adaptif_analogi-d10.png",
+    "adaptif_analogi-d11.png", "adaptif_analogi-d12.png", "adaptif_analogi-d13.png", "adaptif_analogi-d14.png", "adaptif_analogi-d15.png",
+    "adaptif_analogi-d16.png", "adaptif_analogi-d17.png", "adaptif_analogi-d18.png", "adaptif_analogi-d19.png", "adaptif_analogi-d20.png",
+    "adaptif_analogi-d21.png", "adaptif_analogi-d22.png", "adaptif_analogi-d23.png", "adaptif_analogi-d24.png", "adaptif_analogi-d25.png",
+    "adaptif_analogi-d26.png"
+  ],
+  "option_e": [
+    "adaptif_analogi-e1.png", "adaptif_analogi-e2.png", "adaptif_analogi-e3.png", "adaptif_analogi-e4.png", "adaptif_analogi-e5.png",
+    "adaptif_analogi-e6.png", "adaptif_analogi-e7.png", "adaptif_analogi-e8.png", "adaptif_analogi-e9.png", "adaptif_analogi-e10.png",
+    "adaptif_analogi-e11.png", "adaptif_analogi-e12.png", "adaptif_analogi-e13.png", "adaptif_analogi-e14.png", "adaptif_analogi-e15.png",
+    "adaptif_analogi-e16.png", "adaptif_analogi-e17.png", "adaptif_analogi-e18.png", "adaptif_analogi-e19.png", "adaptif_analogi-e20.png",
+    "adaptif_analogi-e21.png", "adaptif_analogi-e22.png", "adaptif_analogi-e23.png", "adaptif_analogi-e24.png", "adaptif_analogi-e25.png",
+    "adaptif_analogi-e26.png"
+  ]
+}

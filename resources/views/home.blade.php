@@ -26,7 +26,7 @@
 <div class="container main-container text-center mt-5 mb-5">
     <div class="card shadow mx-auto" style="max-width: 600px">
         <div class="card-body">
-            <h4 class="fw-bold mb-3">Mulai Tesssss</h4>
+            <h4 class="fw-bold mb-3">Mulai Ujian</h4>
             <p class="mb-4">Pastikan kamu sudah siap dan koneksi internet stabil sebelum memulai.</p>
             <a href="{{ route('soal.pilih-tes') }}" class="btn btn-primary text-uppercase mt-3 px-4 py-2">Mulai Tes Sekarang</a>
             

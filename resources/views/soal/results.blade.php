@@ -1,5 +1,4 @@
-{{-- resources/views/soal/results.blade.php --}}
-@extends('template/main')
+@extends('template.main')
 
 @section('content')
 <!-- Overlay Loading -->
@@ -7,79 +6,70 @@
     <div class="spinner"></div>
 </div>
 
-{{-- Header --}}
+<!-- Header -->
 <div class="bg-header" style="background-color: rgb(255, 165, 0);">
     <div class="container text-center text-white">
-        <h2>Hasil Tes</h2>
+        <h2 class="mb-0">Riwayat Tes</h2>
+        <p class="mt-2">Lihat semua tes yang sudah kamu kerjakan</p>
     </div>
 </div>
+
 <div class="custom-shape-divider-top-1617767620">
-    <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"
-         preserveAspectRatio="none">
-        <path d="M0,0V7.23C0,65.52,268.63,112.77,600,112.77S1200,65.52,1200,7.23V0Z"
-              style="fill: rgb(255, 165, 0);"></path>
+    <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+        <path d="M0,0V7.23C0,65.52,268.63,112.77,600,112.77S1200,65.52,1200,7.23V0Z" style="fill: rgb(255, 165, 0);"></path>
     </svg>
 </div>
 
-<div class="container main-container py-5">
-    <div class="row justify-content-center">
-        <div class="col-12 col-md-8">
-            <div class="card rounded-1 shadow-sm mb-4">
-                <div class="card-header bg-transparent text-center fw-bold">
-                    <i class="fa fa-check-circle text-warning"></i> Ringkasan Skor
-                </div>
-                <div class="card-body">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item d-flex justify-content-between">
-                            <span>Benar</span>
-                            <span class="fw-bold">{{ $benar }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between">
-                            <span>Salah</span>
-                            <span class="fw-bold">{{ $salah }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between">
-                            <span>Kosong</span>
-                            <span class="fw-bold">{{ $kosong }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between">
-                            <span>Skor Akhir</span>
-                            <span class="fw-bold">{{ $score }}</span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between">
-                            <span>Waktu yang Digunakan</span>
-                            <span class="fw-bold">{{ $timeTaken }}</span>
-                    </ul>
-                </div>
-            </div>
+<!-- Isi -->
+<div class="container main-container mt-5 mb-5">
+    <div class="card shadow mx-auto" style="max-width: 900px">
+        <div class="card-body">
+            <h4 class="fw-bold mb-3">Riwayat Tes Anda</h4>
 
-            <nav class="navbar navbar-expand-lg fixed-bottom navbar-light bg-white shadow">
-                <div class="container">
-                    <ul class="navbar-nav ms-auto align-items-center">
-                        <li class="nav-item me-3">
-                        <a href="{{ route('soal.index', ['id' => $test->id]) }}" class="btn btn-md btn-warning text-uppercase">
-    Ulangi Tes
-</a>
-
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ url('/') }}"
-                               class="btn btn-md btn-secondary text-uppercase">
-                                Kembali ke Beranda
-                            </a>
-                        </li>
-                    </ul>
+            @if($results->isEmpty())
+                <p class="text-center text-muted">Belum ada tes yang dikerjakan.</p>
+            @else
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle">
+                        <thead class="table-warning">
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Tes</th>
+                                <th>Paket</th>
+                                <th>Nilai / Hasil</th>
+                                <th>Tanggal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($results as $index => $result)
+                                @php
+                                    // Ambil score: prioritas kolom score, lalu parse dari json jika perlu
+                                    $scoreDisplay = $result->score ?? null;
+                                    if (is_null($scoreDisplay) && $result->json) {
+                                        $decoded = json_decode($result->json, true);
+                                        $scoreDisplay = $decoded['score'] ?? $decoded['total_correct'] ?? null;
+                                    }
+                                    // format tanggal aman
+                                    $created = $result->created_at ? $result->created_at->format('d M Y H:i') : '-';
+                                @endphp
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $result->test->name ?? '-' }}</td>
+                                    <td>{{ $result->packet->name ?? ($result->packet->part ?? '-') }}</td>
+                                    <td>{{ $scoreDisplay ?? '-' }}</td>
+                                    <td>{{ $created }}</td>
+                                    <td>
+                                        <a href="{{ route('soal.results', $result->id) }}">Lihat Detail</a>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
                 </div>
-            </nav>
+            @endif
+
         </div>
     </div>
 </div>
-@endsection
-
-@section('js-extra')
-{{-- Jika perlu, tambahkan scripts --}}
-@endsection
-
-@section('css-extra')
-{{-- Jika perlu, tambahkan style khusus --}}
 @endsection

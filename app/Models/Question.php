@@ -9,8 +9,19 @@ class Question extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['packet_id', 'number', 'description', 'is_example'];
-
+    protected $fillable = [
+    'test_id',
+    'packet_id',
+    'number',         // ✅ tambahkan
+    'description',    // ✅ tambahkan
+    'option_a',
+    'option_b',
+    'option_c',
+    'option_d',
+    'option_e',
+    'correct_option',
+    'is_example',
+];
     public function packet()
     {
         return $this->belongsTo(Packet::class);

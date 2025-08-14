@@ -1,6 +1,7 @@
 $(document).ready(function () {
     const testId = $('#form input[name="test_id"]').val();
     const packetId = $('#form input[name="packet_id"]').val();
+    const part = $('#form input[name="part"]').val() || 1; // <-- ditambahkan: baca part (default 1)
     const jumlahSoal = parseInt($('#jumlah_soal').val());
     let current = 1;
 
@@ -111,7 +112,6 @@ $(document).ready(function () {
     
         if (!$('#btn-submit').data('bound')) {
             $('#btn-submit').data('bound', true).on('click', function () {
-                // 🧠 HITUNG ULANG DI SINI
                 const currentJawab = Object.keys(jawabanSementara).filter(k => {
                     const val = jawabanSementara[k];
                     return Array.isArray(val) ? val.length > 0 : val !== undefined && val !== '';
@@ -132,9 +132,6 @@ $(document).ready(function () {
             });
         }
     }
-    
-    
-    
 
     function updateNavigasi(nomor) {
         $('#prev').toggle(nomor > 1);
@@ -156,92 +153,127 @@ $(document).ready(function () {
         });
     }
 
-    // Tombol Submit diklik
-    
+    // key unik per packet
+    const startKey = `quizStartTime_${packetId}`;
 
-    // --- di bagian atas (masih di $(document).ready(...)) --- // sudah ada di filemu
-// key unik per packet
-const startKey = `quizStartTime_${packetId}`;
+    // total durasi (15 menit)
+    const totalTime = 15 * 60 * 1000;
 
-// total durasi (15 menit)
-const totalTime = 15 * 60 * 1000;
-
-// ambil / set startTime spesifik packet
-let startTime = localStorage.getItem(startKey);
-if (!startTime) {
-    // kalau belum ada, set sekarang (hanya set pertama kali saat user benar2 mulai)
-    startTime = Date.now();
-    localStorage.setItem(startKey, startTime);
-} else {
-    startTime = parseInt(startTime);
-}
-
-// timer update (update elemen #timer)
-function updateTimer() {
-    const now = Date.now();
-    const elapsed = now - startTime;
-    const remaining = totalTime - elapsed;
-
-    if (remaining <= 0) {
-        $('#timer').text('00:00');
-        // auto-submit apabila waktu habis — panggil kirimJawaban otomatis
-        // pastikan kirimJawaban sudah didefinisikan (diletakkan di file yang sama)
-        // hapus key sebelum submit agar tidak tersisa
-        localStorage.removeItem(startKey);
-        sessionStorage.removeItem('jawabanSementara');
-        // submit (tunda sedikit biar form ter-append dengan benar)
-        setTimeout(() => kirimJawaban(), 300);
-        return;
+    // ambil / set startTime spesifik packet
+    let startTime = localStorage.getItem(startKey);
+    if (!startTime) {
+        startTime = Date.now();
+        localStorage.setItem(startKey, startTime);
+    } else {
+        startTime = parseInt(startTime);
     }
 
-    const minutes = Math.floor((remaining / 1000) / 60);
-    const seconds = Math.floor((remaining / 1000) % 60);
-    $('#timer').text(
-        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-    );
-}
+    function updateTimer() {
+        const now = Date.now();
+        const elapsed = now - startTime;
+        const remaining = totalTime - elapsed;
 
-// jalankan timer setiap detik
-updateTimer();
-const timerInterval = setInterval(updateTimer, 1000);
+        if (remaining <= 0) {
+            $('#timer').text('00:00');
+            // auto-submit apabila waktu habis
+            localStorage.removeItem(startKey);
+            sessionStorage.removeItem('jawabanSementara');
+            setTimeout(() => kirimJawaban(), 300);
+            return;
+        }
 
-// --- pada akhir file: ubah fungsi kirimJawaban() seperti ini ---
-function kirimJawaban() {
-    const jumlah = jumlahSoal;
-    const pilihan = jawabanSementara;
-
-    const form = $('<form>', {
-        method: 'POST',
-        action: '/soal/store' // atau sesuai route finalmu
-    });
-
-    const token = $('meta[name="csrf-token"]').attr('content');
-    form.append($('<input>', { type: 'hidden', name: '_token', value: token }));
-    form.append($('<input>', { type: 'hidden', name: 'jumlah', value: jumlah }));
-    form.append($('<input>', { type: 'hidden', name: 'test_id', value: testId }));
-    form.append($('<input>', { type: 'hidden', name: 'packet_id', value: packetId }));
-
-    // hitung time_taken (detik)
-    const now = Date.now();
-    const timeTakenMs = now - startTime;
-    const timeTakenSec = Math.max(0, Math.round(timeTakenMs / 1000));
-    form.append($('<input>', { type: 'hidden', name: 'time_taken', value: timeTakenSec }));
-
-    for (let i = 1; i <= jumlah; i++) {
-        form.append($('<input>', { type: 'hidden', name: `id[]`, value: i }));
-        form.append($('<input>', {
-            type: 'hidden',
-            name: `pilihan[${i}]`,
-            value: Array.isArray(pilihan[i]) ? pilihan[i].join(',') : (pilihan[i] || '')
-        }));
+        const minutes = Math.floor((remaining / 1000) / 60);
+        const seconds = Math.floor((remaining / 1000) % 60);
+        $('#timer').text(
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+        );
     }
 
-    // hapus storage spesifik packet sebelum submit (prevent reuse)
-    localStorage.removeItem(startKey);
-    sessionStorage.removeItem('jawabanSementara');
+    updateTimer();
+    const timerInterval = setInterval(updateTimer, 1000);
 
-    $('body').append(form);
-    form.submit();
-}
+    // ===== MODIFIKASI MINIMAL DI SINI: kirimJawaban pakai AJAX ke /soal/simpan =====
+    function kirimJawaban() {
+        const jumlah = jumlahSoal;
+        const pilihan = jawabanSementara;
+
+        // siapkan payload sesuai controller: test_id, packet_id, part, answers
+        const payload = {
+            test_id: parseInt(testId),
+            packet_id: parseInt(packetId),
+            part: parseInt(part),
+            answers: pilihan
+        };
+
+        // tampilkan loading
+        $('#overlay-loading').show();
+        $('#btn-submit').prop('disabled', true);
+
+        const token = $('meta[name="csrf-token"]').attr('content');
+
+        $.ajax({
+            url: '/soal/simpan',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(payload),
+            headers: {
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json'
+            },
+            success: function (res) {
+                $('#overlay-loading').hide();
+                // hapus storage
+                localStorage.removeItem(startKey);
+                sessionStorage.removeItem('jawabanSementara');
+
+                if (res.status === 'lanjut') {
+                    // lanjut ke part berikutnya (server berikan next_packet_id/part)
+                    alert(res.message || 'Part disimpan. Lanjut ke part berikutnya.');
+                    // simplest: reload agar backend siap dengan packet baru
+                    location.reload();
+                    return;
+                }
+
+                if (res.status === 'selesai') {
+                    if (res.redirect) {
+                        window.location.href = res.redirect;
+                        return;
+                    }
+                    if (res.result) {
+                        alert(`Tes selesai!\nScore: ${res.result.score}%\nBenar: ${res.result.total_correct}\nSalah: ${res.result.total_wrong}`);
+                        window.location.href = '/history';
+                        return;
+                    }
+                    window.location.href = '/history';
+                    return;
+                }
+
+                // fallback
+                alert('Jawaban berhasil disimpan.');
+                window.location.href = '/history';
+            },
+            error: function (xhr) {
+                $('#overlay-loading').hide();
+                $('#btn-submit').prop('disabled', false);
+                if (xhr.status === 422) {
+                    try {
+                        const json = xhr.responseJSON;
+                        if (json && json.unanswered) {
+                            alert('Masih ada soal belum dijawab: ' + json.unanswered.join(', '));
+                            return;
+                        }
+                        if (json && json.message) {
+                            alert(json.message);
+                            return;
+                        }
+                    } catch (e) {}
+                    alert('Validasi gagal.');
+                } else {
+                    alert('Gagal mengirim jawaban. Silakan coba lagi.');
+                }
+            }
+        });
+    }
+    // ===== akhir modifikasi minimal =====
 
 });

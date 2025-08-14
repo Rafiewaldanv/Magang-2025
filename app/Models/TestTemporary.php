@@ -13,7 +13,7 @@ class TestTemporary extends Model
 
     protected $table = 'test_temporary';
 
-    protected $fillable = ['id_user', 'test_id', 'packet_id', 'part', 'json', 'result_temp'];
+    protected $fillable = ['user_id', 'test_id', 'packet_id', 'part', 'json', 'result_temp'];
 
     public function test()
     {

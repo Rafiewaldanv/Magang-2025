@@ -9,7 +9,7 @@ class Test extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'code', 'num_order'];
+    protected $fillable = ['name', 'duration', 'description','is_active'];
 
     public function packets()
     {

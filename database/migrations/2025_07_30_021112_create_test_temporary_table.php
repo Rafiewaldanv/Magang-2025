@@ -9,9 +9,9 @@ class CreateTestTemporaryTable extends Migration
     {
         Schema::create('test_temporary', function (Blueprint $table) {
             $table->bigIncrements('id'); // id_table
-            $table->unsignedBigInteger('id_user')->nullable(); // user id
-            $table->unsignedBigInteger('test_id')->nullable(); // id test
-            $table->unsignedBigInteger('packet_id')->nullable(); // packet id
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // foreign key to users table
+            $table->foreignId('test_id')->constrained('tests')->onDelete('cascade'); // foreign key to users table
+            $table->foreignId('packet_id')->constrained('packets')->onDelete('cascade'); // foreign key to users table
             $table->integer('part')->nullable(); // part ke sekian
             $table->text('json')->nullable(); // menyimpan jawaban yang dipilih
             $table->text('result_temp')->nullable(); // menyimpan hasil scoring
