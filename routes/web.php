@@ -4,7 +4,7 @@ use App\Http\Controllers\SoalController;
 
 // 🏠 Halaman default - redirect ke halaman soal
 Route::get('/', function () {
-    return redirect()->route('soal.index');
+    return redirect()->route('home');
 });
 // Import Soal Ke Database
 Route::get('/soal-adaptif-analogi', [SoalController::class, 'SoalAdaptifAnalogi'])->name('soal.adaptif.analogi');
@@ -19,7 +19,7 @@ Route::get('/soal-spasial-3d', [SoalController::class, 'SoalSpasial3D'])->name('
 Route::get('/soal-toeic', [SoalController::class, 'SoalToeic'])->name('soal.toeic');
 
 // 📃 View utama tes interaktifRoute::get('/soal-toeic', [SoalController::class, 'tampilkanSoalToeic']);
-
+Route::get('/home', [SoalController::class, 'home'])->name('home');
 Route::get('/soal', [SoalController::class, 'index'])->name('soal.index');
 
 // 📦 API: Ambil soal berdasarkan nomor (dipanggil dari JS)

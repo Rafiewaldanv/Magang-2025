@@ -1,3 +1,15 @@
 .option.active {
   background-color: rgb(247, 160, 79);
+
 }
+.bg-theme-1 {
+  background-color: #ff8400 !important;
+}
+.shape-fill {
+  fill: #ff8400 !important;
+}
+.bg-header {
+  background-color: #ff8400 !important;
+}
+
+

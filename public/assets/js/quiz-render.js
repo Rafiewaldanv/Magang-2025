@@ -1,242 +1,247 @@
-// File: public/assets/js/quiz-render.js
-
-const testID = $('#form input[name="test_id"]').val();
-const packetID = $('#form input[name="packet_id"]').val();
-const path = $('#form input[name="path"]').val();
-const jumlahSoal = parseInt($('#jumlah_soal').val());
-console.log('Mengirim request soal:', testID, packetID);
-
-// 🔥 Load soal via AJAX
-function loadQuestion(nomor) {
-  $.ajax({
-    url: `/api/soal/${testID}/${packetID}/${nomor}`,
-    type: 'GET',
-    success: function(questionData) {
-      renderQuestion(questionData);
-      updateAnsweredCount();
-      sessionStorage.setItem('currentQuestion', nomor);
-      updateNavButton(nomor, jumlahSoal);
-
-      // Update sidebar nomor soal aktif
-      renderSidebar(jumlahSoal, nomor);
-    },
-    error: function () {
-      alert('Gagal memuat soal.');
-    }
-  });
-}
-
-// ✅ Render komponen soal & pilihan
-function renderQuestion(questionData) {
-  const container = document.querySelector('.s');
-  if (!container || !questionData) return;
-
-  let html = '';
-
-  if (questionData.questionImage)
-    html += `<img src="../assets/images/gambar/${questionData.questionImage}" class="img-fluid mb-3">`;
-
-  if (questionData.questionText)
-    html += `<p>${questionData.questionText}</p>`;
-
-  questionData.options.forEach((opt, index) => {
-    const inputType = questionData.multiSelect ? 'checkbox' : 'radio';
-    const optionContent = opt.image
-      ? `<img src="../assets/images/gambar/${opt.image}" class="img-option">`
-      : opt.text;
-
-    const inputId = `opt-${questionData.number}-${index}`;
-
-    html += `
-      <div class="form-check option mb-2" data-num="${questionData.number}">
-        <input type="${inputType}" name="option-${questionData.number}" value="${opt.value}" class="form-check-input" id="${inputId}">
-        <label class="form-check-label" for="${inputId}">${optionContent}</label>
-      </div>`;
-  });
-
-  container.innerHTML = html;
-
-  highlightSelectedOption(questionData.number);
-  localStorage.setItem('currentQuestion', questionData.number);
-}
-
-//  Tandai opsi terpilih
-function highlightSelectedOption(num) {
-  const answers = JSON.parse(localStorage.getItem('answers') || '{}');
-  const values = answers[num] || [];
-
-  document.querySelectorAll(`input[name="option-${num}"]`).forEach((input) => {
-    const wrapper = input.closest('.option');
-
-    if (values.includes(input.value)) {
-      input.checked = true;
-      wrapper.classList.add('active');
-    } else {
-      input.checked = false;
-      wrapper.classList.remove('active');
-    }
-  });
-}
-
-//  Simpan jawaban saat memilih
-document.addEventListener("change", function (e) {
-  if (!e.target.name.startsWith('option-')) return;
-
-  let answers = JSON.parse(localStorage.getItem('answers') || '{}');
-  const num = e.target.name.split('-')[1];
-
-  if (!answers[num]) answers[num] = [];
-
-  if (e.target.type === 'checkbox') {
-    if (e.target.checked && !answers[num].includes(e.target.value)) {
-      answers[num].push(e.target.value);
-    } else if (!e.target.checked) {
-      answers[num] = answers[num].filter(val => val !== e.target.value);
-    }
-  } else {
-    answers[num] = [e.target.value];
-  }
-
-  localStorage.setItem('answers', JSON.stringify(answers));
-  localStorage.setItem('currentQuestion', num);
-
-  highlightSelectedOption(num);
-  updateAnsweredCount();
-});
-
-// Hitung soal yang terjawab
-function updateAnsweredCount() {
-  const answers = JSON.parse(localStorage.getItem('answers') || '{}');
-  const totalAnswered = Object.values(answers).filter(val => val.length > 0).length;
-  document.getElementById('answered').textContent = totalAnswered;
-}
-//  Render sidebar dengan nomor soal
-//  Menampilkan nomor soal di sidebar
-function renderSidebar(total, current) {
-  const container = document.getElementById('soal-container');
-  const answers = JSON.parse(localStorage.getItem('answers') || '{}');
-
-  let html = '';
-  for (let i = 1; i <= total; i++) {
-    const isAnswered = answers[i] && answers[i].length > 0;
-    const isCurrent = parseInt(current) === i;
-
-    let classes = 'nav-number';
-    if (isAnswered) classes += ' answered';
-    if (isCurrent) classes += ' active';
-
-    html += `<div class="${classes}" data-num="${i}">${i}</div>`;
-  }
-
-  container.innerHTML = html;
-
-  // 🎯 Enable klik nomor soal
-  $('.nav-number').on('click', function () {
-    const nomor = $(this).data('num');
-    loadQuestion(nomor);
-  });
-}
-
-//  Toggle tombol Next dan Prev
-function updateNavButton(nomor, totalSoal) {
-  $('#next').toggle(nomor < totalSoal);
-  $('#prev').toggle(nomor > 1);
-}
-
-//  Auto-submit saat waktu habis
-function handleTimeoutSubmit() {
-  const answers = JSON.parse(localStorage.getItem('answers') || '{}');
-
-  $.ajax({
-    url: `/tes/${path}/submit`,
-    type: 'POST',
-    data: {
-      answers: answers,
-      _token: $('meta[name="csrf-token"]').attr('content'),
-      test_id: testID,
-      packet_id: packetID
-    },
-    success: function() {
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.href = '/tes/selesai';
-    },
-    error: function () {
-      alert('Gagal submit jawaban.');
-    }
-  });
-}
-
-//  Saat halaman dimuat, tampilkan soal terakhir
 $(document).ready(function () {
-  const currentNum = sessionStorage.getItem('currentQuestion') || 1;
-  renderSidebar(jumlahSoal);
-  loadQuestion(currentNum);
-});
+  const testId = $('#form input[name="test_id"]').val();
+  const packetId = $('#form input[name="packet_id"]').val();
+  const jumlahSoal = parseInt($('#jumlah_soal').val());
+  let current = 1;
 
-// Backup saat keluar halaman
-window.addEventListener("beforeunload", function () {
-  localStorage.setItem('answers_backup', localStorage.getItem('answers'));
-});
+  let jawabanSementara = JSON.parse(sessionStorage.getItem('jawabanSementara')) || {};
+  Object.keys(jawabanSementara).forEach(k => { if (jawabanSementara[k] === "null") delete jawabanSementara[k]; });
 
-// ✅ Ambil nilai part dari input hidden
-function getCurrentPart() {
-  return parseInt($('#form input[name="part"]').val());
-}
+  getSoal(current);
 
-// ✅ Cek apakah semua soal sudah dijawab
-function isAllAnswered() {
-  const answers = JSON.parse(localStorage.getItem('answers') || '{}');
-  for (let i = 1; i <= jumlahSoal; i++) {
-    if (!answers[i] || answers[i].length === 0) {
-      return false;
-    }
-  }
-  return true;
-}
-
-// ✅ Fungsi manual submit (dari tombol submit)
-function handleManualSubmit() {
-  const answers = JSON.parse(localStorage.getItem('answers') || '{}');
-
-  if (!isAllAnswered()) {
-    alert('Masih ada soal yang belum dijawab.');
-    return;
-  }
-
-  $.ajax({
-    url: `/tes/${path}/submit`,
-    type: 'POST',
-    data: {
-      answers: answers,
-      _token: $('meta[name="csrf-token"]').attr('content'),
-      test_id: testID,
-      packet_id: packetID,
-      part: getCurrentPart()
-    },
-    success: function (res) {
-      if (res.status === 'selesai') {
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.href = res.redirect;
-      } else if (res.status === 'lanjut') {
-        window.location.href = `/soal?packet_id=${res.next_packet_id}&part=${res.next_part}`;
-      } else if (res.status === 'belum_lengkap') {
-        alert(res.message);
+  $('#next').click(() => {
+      if (current < jumlahSoal) {
+          current++;
+          getSoal(current);
       }
-    },
-    error: function () {
-      alert('Gagal submit jawaban.');
-    }
   });
+
+  $('#prev').click(() => {
+      if (current > 1) {
+          current--;
+          getSoal(current);
+      }
+  });
+
+  function getSoal(nomor) {
+      $('#overlay-loading').show();
+      $.get(`/api/soal/${testId}/${packetId}/${nomor}`, function (data) {
+          $('#overlay-loading').hide();
+          tampilkanSoal(data, nomor);
+          updateNavigasi(nomor);
+          updatePanelNavigasi();
+          updateSoalTerjawab();
+      }).fail(function () {
+          $('#overlay-loading').hide();
+          alert("Gagal memuat soal. Silakan refresh halaman.");
+      });
+  }
+
+  function tampilkanSoal(data, nomor) {
+      $('.soal_number .num').text(`Soal Nomor ${nomor}`);
+      const answered = jawabanSementara[nomor] !== undefined && jawabanSementara[nomor] !== "";
+
+      const opsiHtml = data.options.map(opt => {
+          const isChecked = (
+              Array.isArray(jawabanSementara[nomor])
+                  ? jawabanSementara[nomor].includes(opt.value)
+                  : jawabanSementara[nomor] === opt.value
+          ) ? 'checked' : '';
+
+          return `
+              <label class="list-group-item">
+                  <input type="${data.multiSelect ? 'checkbox' : 'radio'}"
+                      name="answer_${nomor}${data.multiSelect ? '[]' : ''}" 
+                      value="${opt.value}" class="form-check-input me-1" ${isChecked}>
+                  ${opt.text}
+              </label>`;
+      }).join('');
+
+      const batalHtml = answered ? `
+          <div class="text-start mt-2">
+              <button type="button" class="btn btn-danger btn-sm batal-jawab" data-nomor="${nomor}">
+                  Batal Pilihan
+              </button>
+          </div>` : '';
+
+      $('.s').html(`
+          <p>${data.questionText}</p>
+          ${data.questionImage ? `<img src="/storage/${data.questionImage}" class="img-fluid mb-2">` : ''}
+          <div class="list-group">${opsiHtml}</div>${batalHtml}
+      `);
+
+      $(`input[name^="answer_${nomor}"]`).off('change').on('change', function () {
+          if (data.multiSelect) {
+              const selected = [];
+              $(`input[name="answer_${nomor}[]"]:checked`).each(function () {
+                  selected.push($(this).val());
+              });
+              jawabanSementara[nomor] = selected;
+          } else {
+              jawabanSementara[nomor] = $(this).val();
+          }
+
+          sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
+          updateSoalTerjawab();
+          updatePanelNavigasi();
+          if (!data.multiSelect && current < jumlahSoal) {
+              setTimeout(() => getSoal(++current), 300);
+          }
+      });
+
+      $('.batal-jawab').off('click').on('click', function () {
+          delete jawabanSementara[$(this).data('nomor')];
+          sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
+          tampilkanSoal(data, nomor);
+          updateSoalTerjawab();
+          updatePanelNavigasi();
+      });
+  }
+
+  function updateSoalTerjawab() {
+      const totalJawab = Object.keys(jawabanSementara).filter(k => {
+          const val = jawabanSementara[k];
+          return Array.isArray(val) ? val.length > 0 : val !== undefined && val !== '';
+      }).length;
+  
+      $('#answered').text(totalJawab);
+      $('#totals').text(jumlahSoal);
+  
+      $('#btn-submit').show().prop('disabled', false);
+  
+      if (!$('#btn-submit').data('bound')) {
+          $('#btn-submit').data('bound', true).on('click', function () {
+              // 🧠 HITUNG ULANG DI SINI
+              const currentJawab = Object.keys(jawabanSementara).filter(k => {
+                  const val = jawabanSementara[k];
+                  return Array.isArray(val) ? val.length > 0 : val !== undefined && val !== '';
+              }).length;
+  
+              const modalBody = currentJawab < jumlahSoal
+                  ? 'Masih ada soal yang belum dijawab. Yakin ingin mengumpulkan sekarang?'
+                  : 'Apakah Anda yakin ingin mengumpulkan semua jawaban?';
+              $('#konfirmasiModal .modal-body').text(modalBody);
+              $('#konfirmasiModal').modal('show');
+          });
+      }
+  
+      if (!$('#confirm-submit').data('bound')) {
+          $('#confirm-submit').data('bound', true).on('click', function () {
+              $('#konfirmasiModal').modal('hide');
+              kirimJawaban();
+          });
+      }
+  }
+  
+  
+  
+
+  function updateNavigasi(nomor) {
+      $('#prev').toggle(nomor > 1);
+      $('#next').toggle(nomor < jumlahSoal);
+  }
+
+  function updatePanelNavigasi() {
+      let html = '';
+      for (let i = 1; i <= jumlahSoal; i++) {
+          const isCurrent = i === current;
+          const hasAnswer = Array.isArray(jawabanSementara[i]) ? jawabanSementara[i].length > 0 : !!jawabanSementara[i];
+          let btnClass = isCurrent ? 'btn-success' : (hasAnswer ? 'btn-warning' : 'btn-outline-secondary');
+          html += `<button type="button" class="btn ${btnClass} btn-sm m-1 nav-soal" data-index="${i}">${i}</button>`;
+      }
+      $('#soal-container').html(html);
+      $('.nav-soal').off('click').on('click', function () {
+          current = $(this).data('index');
+          getSoal(current);
+      });
+  }
+
+  // Tombol Submit diklik
+  
+
+  // --- di bagian atas (masih di $(document).ready(...)) --- // sudah ada di filemu
+// key unik per packet
+const startKey = `quizStartTime_${packetId}`;
+
+// total durasi (15 menit)
+const totalTime = 15 * 60 * 1000;
+
+// ambil / set startTime spesifik packet
+let startTime = localStorage.getItem(startKey);
+if (!startTime) {
+  // kalau belum ada, set sekarang (hanya set pertama kali saat user benar2 mulai)
+  startTime = Date.now();
+  localStorage.setItem(startKey, startTime);
+} else {
+  startTime = parseInt(startTime);
 }
 
-// ✅ Kaitkan tombol submit (jika ada tombol dengan id="submit-btn")
-$(document).ready(function () {
-  $('#submit-btn').on('click', handleManualSubmit);
-});
-// ⏺️ Gantikan tombol submit dengan tombol dari atasan (#btn-nextj)
-$('#btn-nextj').on('click', function (e) {
-  e.preventDefault();
-  handleManualSubmit(); 
+// timer update (update elemen #timer)
+function updateTimer() {
+  const now = Date.now();
+  const elapsed = now - startTime;
+  const remaining = totalTime - elapsed;
+
+  if (remaining <= 0) {
+      $('#timer').text('00:00');
+      // auto-submit apabila waktu habis — panggil kirimJawaban otomatis
+      // pastikan kirimJawaban sudah didefinisikan (diletakkan di file yang sama)
+      // hapus key sebelum submit agar tidak tersisa
+      localStorage.removeItem(startKey);
+      sessionStorage.removeItem('jawabanSementara');
+      // submit (tunda sedikit biar form ter-append dengan benar)
+      setTimeout(() => kirimJawaban(), 300);
+      return;
+  }
+
+  const minutes = Math.floor((remaining / 1000) / 60);
+  const seconds = Math.floor((remaining / 1000) % 60);
+  $('#timer').text(
+      `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  );
+}
+
+// jalankan timer setiap detik
+updateTimer();
+const timerInterval = setInterval(updateTimer, 1000);
+
+// --- pada akhir file: ubah fungsi kirimJawaban() seperti ini ---
+function kirimJawaban() {
+  const jumlah = jumlahSoal;
+  const pilihan = jawabanSementara;
+
+  const form = $('<form>', {
+      method: 'POST',
+      action: '/soal/store' // atau sesuai route finalmu
+  });
+
+  const token = $('meta[name="csrf-token"]').attr('content');
+  form.append($('<input>', { type: 'hidden', name: '_token', value: token }));
+  form.append($('<input>', { type: 'hidden', name: 'jumlah', value: jumlah }));
+  form.append($('<input>', { type: 'hidden', name: 'test_id', value: testId }));
+  form.append($('<input>', { type: 'hidden', name: 'packet_id', value: packetId }));
+
+  // hitung time_taken (detik)
+  const now = Date.now();
+  const timeTakenMs = now - startTime;
+  const timeTakenSec = Math.max(0, Math.round(timeTakenMs / 1000));
+  form.append($('<input>', { type: 'hidden', name: 'time_taken', value: timeTakenSec }));
+
+  for (let i = 1; i <= jumlah; i++) {
+      form.append($('<input>', { type: 'hidden', name: `id[]`, value: i }));
+      form.append($('<input>', {
+          type: 'hidden',
+          name: `pilihan[${i}]`,
+          value: Array.isArray(pilihan[i]) ? pilihan[i].join(',') : (pilihan[i] || '')
+      }));
+  }
+
+  // hapus storage spesifik packet sebelum submit (prevent reuse)
+  localStorage.removeItem(startKey);
+  sessionStorage.removeItem('jawabanSementara');
+
+  $('body').append(form);
+  form.submit();
+}
+
 });

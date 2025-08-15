@@ -123,7 +123,43 @@
 
 @section('js-extra')
 <script src="{{ asset('assets/js/quiz-render.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const totalTime = 15 * 60 * 1000; // 15 menit dalam ms
+    const timerDisplay = document.getElementById('timer');
+    const form = document.getElementById('form');
 
+    // Ambil atau set waktu mulai
+    let startTime = localStorage.getItem('quizStartTime');
+    if (!startTime) {
+        startTime = new Date().getTime();
+        localStorage.setItem('quizStartTime', startTime);
+    } else {
+        startTime = parseInt(startTime);
+    }
+
+    function updateTimer() {
+        const now = new Date().getTime();
+        const elapsed = now - startTime;
+        const remaining = totalTime - elapsed;
+
+        if (remaining <= 0) {
+            timerDisplay.innerText = "00:00";
+            localStorage.removeItem('quizStartTime');
+            form.submit();
+            return;
+        }
+
+        const minutes = Math.floor((remaining / 1000) / 60);
+        const seconds = Math.floor((remaining / 1000) % 60);
+        timerDisplay.innerText =
+            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    setInterval(updateTimer, 1000);
+    updateTimer();
+});
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const jumlahSoal = parseInt(document.getElementById('jumlah_soal').value);
@@ -168,6 +204,46 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 @section('css-extra')
+<style>
+    /* Kotak navigasi soal */
+    .nav-soal {
+        width: 40px;
+        height: 30px;
+        border-radius: 4px;
+        font-weight: bold;
+        text-align: center;
+        line-height: 20px;
+        cursor: pointer;
+        margin: 3px;
+        border: 2px solid #ccc;
+        transition: all 0.2s ease-in-out;
+    }
 
+    /* Soal aktif */
+    .nav-soal.active {
+        background-color: #0d6efd;
+        color: white;
+        border-color: #0a58ca;
+    }
+
+    /* Sudah dijawab */
+    .nav-soal.answered {
+        background-color: #198754;
+        color: white;
+        border-color: #146c43;
+    }
+
+    /* Belum dijawab */
+    .nav-soal.unanswered {
+        background-color: #dc3545;
+        color: white;
+        border-color: #b02a37;
+    }
+
+    /* Hover effect */
+    .nav-soal:hover {
+        transform: scale(1.1);
+    }
+</style>
 </style>
 @endsection

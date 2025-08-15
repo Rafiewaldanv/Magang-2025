@@ -6,7 +6,7 @@
             </li>
         </ul>
         <a class="navbar-brand mx-auto" href="/">
-            <img src="{{ asset('assets/images/logo-2-white.png') }}" height="40" alt="img">
+            <img src="{{ asset('assets/images/logo.png') }}" style="filter: invert(1);" height="40" alt="img">
         </a>
         <ul class="nav navbar-nav">
             <li class="nav-item">
