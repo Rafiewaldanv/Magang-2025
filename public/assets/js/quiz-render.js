@@ -122,12 +122,22 @@ $(document).ready(function () {
     });
 
     $('.batal-jawab').off('click').on('click', function () {
-        delete jawabanSementara[$(this).data('nomor')];
+        const nomorSoal = $(this).data('nomor');
+    
+        // hapus jawaban di object
+        delete jawabanSementara[nomorSoal];
         sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
-        tampilkanSoal(data, nomor);
+    
+        // uncheck semua input pilihan (tanpa reload ulang soal)
+        $(`input[name^="answer_${nomorSoal}"]`).prop('checked', false);
+    
+        // sembunyikan tombol batal (optional)
+        $(this).remove();
+    
         updateSoalTerjawab();
         updatePanelNavigasi();
     });
+    
 }
 
 

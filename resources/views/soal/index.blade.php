@@ -88,10 +88,10 @@
                     <a href="#" class="text-secondary" data-bs-toggle="modal" data-bs-target="#tutorialModal" title="Tutorial"><i class="fa fa-question-circle" style="font-size: 1.5rem"></i></a>
                 </li>
                 <li class="nav-item ms-3">
-                <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase" id="btn-nextj" disabled>Submit</button>
+                <!-- <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase" id="btn-nextj" disabled>Submit</button> -->
 
                     <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase " id="btn-submit" style="display: none">Submit</button>
-                    <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase " id="btn-tiki" style="display: none">Submit</button>
+                    <!-- <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase " id="btn-tiki" style="display: none">Submit</button> -->
                 </li>
             </ul>
         </div>
