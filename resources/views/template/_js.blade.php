@@ -49,12 +49,12 @@
     });
 
     // Submit form
-    $(document).on("click", "#btn-submit", function(e){
-        e.preventDefault();
-        var ask = confirm("Anda yakin ingin mengumpulkan tes yang telah dikerjakan?");
-        if(ask){
-            window.removeEventListener("beforeunload", j);
-            $("#form")[0].submit();
-        }
-    });
+    // $(document).on("click", "#btn-submit", function(e){
+    //     e.preventDefault();
+    //     var ask = confirm("Anda yakin ingin mengumpulkan tes yang telah dikerjakann?");
+    //     if(ask){
+    //         window.removeEventListener("beforeunload", j);
+    //         $("#form")[0].submit();
+    //     }
+    // });
 </script>

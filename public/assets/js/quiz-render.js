@@ -255,7 +255,7 @@ function kirimJawaban() {
 
   const form = $('<form>', {
       method: 'POST',
-      action: '/soal/store' // atau sesuai route finalmu
+      action: '/soal/{path}/submit' // atau sesuai route finalmu
   });
 
   const token = $('meta[name="csrf-token"]').attr('content');

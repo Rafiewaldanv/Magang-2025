@@ -36,17 +36,16 @@
             <div class="card">
                 <div class="card-header fw-bold text-center">Navigasi Soal</div>
                 <div class="card-body">
-                    {{-- <form id="form" method="post" action="/tes/{{ $path }}/store"> --}}
-                    <form id="form" method="post" action="/tes/{{ $path }}/store">
-                        @csrf
-                    
-                        <input type="hidden" name="path" value="{{ $path }}">
-<input type="hidden" name="packet_id" value="{{ $packet->id }}">
-<input type="hidden" name="test_id" value="{{ $test->id }}">
-<input type="hidden" name="jumlah_soal" class="jumlah_soal" id="jumlah_soal" value="{{ $jumlah_soal }}">
-<input type="hidden" name="part" class="part" id="part" value="{{ $part }}">
+                <form id="form" method="POST" action="{{ route('tes.submit', ['path' => $path]) }}">
+    @csrf
+    <input type="hidden" name="path" value="{{ $path }}">
+    <input type="hidden" name="packet_id" value="{{ $packet->id }}">
+    <input type="hidden" name="test_id" value="{{ $test->id }}">
+    <input type="hidden" name="jumlah_soal" id="jumlah_soal" value="{{ $jumlah_soal }}">
+    <input type="hidden" name="part" id="part" value="{{ $part }}">
+    <div id="soal-container"></div>
+</form>
 
-<div id="soal-container"></div>
 
 
                     </form>
@@ -97,25 +96,23 @@
         </div>
     </nav>
     
-    <div class="modal fade" id="tutorialModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-            <div class="modal-content" style="height: 60vh">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">
-                        <span class="bg-warning rounded-1 text-center px-3 py-2 me-2"><i class="fa fa-lightbulb-o text-dark" aria-hidden="true"></i></span>
-                        Tutorial Tes
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary text-uppercase " data-bs-dismiss="modal">Mengerti</button>
-                </div>
-            </div>
-        </div>
+    <div class="modal fade" id="konfirmasiModal" tabindex="-1" aria-labelledby="konfirmasiLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="konfirmasiLabel">Konfirmasi Submit</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body">
+        Masih ada soal yang belum dijawab. Yakin ingin mengumpulkan sekarang?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-primary" id="confirm-submit">Ya, Kirim Jawaban</button>
+      </div>
     </div>
+  </div>
+</div>
     @endif
 </div>
 
@@ -123,6 +120,24 @@
 
 @section('js-extra')
 <script src="{{ asset('assets/js/quiz-render.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const btnSubmit = document.getElementById('btn-submit');
+    const confirmSubmit = document.getElementById('confirm-submit');
+    const form = document.getElementById('form');
+
+    // Klik tombol submit → buka modal
+    btnSubmit.addEventListener('click', function () {
+        new bootstrap.Modal(document.getElementById('konfirmasiModal')).show();
+    });
+
+    // Klik "Ya, Kirim Jawaban" → submit form
+    confirmSubmit.addEventListener('click', function () {
+        form.action = `/tes/{path}/submit`; // ubah action sesuai route
+        form.submit();
+    });
+});
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const totalTime = 15 * 60 * 1000; // 15 menit dalam ms
