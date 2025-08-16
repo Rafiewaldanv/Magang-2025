@@ -404,9 +404,8 @@ public function SoalToeic()
         'number'    => $number,
     ]);
 
-    // Query soal dengan relasi options
-    $question = Question::with('options')
-        ->where('packet_id', $packet_id)
+    // Ambil soal
+    $question = Question::where('packet_id', $packet_id)
         ->where('number', $number)
         ->first();
 
@@ -434,34 +433,20 @@ public function SoalToeic()
         } else {
             $questionText = $desc['soal'];
         }
-    } elseif (!empty($question->image)) {
-        $questionImage = $question->image;
     }
 
-    // Bangun daftar opsi
+    // Ambil opsi dari JSON description
     $options = [];
-    if (!empty($desc['option_a']) || !empty($desc['option_b'])) {
-        // Ambil dari JSON description
-        foreach (['a', 'b', 'c', 'd', 'e', 'f'] as $code) {
-            $key = 'option_' . $code;
-            if (!isset($desc[$key])) continue;
+    foreach (['a', 'b', 'c', 'd', 'e', 'f'] as $code) {
+        $key = 'option_' . $code;
+        if (!isset($desc[$key])) continue;
 
-            $val = $desc[$key];
-            $options[] = [
-                'value' => strtoupper($code),
-                'text'  => $isImage($val) ? null : $val,
-                'image' => $isImage($val) ? $val : null,
-            ];
-        }
-    } else {
-        // Ambil dari relasi options (Eloquent)
-        $options = $question->options->map(function ($opt) {
-            return [
-                'value' => $opt->value,
-                'text'  => $opt->text,
-                'image' => $opt->image,
-            ];
-        })->toArray();
+        $val = $desc[$key];
+        $options[] = [
+            'value' => strtoupper($code),
+            'text'  => $isImage($val) ? null : $val,
+            'image' => $isImage($val) ? $val : null,
+        ];
     }
 
     return response()->json([
@@ -474,6 +459,7 @@ public function SoalToeic()
         'options'       => $options,
     ]);
 }
+
 
 /**
  * Cek apakah string adalah JSON valid
