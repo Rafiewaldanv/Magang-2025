@@ -397,69 +397,85 @@ public function SoalToeic()
 
     // API: Ambil satu soal berdasarkan nomor
     public function getSoal($test_id, $packet_id, $number)
-{
-    Log::info('Memuat soal ke-', [
-        'test_id'   => $test_id,
-        'packet_id' => $packet_id,
-        'number'    => $number,
-    ]);
-
-    // Ambil soal
-    $question = Question::where('packet_id', $packet_id)
-        ->where('number', $number)
-        ->first();
-
-    if (!$question) {
-        return response()->json(['error' => 'Soal tidak ditemukan'], 404);
-    }
-
-    $test = Test::find($test_id);
-    $pathFromCode = $test ? $test->code : null;
-
-    // Decode deskripsi (JSON atau teks biasa)
-    $desc = is_string($question->description) && $this->isJson($question->description)
-        ? json_decode($question->description, true)
-        : ['soal' => $question->description, 'type' => $question->type];
-
-    // Fungsi bantu untuk cek path gambar
-    $isImage = fn($value) => is_string($value) && preg_match('/\.(png|jpg|jpeg)$/i', $value);
-
-    // Deteksi soal: teks atau gambar
-    $questionText = null;
-    $questionImage = null;
-    if (isset($desc['soal'])) {
-        if ($isImage($desc['soal'])) {
-            $questionImage = $desc['soal'];
-        } else {
-            $questionText = $desc['soal'];
+    {
+        Log::info('Memuat soal ke-', compact('test_id','packet_id','number'));
+    
+        $question = Question::where('packet_id', $packet_id)
+            ->where('number', $number)
+            ->first();
+    
+        if (!$question) {
+            return response()->json(['error' => 'Soal tidak ditemukan'], 404);
         }
+    
+        // base folder berdasarkan packet id
+        $baseFolder = "assets/images/{$packet_id}";
+    
+        // decode description
+        $desc = is_string($question->description) && $this->isJson($question->description)
+            ? json_decode($question->description, true)
+            : ['soal' => $question->description, 'type' => $question->type];
+    
+        $looksLikeImage = function($v) {
+            return is_string($v) && preg_match('/\.(png|jpe?g|gif)$/i', trim($v));
+        };
+    
+        // soal bisa berisi banyak gambar dipisah ":" atau teks
+        $questionImages = [];
+        $questionText = null;
+        if (!empty($desc['soal'])) {
+            $soalRaw = $desc['soal'];
+            if (strpos($soalRaw, ':') !== false) {
+                $parts = array_map('trim', explode(':', $soalRaw));
+                foreach ($parts as $p) {
+                    if ($looksLikeImage($p)) {
+                        $questionImages[] = asset("{$baseFolder}/" . trim($p));
+                    } else {
+                        $questionText = trim(($questionText ? $questionText . ' ' : '') . $p);
+                    }
+                }
+            } else {
+                if ($looksLikeImage($soalRaw)) {
+                    $questionImages[] = asset("{$baseFolder}/" . trim($soalRaw));
+                } else {
+                    $questionText = $soalRaw;
+                }
+            }
+        }
+    
+        // opsi dari JSON description (buat URL kalau image)
+        $options = [];
+        foreach (['a','b','c','d','e','f'] as $code) {
+            $key = 'option_' . $code;
+            if (!isset($desc[$key])) continue;
+            $val = trim($desc[$key]);
+            if ($looksLikeImage($val)) {
+                $options[] = [
+                    'value' => strtoupper($code),
+                    'text'  => null,
+                    'image' => asset("{$baseFolder}/" . $val),
+                ];
+            } else {
+                $options[] = [
+                    'value' => strtoupper($code),
+                    'text'  => $val,
+                    'image' => null,
+                ];
+            }
+        }
+    
+        return response()->json([
+            'number' => $question->number,
+            'questionText'  => $questionText,
+            'questionImage' => count($questionImages) ? $questionImages[0] : null,
+            'questionImages' => $questionImages,
+            'multiSelect' => ($desc['type'] ?? $question->type ?? 'radio') === 'checkbox',
+            'selection' => null,
+            'path' => (string)$packet_id, // opsional, kalau frontend butuh
+            'options' => $options,
+        ]);
     }
-
-    // Ambil opsi dari JSON description
-    $options = [];
-    foreach (['a', 'b', 'c', 'd', 'e', 'f'] as $code) {
-        $key = 'option_' . $code;
-        if (!isset($desc[$key])) continue;
-
-        $val = $desc[$key];
-        $options[] = [
-            'value' => strtoupper($code),
-            'text'  => $isImage($val) ? null : $val,
-            'image' => $isImage($val) ? $val : null,
-        ];
-    }
-
-    return response()->json([
-        'number'        => $question->number,
-        'questionText'  => $questionText,
-        'questionImage' => $questionImage,
-        'multiSelect'   => ($desc['type'] ?? $question->type ?? 'radio') === 'checkbox',
-        'selection'     => null,
-        'path'          => $pathFromCode,
-        'options'       => $options,
-    ]);
-}
-
+    
 
 /**
  * Cek apakah string adalah JSON valid

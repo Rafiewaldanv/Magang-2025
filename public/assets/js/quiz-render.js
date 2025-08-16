@@ -41,26 +41,51 @@ $(document).ready(function () {
     $('.soal_number .num').text(`Soal Nomor ${nomor}`);
     const answered = jawabanSementara[nomor] !== undefined && jawabanSementara[nomor] !== "";
 
-    const opsiHtml = data.options.map(opt => {
-        const isChecked = (
-            Array.isArray(jawabanSementara[nomor])
-                ? jawabanSementara[nomor].includes(opt.value)
-                : jawabanSementara[nomor] === opt.value
-        ) ? 'checked' : '';
+    // helper: dapatkan src gambar — kalau sudah URL penuh, pakai langsung,
+    // kalau hanya filename, bangun dari data.path (packet id).
+    const resolveImageSrc = (img) => {
+        if (!img) return null;
+        img = ('' + img).trim();
+        // jika sudah path absolut atau mulai dengan http or slash, pakai langsung
+        if (/^(https?:\/\/|\/|assets\/)/i.test(img)) return img.startsWith('/') ? img : (img.startsWith('http') ? img : '/' + img);
+        // fallback: build dari packet path (data.path expected to be packet_id)
+        const base = data.path ? `/assets/images/${data.path}/` : `/assets/images/`;
+        return base + img;
+    };
 
-        // ✅ jika opsi berupa gambar, tampilkan <img>, kalau teks tetap teks
-        const content = opt.image 
-            ? `<img src="/assets/images/${data.path}/${opt.image}" class="img-fluid">`
-            : opt.text;
+    const opsiHtml = (data.options || []).map(opt => {
+        const stored = jawabanSementara[nomor];
+        const isChecked = Array.isArray(stored)
+            ? stored.includes(opt.value)
+            : stored === opt.value;
+
+        const checkedAttr = isChecked ? 'checked' : '';
+
+        // resolve opt.image (could be full URL or filename)
+        const imgSrc = resolveImageSrc(opt.image);
+
+        const content = imgSrc
+            ? `<img src="${imgSrc}" class="img-fluid" style="max-width:160px; display:block; margin:6px 0;">`
+            : (opt.text ?? '');
 
         return `
-            <label class="list-group-item">
+            <label class="list-group-item d-flex align-items-center">
                 <input type="${data.multiSelect ? 'checkbox' : 'radio'}"
                     name="answer_${nomor}${data.multiSelect ? '[]' : ''}" 
-                    value="${opt.value}" class="form-check-input me-1" ${isChecked}>
-                ${content}
+                    value="${opt.value}" class="form-check-input me-2" ${checkedAttr}>
+                <div class="flex-grow-1">${content}</div>
             </label>`;
     }).join('');
+
+    // soal image(s)
+    let soalImageHtml = '';
+    if (Array.isArray(data.questionImages) && data.questionImages.length) {
+        soalImageHtml = data.questionImages
+            .map(u => `<img src="${resolveImageSrc(u)}" class="img-fluid mb-2">`)
+            .join('');
+    } else if (data.questionImage) {
+        soalImageHtml = `<img src="${resolveImageSrc(data.questionImage)}" class="img-fluid mb-2">`;
+    }
 
     const batalHtml = answered ? `
         <div class="text-start mt-2">
@@ -71,10 +96,12 @@ $(document).ready(function () {
 
     $('.s').html(`
         <p>${data.questionText ?? ''}</p>
-        ${data.questionImage ? `<img src="/assets/images/${data.path}/${data.questionImage}" class="img-fluid mb-2">` : ''}
-        <div class="list-group">${opsiHtml}</div>${batalHtml}
+        ${soalImageHtml}
+        <div class="list-group">${opsiHtml}</div>
+        ${batalHtml}
     `);
 
+    // event handlers (unchanged logic)
     $(`input[name^="answer_${nomor}"]`).off('change').on('change', function () {
         if (data.multiSelect) {
             const selected = [];
