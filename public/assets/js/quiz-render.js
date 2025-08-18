@@ -41,14 +41,11 @@ $(document).ready(function () {
     $('.soal_number .num').text(`Soal Nomor ${nomor}`);
     const answered = jawabanSementara[nomor] !== undefined && jawabanSementara[nomor] !== "";
 
-    // helper: dapatkan src gambar — kalau sudah URL penuh, pakai langsung,
-    // kalau hanya filename, bangun dari data.path (packet id).
+    // helper: dapatkan src gambar
     const resolveImageSrc = (img) => {
         if (!img) return null;
         img = ('' + img).trim();
-        // jika sudah path absolut atau mulai dengan http or slash, pakai langsung
         if (/^(https?:\/\/|\/|assets\/)/i.test(img)) return img.startsWith('/') ? img : (img.startsWith('http') ? img : '/' + img);
-        // fallback: build dari packet path (data.path expected to be packet_id)
         const base = data.path ? `/assets/images/${data.path}/` : `/assets/images/`;
         return base + img;
     };
@@ -65,7 +62,7 @@ $(document).ready(function () {
         const imgSrc = resolveImageSrc(opt.image);
 
         const content = imgSrc
-            ? `<img src="${imgSrc}" class="img-fluid" style="max-width:160px; display:block; margin:6px 0;">`
+            ? `<img src="${imgSrc}" class="q-img" alt="option-${opt.value}">`
             : (opt.text ?? '');
 
         return `
@@ -73,18 +70,26 @@ $(document).ready(function () {
                 <input type="${data.multiSelect ? 'checkbox' : 'radio'}"
                     name="answer_${nomor}${data.multiSelect ? '[]' : ''}" 
                     value="${opt.value}" class="form-check-input me-2" ${checkedAttr}>
-                <div class="flex-grow-1">${content}</div>
+                <div class="flex-grow-1 d-flex align-items-center">
+                    ${content}
+                    <div class="option-text ms-2">${opt.text ?? ''}</div>
+                </div>
             </label>`;
     }).join('');
 
-    // soal image(s)
+    // soal image(s) - bungkus dalam row agar sebaris
     let soalImageHtml = '';
     if (Array.isArray(data.questionImages) && data.questionImages.length) {
-        soalImageHtml = data.questionImages
-            .map(u => `<img src="${resolveImageSrc(u)}" class="img-fluid mb-2">`)
-            .join('');
+        soalImageHtml = `<div class="q-image-row">` +
+            data.questionImages
+                .map(u => {
+                    const src = resolveImageSrc(u);
+                    return src ? `<img src="${src}" class="q-img" alt="soal-img">` : '';
+                })
+                .join('') +
+            `</div>`;
     } else if (data.questionImage) {
-        soalImageHtml = `<img src="${resolveImageSrc(data.questionImage)}" class="img-fluid mb-2">`;
+        soalImageHtml = `<div class="q-image-row"><img src="${resolveImageSrc(data.questionImage)}" class="q-img" alt="soal-img"></div>`;
     }
 
     const batalHtml = answered ? `
@@ -123,22 +128,22 @@ $(document).ready(function () {
 
     $('.batal-jawab').off('click').on('click', function () {
         const nomorSoal = $(this).data('nomor');
-    
+
         // hapus jawaban di object
         delete jawabanSementara[nomorSoal];
         sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
-    
+
         // uncheck semua input pilihan (tanpa reload ulang soal)
         $(`input[name^="answer_${nomorSoal}"]`).prop('checked', false);
-    
+
         // sembunyikan tombol batal (optional)
         $(this).remove();
-    
+
         updateSoalTerjawab();
         updatePanelNavigasi();
     });
-    
 }
+
 
 
   function updateSoalTerjawab() {
@@ -255,8 +260,7 @@ function kirimJawaban() {
 
   const form = $('<form>', {
       method: 'POST',
-      action: '/soal/{path}/submit' // atau sesuai route finalmu
-  });
+      action: '/soal/simpan',  });
 
   const token = $('meta[name="csrf-token"]').attr('content');
   form.append($('<input>', { type: 'hidden', name: '_token', value: token }));

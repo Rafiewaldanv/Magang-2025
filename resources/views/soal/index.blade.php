@@ -95,7 +95,25 @@
             </ul>
         </div>
     </nav>
-    
+    <div class="modal fade" id="modalKembali" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Konfirmasi Keluar Tes</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Jika keluar, tes dianggap <strong>selesai</strong> dan tidak bisa dilanjutkan lagi. 
+        Yakin ingin keluar?
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <a href="/" class="btn btn-danger" id="confirm-kembali">Ya, Keluar</a>
+      </div>
+    </div>
+  </div>
+</div>
+
     <div class="modal fade" id="konfirmasiModal" tabindex="-1" aria-labelledby="konfirmasiLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -120,7 +138,43 @@
 
 @section('js-extra')
 <script src="{{ asset('assets/js/quiz-render.js') }}"></script>
+
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Handler tombol kembali di navbar
+    const btnKembali = document.getElementById('btn-kembali');
+    const confirmKembali = document.getElementById('confirm-kembali');
+
+    if (btnKembali) {
+        btnKembali.addEventListener('click', function (e) {
+            e.preventDefault();
+            new bootstrap.Modal(document.getElementById('modalKembali')).show();
+        });
+    }
+
+    if (confirmKembali) {
+        confirmKembali.addEventListener('click', function () {
+            // Hapus data tes
+            localStorage.removeItem('quizStartTime');
+            sessionStorage.clear();
+
+            // Tandai selesai (opsional bisa request ke server)
+            window.location.href = '/';
+        });
+    }
+
+    // 🟢 Intercept tombol back browser
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', function () {
+        new bootstrap.Modal(document.getElementById('modalKembali')).show();
+
+        // Dorong lagi state supaya back tidak langsung keluar
+        window.history.pushState(null, '', window.location.href);
+    });
+});
+
+
+
 document.addEventListener('DOMContentLoaded', function () {
     const btnSubmit = document.getElementById('btn-submit');
     const confirmSubmit = document.getElementById('confirm-submit');
@@ -133,14 +187,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Klik "Ya, Kirim Jawaban" → submit form
     confirmSubmit.addEventListener('click', function () {
-        form.action = `/tes/{path}/submit`; // ubah action sesuai route
+        localStorage.removeItem('quizStartTime');
         form.submit();
     });
 });
 </script>
+@if(Route::is('soal'))
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const totalTime = 15 * 60 * 1000; // 15 menit dalam ms
+    const totalTime = 15 * 60 * 1000; // 15 menit
     const timerDisplay = document.getElementById('timer');
     const form = document.getElementById('form');
 
@@ -175,6 +230,8 @@ document.addEventListener('DOMContentLoaded', function () {
     updateTimer();
 });
 </script>
+@endif
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const jumlahSoal = parseInt(document.getElementById('jumlah_soal').value);
@@ -217,6 +274,31 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 @endsection
 
+@section('css-extra')
+<style>
+.q-img {
+  display: inline-block;
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 1px;
+  margin-right: 8px;
+  margin-bottom: 6px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.q-image-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 6px 0;
+  white-space: nowrap;
+}
+.list-group-item .q-img { margin-right: 10px; }
+</style>
+@endsection
 
 @section('css-extra')
 <style>
@@ -259,6 +341,7 @@ document.addEventListener('DOMContentLoaded', function () {
     .nav-soal:hover {
         transform: scale(1.1);
     }
+    
 </style>
 </style>
 @endsection

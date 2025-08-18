@@ -1,9 +1,20 @@
 <nav class="navbar navbar-expand navbar-dark bg-theme-1 fixed-top shadow-sm">
     <div class="container">
         <ul class="nav navbar-nav">
-            <li class="nav-item" style="{{ is_int(strpos(Request::path(), 'dashboard')) ? 'visibility:hidden' : 'visibility:visible' }}">
-                <a onclick="sessionStorage.clear();" class="nav-link text-white fw-bold" href="/"><i class="fa fa-arrow-left"></i> <span class="d-none d-md-inline">Kembali</span></a>
-            </li>
+        <li class="nav-item" style="{{ is_int(strpos(Request::path(), 'dashboard')) ? 'visibility:hidden' : 'visibility:visible' }}">
+    @if(Route::is('soal.index')) 
+        {{-- Override khusus halaman soal --}}
+        <a href="#" id="btn-kembali" class="nav-link text-white fw-bold">
+            <i class="fa fa-arrow-left"></i> <span class="d-none d-md-inline">Kembali</span>
+        </a>
+    @else
+        {{-- Default tombol kembali --}}
+        <a onclick="sessionStorage.clear();" class="nav-link text-white fw-bold" href="/">
+            <i class="fa fa-arrow-left"></i> <span class="d-none d-md-inline">Kembali</span>
+        </a>
+    @endif
+</li>
+
         </ul>
         <a class="navbar-brand mx-auto" href="/">
             <img src="{{ asset('assets/images/logo.png') }}" style="filter: invert(1);" height="40" alt="img">
