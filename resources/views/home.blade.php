@@ -64,6 +64,7 @@
 </div>
 
 <!-- Modal 2: Konfirmasi -->
+<!-- Modal 2: Konfirmasi -->
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -72,13 +73,22 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                <p>Apakah kamu sudah siap memulai tes?</p>
-            </div>
-            <div class="modal-footer">
-                <a href="{{ route('soal.index') }}" class="btn btn-success">Lanjutkan Tes</a>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Belum Siap</button>
+                <p>Pilih jenis tes yang akan kamu kerjakan:</p>
+
+                <form id="startTestForm" method="GET" action="{{ route('soal.index') }}">
+                    <select class="form-select mb-3" name="packet_id" required>
+                        <option value="">-- Pilih Paket Tes --</option>
+                        @foreach($packets as $p)
+                            <option value="{{ $p->id }}">{{ $p->name }}</option>
+                        @endforeach
+                    </select>
+
+                    <button type="submit" class="btn btn-success">Lanjutkan Tes</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Belum Siap</button>
+                </form>
             </div>
         </div>
     </div>
 </div>
+
 @endsection

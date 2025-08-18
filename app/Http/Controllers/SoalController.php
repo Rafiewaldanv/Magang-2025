@@ -15,8 +15,10 @@ use Illuminate\Support\Facades\Storage;
 class SoalController extends Controller
 {
 
-public function home(){
-    return view('home');
+    public function home()
+    {
+        $packets = Packet::all(); // ambil semua packet
+        return view('home', compact('packets'));
 }
 public function SoalAdaptifAnalogi()
 {
@@ -371,29 +373,36 @@ public function SoalToeic()
     return "Import selesai!";
 }
     // Menampilkan seluruh soal (jika non-AJAX)
-    public function index()
-    {
-        $test = Test::find(1); // Ganti 1 sesuai ID default atau gunakan dynamic jika diperlukan
+    public function index(Request $request)
+{
+    $packetId = $request->get('packet_id'); // ambil dari dropdown
 
-        if (!$test) {
-            abort(404, 'Data test tidak ditemukan.');
-        }
+    if (!$packetId) {
+        abort(400, 'Packet ID tidak diberikan.');
+    }
 
-    $packet = Packet::where('test_id', $test->id)->first();
+    $packet = Packet::find($packetId);
     if (!$packet) {
         abort(404, 'Data packet tidak ditemukan.');
     }
+
+    $test = Test::find($packet->test_id);
+    if (!$test) {
+        abort(404, 'Data test tidak ditemukan.');
+    }
+
     $soal = Question::where('packet_id', $packet->id)->get();
     $jumlah_soal = $soal->count();
     $part = $packet->part;
     $path = $test->code;
     $selection = null;
 
-        return view('soal.index', compact(
-            'soal', 'selection', 'path',
-            'packet', 'test', 'jumlah_soal', 'part'
-        ));
-    }
+    return view('soal.index', compact(
+        'soal', 'selection', 'path',
+        'packet', 'test', 'jumlah_soal', 'part'
+    ));
+}
+
 
     // API: Ambil satu soal berdasarkan nomor
     public function getSoal($test_id, $packet_id, $number)
