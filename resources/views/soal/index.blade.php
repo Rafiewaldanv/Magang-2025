@@ -9,7 +9,6 @@
 <div class="bg-theme-1 bg-header">
     <div class="container text-center text-white">
         {{-- <h3>{{ $questions->packet->name }}</h3> --}}
-        <h2 id="timer">00:00</h2>
     </div>
 </div>
 <div class="custom-shape-divider-top-1617767620">
@@ -59,10 +58,15 @@
                 <div class="">
                     <div class="row mb-5">
                         <div class="col-12">
-                            <div class="card soal rounded-1 mb-3">
-                                <div class="soal_number card-header bg-transparent">
-                                    <i class="fa fa-edit"></i> <span class="num fw-bold"></span>
-                                </div>
+                        <div class="card soal rounded-1 mb-3">
+    {{-- Timer di atas tulisan "Soal Nomor" --}}
+    <div class="card-header bg-transparent text-end">
+        <h2 id="timer" class="mb-0 fw-bold">30:00</h2>
+    </div>
+
+    <div class="soal_number card-header bg-transparent">
+        <i class="fa fa-edit"></i> <span class="num fw-bold"></span>
+    </div>
                                 <div class="card-body s" >
 
                                 </div>
@@ -135,102 +139,196 @@
 </div>
 
 @endsection
-
 @section('js-extra')
 <script src="{{ asset('assets/js/quiz-render.js') }}"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Handler tombol kembali di navbar
-    const btnKembali = document.getElementById('btn-kembali');
-    const confirmKembali = document.getElementById('confirm-kembali');
+  // --- Shared setup: dedup & key discovery ---
+  const $form = document.getElementById('form');
+  const packetInput = $form ? $form.querySelector('input[name="packet_id"]') : null;
+  const packetId = packetInput ? packetInput.value : null;
+  // key unik per packet; fallback ke generic supaya tidak error bila packetId null
+  const START_KEY = packetId ? `quizStartTime_${packetId}` : 'quizStartTime';
+  // simpan di global supaya handler lain bisa akses
+  window.__quizStartKey = START_KEY;
 
-    if (btnKembali) {
-        btnKembali.addEventListener('click', function (e) {
-            e.preventDefault();
-            new bootstrap.Modal(document.getElementById('modalKembali')).show();
-        });
-    }
+  // helper clear timer & related storage
+  function clearQuizStorageAndTimer() {
+    try {
+      localStorage.removeItem(window.__quizStartKey);
+    } catch (e) { console.warn('clear localStorage error', e); }
+    try {
+      sessionStorage.removeItem('jawabanSementara');
+    } catch (e) {}
+    // stop interval jika dijalankan
+    try {
+      if (window.__quizTimerInterval) {
+        clearInterval(window.__quizTimerInterval);
+        window.__quizTimerInterval = null;
+      }
+    } catch (e) {}
+  }
 
-    if (confirmKembali) {
-        confirmKembali.addEventListener('click', function () {
-            // Hapus data tes
-            localStorage.removeItem('quizStartTime');
-            sessionStorage.clear();
+  // --- Navbar back override + modal handling ---
+  const btnKembali = document.getElementById('btn-kembali');
+  const modalKembaliEl = document.getElementById('modalKembali');
+  const confirmKembali = document.getElementById('confirm-kembali');
 
-            // Tandai selesai (opsional bisa request ke server)
-            window.location.href = '/';
-        });
-    }
+  if (btnKembali) {
+    btnKembali.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (modalKembaliEl) new bootstrap.Modal(modalKembaliEl).show();
+    });
+  }
 
-    // 🟢 Intercept tombol back browser
+  if (confirmKembali) {
+    confirmKembali.addEventListener('click', function (e) {
+      // hapus storage & hentikan timer, lalu pindah halaman
+      clearQuizStorageAndTimer();
+      // biarkan href berjalan — kalau itu anchor, window.location.href akan diikuti
+      // jika ingin memastikan redirect, uncomment baris berikut:
+      // window.location.href = confirmKembali.getAttribute('href') || '/';
+    });
+  }
+
+  // Intercept browser back (popstate) untuk menampilkan modal juga
+  try {
+    // push state agar popstate terjadi saat user tekan back
     window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', function () {
-        new bootstrap.Modal(document.getElementById('modalKembali')).show();
-
-        // Dorong lagi state supaya back tidak langsung keluar
+    window.addEventListener('popstate', function (e) {
+      if (modalKembaliEl) {
+        new bootstrap.Modal(modalKembaliEl).show();
+        // dorong state kembali agar user tidak langsung navigate away
         window.history.pushState(null, '', window.location.href);
+      }
     });
-});
+  } catch (e) {
+    console.warn('popstate not available', e);
+  }
 
+  // --- Submit handlers (navbar submit and confirm) ---
+  const btnSubmit = document.getElementById('btn-submit');
+  const confirmSubmit = document.getElementById('confirm-submit');
 
-
-document.addEventListener('DOMContentLoaded', function () {
-    const btnSubmit = document.getElementById('btn-submit');
-    const confirmSubmit = document.getElementById('confirm-submit');
-    const form = document.getElementById('form');
-
-    // Klik tombol submit → buka modal
-    btnSubmit.addEventListener('click', function () {
-        new bootstrap.Modal(document.getElementById('konfirmasiModal')).show();
+  if (btnSubmit) {
+    btnSubmit.addEventListener('click', function (e) {
+      e.preventDefault();
+      const konf = document.getElementById('konfirmasiModal');
+      if (konf) new bootstrap.Modal(konf).show();
     });
+  }
 
-    // Klik "Ya, Kirim Jawaban" → submit form
-    confirmSubmit.addEventListener('click', function () {
-        localStorage.removeItem('quizStartTime');
-        form.submit();
+  if (confirmSubmit) {
+    confirmSubmit.addEventListener('click', function (e) {
+      // clear and then submit form
+      clearQuizStorageAndTimer();
+      // submit the form (form action is already set to your tes.submit route)
+      if ($form) {
+        // make sure form is submitted after modal is hidden (small delay)
+        setTimeout(() => $form.submit(), 150);
+      }
     });
-});
-</script>
-@if(Route::is('soal'))
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const totalTime = 15 * 60 * 1000; // 15 menit
-    const timerDisplay = document.getElementById('timer');
-    const form = document.getElementById('form');
+  }
 
-    // Ambil atau set waktu mulai
-    let startTime = localStorage.getItem('quizStartTime');
-    if (!startTime) {
-        startTime = new Date().getTime();
-        localStorage.setItem('quizStartTime', startTime);
-    } else {
-        startTime = parseInt(startTime);
-    }
+  // also ensure normal form submit clears storage (catch all)
+  if ($form) {
+    $form.addEventListener('submit', function () {
+      clearQuizStorageAndTimer();
+    });
+  }
 
-    function updateTimer() {
-        const now = new Date().getTime();
-        const elapsed = now - startTime;
-        const remaining = totalTime - elapsed;
+  // --- TIMER (hanya aktif kalau route soal, atau jika #timer ada) ---
+  const timerEl = document.getElementById('timer');
+  if (!timerEl) {
+    // no timer on this page — nothing to do further
+    return;
+  }
 
-        if (remaining <= 0) {
-            timerDisplay.innerText = "00:00";
-            localStorage.removeItem('quizStartTime');
-            form.submit();
-            return;
+  const TOTAL_MS = 15 * 60 * 1000; // 15 menit (ubah ke 30*60*1000 kalau mau 30 menit)
+  // gunakan startTime stored, kalau belum ada set sekarang
+  let startTime = localStorage.getItem(window.__quizStartKey);
+  if (startTime) {
+    startTime = parseInt(startTime, 10);
+  } else {
+    startTime = Date.now();
+    try { localStorage.setItem(window.__quizStartKey, startTime); } catch (e) {}
+  }
+
+  // prevent double init (jika script dieksekusi dua kali)
+  if (window.__quizTimerInterval) {
+    // sudah berjalan — update timer immediately and exit
+    (function immediateUpdate() {
+      const now = Date.now();
+      const elapsed = now - startTime;
+      const remaining = TOTAL_MS - elapsed;
+      if (remaining <= 0) {
+        timerEl.innerText = '00:00';
+      } else {
+        const m = Math.floor((remaining / 1000) / 60);
+        const s = Math.floor((remaining / 1000) % 60);
+        timerEl.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      }
+    })();
+    return;
+  }
+
+  function updateTimerOnce() {
+    const now = Date.now();
+    const elapsed = now - startTime;
+    const remaining = TOTAL_MS - elapsed;
+
+    if (remaining <= 0) {
+      timerEl.innerText = '00:00';
+      // auto-submit: make sure we only submit once
+      clearQuizStorageAndTimer();
+      // trigger form submit if available
+      if ($form) {
+        // inject answers from sessionStorage (if you use that) — optional
+        const answers = JSON.parse(sessionStorage.getItem('jawabanSementara') || '{}');
+        // remove previous dynamic inputs
+        $form.querySelectorAll('input._auto_ans').forEach(n => n.remove());
+        for (const num in answers) {
+          if (!answers.hasOwnProperty(num)) continue;
+          const val = Array.isArray(answers[num]) ? answers[num].join(',') : (answers[num] ?? '');
+          const inp = document.createElement('input');
+          inp.type = 'hidden';
+          inp.name = `answers[${num}]`;
+          inp.value = String(val);
+          inp.className = '_auto_ans';
+          $form.appendChild(inp);
         }
+        // optional time_taken
+        const timeTakenSec = Math.round(elapsed / 1000);
+        const tt = document.createElement('input');
+        tt.type = 'hidden';
+        tt.name = 'time_taken';
+        tt.value = String(timeTakenSec);
+        tt.className = '_auto_ans';
+        $form.appendChild(tt);
 
-        const minutes = Math.floor((remaining / 1000) / 60);
-        const seconds = Math.floor((remaining / 1000) % 60);
-        timerDisplay.innerText =
-            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        // submit
+        setTimeout(() => $form.submit(), 100);
+      }
+      // stop interval
+      if (window.__quizTimerInterval) {
+        clearInterval(window.__quizTimerInterval);
+        window.__quizTimerInterval = null;
+      }
+      return;
     }
 
-    setInterval(updateTimer, 1000);
-    updateTimer();
+    const minutes = Math.floor((remaining / 1000) / 60);
+    const seconds = Math.floor((remaining / 1000) % 60);
+    timerEl.innerText = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+  }
+
+  // start interval and store id globally so confirmKembali can clear it
+  updateTimerOnce();
+  window.__quizTimerInterval = setInterval(updateTimerOnce, 1000);
+
 });
 </script>
-@endif
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
