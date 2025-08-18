@@ -190,19 +190,28 @@ $(document).ready(function () {
   }
 
   function updatePanelNavigasi() {
-      let html = '';
-      for (let i = 1; i <= jumlahSoal; i++) {
-          const isCurrent = i === current;
-          const hasAnswer = Array.isArray(jawabanSementara[i]) ? jawabanSementara[i].length > 0 : !!jawabanSementara[i];
-          let btnClass = isCurrent ? 'btn-success' : (hasAnswer ? 'btn-warning' : 'btn-outline-secondary');
-          html += `<button type="button" class="btn ${btnClass} btn-sm m-1 nav-soal" data-index="${i}">${i}</button>`;
-      }
-      $('#soal-container').html(html);
-      $('.nav-soal').off('click').on('click', function () {
-          current = $(this).data('index');
-          getSoal(current);
-      });
-  }
+    let html = '';
+    for (let i = 1; i <= jumlahSoal; i++) {
+        const isCurrent = i === current;
+        const hasAnswer = Array.isArray(jawabanSementara[i]) 
+            ? jawabanSementara[i].length > 0 
+            : !!jawabanSementara[i];
+
+        // pake class dari CSS custom
+        let statusClass = hasAnswer ? 'answered' : 'unanswered';
+        if (isCurrent) statusClass = 'active';
+
+        html += `<button type="button" class="nav-soal ${statusClass}" data-index="${i}">${i}</button>`;
+    }
+
+    $('#soal-container').html(html);
+
+    // klik navigasi soal
+    $('.nav-soal').off('click').on('click', function () {
+        current = $(this).data('index');
+        getSoal(current);
+    });
+}
 
   // Tombol Submit diklik
   

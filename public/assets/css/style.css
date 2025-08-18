@@ -12,4 +12,43 @@
   background-color: #ff8400 !important;
 }
 
+ /* Kotak navigasi soal */
+ .nav-soal {
+  width: 45px;
+  height: 30px;
+  border-radius: 2px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 20px;
+  cursor: pointer;
+  margin: 3px;
+  border: 2px solid #ccc;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Soal aktif */
+.nav-soal.active {
+  background-color: #198754;
+  color: white;
+  border-color: #6c757d;
+}
+
+/* Sudah dijawab */
+.nav-soal.answered {
+  background-color: rgb(247, 160, 79);
+  color: white;
+  border-color: #6c757d);
+}
+
+/* Belum dijawab */
+.nav-soal.unanswered {
+  background-color: #ffffff;
+  color: #6c757d;
+  border-color: #6c757d);
+}
+
+/* Hover effect */
+.nav-soal:hover {
+  transform: scale(1.1);
+}
 
