@@ -670,6 +670,9 @@ public function simpanJawaban(Request $request)
             'debug' => config('app.debug') ? $e->getMessage() : null
         ], 500);
     }
+    // ✅ Tandai bahwa user sudah menyelesaikan tes
+
+
 }
 
 // ✅ Method terpisah untuk menghitung skor final

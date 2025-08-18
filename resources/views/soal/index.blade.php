@@ -99,6 +99,49 @@
             </ul>
         </div>
     </nav>
+    <!-- Modal Tutorial -->
+    <div class="modal fade" id="tutorialModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content" style="height: 60vh">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">
+                    <span class="bg-warning rounded-1 text-center px-3 py-2 me-2">
+                        <i class="fa fa-lightbulb-o text-dark" aria-hidden="true"></i>
+                    </span>
+                    Tutorial Tes
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body text-start overflow-auto">
+                <h6 class="fw-bold">Panduan Mengerjakan Tes:</h6>
+                <ol class="mt-2">
+                    <li>Baca setiap soal dengan seksama sebelum menjawab.</li>
+                    <li>Pilih salah satu jawaban dengan mengklik opsi yang tersedia.</li>
+                    <li>Jika soal berupa gambar, perhatikan detail gambar dengan baik.</li>
+                    <li>Gunakan tombol <b>Next</b> untuk maju ke soal berikutnya dan <b>Previous</b> untuk kembali ke soal sebelumnya.</li>
+                    <li>Pastikan semua soal sudah dijawab. Sistem tidak akan mengizinkan submit jika ada soal yang kosong.</li>
+                    <li>Kamu bisa mengganti jawaban kapan saja sebelum menekan tombol <b>Submit</b>.</li>
+                    <li>Setelah menekan tombol <b>Submit</b>, jawaban akan disimpan dan <b>tidak dapat diubah kembali</b>.</li>
+                </ol>
+                
+                <div class="alert alert-info mt-3" role="alert">
+                    ℹ️ Tips: Kerjakan soal yang mudah terlebih dahulu agar lebih efisien.
+                </div>
+                
+                <div class="alert alert-warning mt-2" role="alert">
+                    ⚠️ Waktu pengerjaan terbatas, pastikan memanfaatkan waktu dengan baik.
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary text-uppercase" data-bs-dismiss="modal">Mengerti</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
     <div class="modal fade" id="modalKembali" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -107,7 +150,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        Jika keluar, tes dianggap <strong>selesai</strong> dan tidak bisa dilanjutkan lagi. 
+        Jika keluar, tes dianggap <strong>dibatalkan</strong> dan tidak bisa dilanjutkan lagi. 
         Yakin ingin keluar?
       </div>
       <div class="modal-footer">
