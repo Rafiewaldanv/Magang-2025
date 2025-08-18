@@ -141,6 +141,20 @@
 @endsection
 @section('js-extra')
 <script src="{{ asset('assets/js/quiz-render.js') }}"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // Deteksi apakah kita di halaman soal.index
+    @if(Route::is('soal.index'))
+        // Dorong state baru biar tombol back gak langsung balik ke home
+        history.pushState(null, null, location.href);
+
+        window.onpopstate = function (event) {
+            // Saat tombol back ditekan, trigger tombol kembali custom
+            document.getElementById('btn-kembali').click();
+        };
+    @endif
+});
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {

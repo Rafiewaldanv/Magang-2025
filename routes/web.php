@@ -20,15 +20,30 @@ Route::get('/soal-toeic', [SoalController::class, 'SoalToeic'])->name('soal.toei
 
 // 📃 View utama tes interaktifRoute::get('/soal-toeic', [SoalController::class, 'tampilkanSoalToeic']);
 Route::get('/home', [SoalController::class, 'home'])->name('home');
-Route::get('/soal', [SoalController::class, 'index'])->name('soal.index');
+Route::post('/soal/start', [SoalController::class, 'soalStart'])->name('soal.start');
+Route::post('/soal/prepare', [SoalController::class, 'prepareTes'])->name('soal.mulai');
+Route::get('/soal', [SoalController::class, 'mulaiTes'])->name('soal.index');
+
+
+
 
 // 📦 API: Ambil soal berdasarkan nomor (dipanggil dari JS)
 // 📮 Simpan jawaban setelah memilih opsi (optional, jika dipakai per soal)
 Route::post('/soal/simpan', [SoalController::class, 'simpanJawaban'])->name('soal.simpan');
-
+Route::get('/error', function () {
+    return view('soal.error');
+})->name('soal.error');
+Route::get('/errorr', function () {
+    return view('soal.error');
+})->name('soal.errorr');
+Route::get('/errorrr', function () {
+    return view('soal.error');
+})->name('soal.errorrr');
 // 🚀 Submit saat waktu habis (auto-submit final)
 Route::post('/tes/{path}/submit', [SoalController::class, 'simpanJawaban'])->name('tes.submit');
 
 // 🧪  View setelah tes selesai
 Route::get('/tes/selesai', function () {  return view('tes.selesai'); // Buat view ini untuk notifikasi akhir tes
 })->name('tes.selesai');
+
+Route::get('/soal/selesai}', [SoalController::class, 'soalSelesai'])->name('soal.simpan');

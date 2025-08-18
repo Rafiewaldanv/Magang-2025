@@ -28,7 +28,7 @@
             @endif
 
             <div class="d-flex justify-content-center gap-3 mt-4">
-                <a href="{{ route('soal.skor') }}" class="btn btn-primary px-4 py-2">
+                <a href="{{ route('soal.selesai') }}" class="btn btn-primary px-4 py-2">
                     <i class="fa fa-bar-chart me-2"></i> Lihat Skor
                 </a>
                 <a href="{{ route('index') }}" class="btn btn-secondary px-4 py-2">

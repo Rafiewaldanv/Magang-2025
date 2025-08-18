@@ -372,36 +372,78 @@ public function SoalToeic()
 
     return "Import selesai!";
 }
-    // Menampilkan seluruh soal (jika non-AJAX)
-    public function index(Request $request)
+public function prepareTes(Request $request)
 {
-    $packetId = $request->get('packet_id'); // ambil dari dropdown
+    $packetId = $request->input('packet_id');
 
-    if (!$packetId) {
-        abort(400, 'Packet ID tidak diberikan.');
-    }
-
+    // validasi packet_id
     $packet = Packet::find($packetId);
     if (!$packet) {
-        abort(404, 'Data packet tidak ditemukan.');
+        return redirect()->route('home')
+                         ->with('error', 'Paket tes tidak valid.');
     }
 
+    // simpan session sekali pakai
+    session(['selected_packet_id' => $packetId]);
+
+    // redirect ke mulaiTes
+    return redirect()->route('soal.index', ['packetId' => $packetId]);
+}
+public function soalStart(Request $request)
+{
+    $request->validate([
+        'packet_id' => 'required|exists:packets,id'
+    ]);
+
+    // Simpan ke session
+    session(['packet_id' => $request->packet_id]);
+
+    return redirect()->route('soal.index');
+}
+
+
+    // Step 2: tampilkan soal
+    public function mulaiTes()
+{
+    // 🔹 Ambil packet_id dari session
+    $packetId = session('packet_id');
+
+    // Kalau nggak ada, redirect balik
+    if (!$packetId) {
+        return redirect()->route('home')->with('error', 'Silakan pilih paket tes dulu.');
+    }
+
+    // 🔹 Cari packet
+    $packet = Packet::find($packetId);
+    if (!$packet) {
+        return view('soal.error', ['message' => 'Paket tidak ditemukan.']);
+    }
+
+    // 🔹 Cari test yang sesuai
     $test = Test::find($packet->test_id);
     if (!$test) {
-        abort(404, 'Data test tidak ditemukan.');
+        return view('soal.error', ['message' => 'Tes tidak ditemukan.']);
     }
 
+    // 🔹 Ambil semua soal dari packet
     $soal = Question::where('packet_id', $packet->id)->get();
     $jumlah_soal = $soal->count();
-    $part = $packet->part;
-    $path = $test->code;
-    $selection = null;
 
-    return view('soal.index', compact(
-        'soal', 'selection', 'path',
-        'packet', 'test', 'jumlah_soal', 'part'
-    ));
+    // 🔹 Render view
+    return view('soal.index', [
+        'test_id'     => $test->id,
+        'soal'        => $soal,
+        'selection'   => null,
+        'path'        => $test->code,
+        'packet_id'   => $packet->id,
+        'packet'      => $packet,
+        'test'        => $test,
+        'jumlah_soal' => $jumlah_soal,
+        'part'        => $packet->part
+    ]);
 }
+
+
 
 
     // API: Ambil satu soal berdasarkan nomor
