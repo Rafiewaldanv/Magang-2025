@@ -37,14 +37,14 @@
 .nav-soal.answered {
   background-color: rgb(247, 160, 79);
   color: white;
-  border-color: #6c757d);
+  border-color: #6c757d;
 }
 
 /* Belum dijawab */
 .nav-soal.unanswered {
   background-color: #ffffff;
   color: #6c757d;
-  border-color: #6c757d);
+  border-color: #6c757d;
 }
 
 /* Hover effect */
