@@ -35,7 +35,7 @@
             <div class="card">
                 <div class="card-header fw-bold text-center">Navigasi Soal</div>
                 <div class="card-body">
-                <form id="form" method="POST" action="{{ route('tes.submit', ['path' => $path]) }}">
+                <form id="form" method="POST" action="{{ route('soal.simpan', ['path' => $path]) }}">
     @csrf
     <input type="hidden" name="path" value="{{ $path }}">
     <input type="hidden" name="packet_id" value="{{ $packet->id }}">
@@ -198,7 +198,12 @@ document.addEventListener("DOMContentLoaded", function () {
     @endif
 });
 </script>
-
+<script>
+document.getElementById("form").addEventListener("submit", function(e) {
+    e.preventDefault(); // cegah langsung submit
+    kirimJawaban();     // pastikan isi jawaban ditambahkan dulu
+});
+<script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   // --- Shared setup: dedup & key discovery ---
@@ -456,6 +461,7 @@ document.addEventListener('DOMContentLoaded', function () {
 @endsection
 
 @section('css-extra')
+<link rel="stylesheet" href="{{ asset('css/style.css') }}">
 <style>
     /* Kotak navigasi soal */
     .nav-soal {

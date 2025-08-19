@@ -40,10 +40,9 @@ Route::get('/errorrr', function () {
     return view('soal.error');
 })->name('soal.errorrr');
 // 🚀 Submit saat waktu habis (auto-submit final)
-Route::post('/tes/{path}/submit', [SoalController::class, 'simpanJawaban'])->name('tes.submit');
 
 // 🧪  View setelah tes selesai
 Route::get('/tes/selesai', function () {  return view('tes.selesai'); // Buat view ini untuk notifikasi akhir tes
 })->name('tes.selesai');
 
-Route::get('/soal/selesai}', [SoalController::class, 'soalSelesai'])->name('soal.simpan');
+Route::get('/soal/selesai}', [SoalController::class, 'soalSelesai'])->name('soal.selesai');
