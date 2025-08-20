@@ -380,103 +380,105 @@ $(document).ready(function () {
     }
   
     function tampilkanSoal(data, nomor) {
-      $('.soal_number .num').text(`Soal Nomor ${nomor}`);
-      const answered = jawabanSementara[nomor] !== undefined && jawabanSementara[nomor] !== "";
-  
-      const resolveImageSrc = (img) => {
-          if (!img) return null;
-          img = ('' + img).trim();
-          if (/^(https?:\/\/|\/|assets\/)/i.test(img)) return img.startsWith('/') ? img : (img.startsWith('http') ? img : '/' + img);
-          const base = data.path ? `/assets/images/${data.path}/` : `/assets/images/`;
-          return base + img;
-      };
-  
-      const opsiHtml = (data.options || []).map(opt => {
-          const stored = jawabanSementara[nomor];
-          const isChecked = Array.isArray(stored)
-              ? stored.includes(opt.value)
-              : stored === opt.value;
-  
-          const checkedAttr = isChecked ? 'checked' : '';
-          const imgSrc = resolveImageSrc(opt.image);
-          const content = imgSrc ? `<img src="${imgSrc}" class="q-img" alt="option-${opt.value}">` : (opt.text ?? '');
-  
-          return `
-              <label class="list-group-item d-flex align-items-center">
-                  <input type="${data.multiSelect ? 'checkbox' : 'radio'}"
-                      name="answer_${nomor}${data.multiSelect ? '[]' : ''}" 
-                      value="${opt.value}" class="form-check-input me-2" ${checkedAttr}>
-                  <div class="flex-grow-1 d-flex align-items-center">
-                      ${content}
-                      <div class="option-text ms-2">${opt.text ?? ''}</div>
-                  </div>
-              </label>`;
-      }).join('');
-  
-      let soalImageHtml = '';
-      if (Array.isArray(data.questionImages) && data.questionImages.length) {
-          soalImageHtml = `<div class="q-image-row">` +
-              data.questionImages
-                  .map(u => {
-                      const src = resolveImageSrc(u);
-                      return src ? `<img src="${src}" class="q-img" alt="soal-img">` : '';
-                  })
-                  .join('') +
-              `</div>`;
-      } else if (data.questionImage) {
-          soalImageHtml = `<div class="q-image-row"><img src="${resolveImageSrc(data.questionImage)}" class="q-img" alt="soal-img"></div>`;
+        $('.soal_number .num').text(`Soal Nomor ${nomor}`);
+        const answered = jawabanSementara[nomor] !== undefined && jawabanSementara[nomor] !== "";
+      
+        const resolveImageSrc = (img) => {
+            if (!img) return null;
+            img = ('' + img).trim();
+            if (/^(https?:\/\/|\/|assets\/)/i.test(img)) return img.startsWith('/') ? img : (img.startsWith('http') ? img : '/' + img);
+            const base = data.path ? `/assets/images/${data.path}/` : `/assets/images/`;
+            return base + img;
+        };
+      
+        const opsiHtml = (data.options || []).map(opt => {
+            const stored = jawabanSementara[nomor];
+            const isChecked = Array.isArray(stored)
+                ? stored.includes(opt.value)
+                : stored === opt.value;
+      
+            const checkedAttr = isChecked ? 'checked' : '';
+            const imgSrc = resolveImageSrc(opt.image);
+            const content = imgSrc ? `<img src="${imgSrc}" class="q-img" alt="option-${opt.value}">` : (opt.text ?? '');
+      
+            return `
+                <label class="list-group-item option-item d-flex align-items-center" role="option" tabindex="0">
+                    <input type="${data.multiSelect ? 'checkbox' : 'radio'}"
+                        name="answer_${nomor}${data.multiSelect ? '[]' : ''}" 
+                        value="${opt.value}" class="form-check-input me-2" ${checkedAttr}>
+                    <div class="flex-grow-1 d-flex align-items-center">
+                        ${content}
+                        <div class="option-text ms-2">${opt.text ?? ''}</div>
+                    </div>
+                </label>`;
+        }).join('');
+      
+        let soalImageHtml = '';
+        if (Array.isArray(data.questionImages) && data.questionImages.length) {
+            soalImageHtml = `<div class="q-image-row">` +
+                data.questionImages
+                    .map(u => {
+                        const src = resolveImageSrc(u);
+                        return src ? `<img src="${src}" class="q-img" alt="soal-img">` : '';
+                    })
+                    .join('') +
+                `</div>`;
+        } else if (data.questionImage) {
+            soalImageHtml = `<div class="q-image-row"><img src="${resolveImageSrc(data.questionImage)}" class="q-img" alt="soal-img"></div>`;
+        }
+      
+        const batalHtml = answered ? `
+            <div class="text-start mt-2">
+                <button type="button" class="btn btn-danger btn-sm batal-jawab" data-nomor="${nomor}">
+                    Batal Pilihan
+                </button>
+            </div>` : '';
+      
+        $('.s').html(`
+            <p>${data.questionText ?? ''}</p>
+            ${soalImageHtml}
+            <!-- NOTE: options-grid class enables horizontal-first grid layout -->
+            <div class="list-group options-grid" role="list">${opsiHtml}</div>
+            ${batalHtml}
+        `);
+      
+        // attach change handlers
+        $(`input[name^="answer_${nomor}"]`).off('change').on('change', function () {
+            if (data.multiSelect) {
+                const selected = [];
+                $(`input[name="answer_${nomor}[]"]:checked`).each(function () {
+                    selected.push($(this).val());
+                });
+                jawabanSementara[nomor] = selected;
+            } else {
+                jawabanSementara[nomor] = $(this).val();
+            }
+      
+            sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
+            updateSoalTerjawab();
+            updatePanelNavigasi();
+      
+            // only auto-next on normal tests (not per-question), keep previous behavior
+            if (!data.multiSelect && current < jumlahSoal && !perQuestionMode) {
+                setTimeout(() => {
+                    current++;
+                    localStorage.setItem(currentKey, current.toString());
+                    getSoal(current);
+                }, 300);
+            }
+        });
+      
+        $('.batal-jawab').off('click').on('click', function () {
+            const nomorSoal = $(this).data('nomor');
+            delete jawabanSementara[nomorSoal];
+            sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
+            $(`input[name^="answer_${nomorSoal}"]`).prop('checked', false);
+            $(this).remove();
+            updateSoalTerjawab();
+            updatePanelNavigasi();
+        });
       }
-  
-      const batalHtml = answered ? `
-          <div class="text-start mt-2">
-              <button type="button" class="btn btn-danger btn-sm batal-jawab" data-nomor="${nomor}">
-                  Batal Pilihan
-              </button>
-          </div>` : '';
-  
-      $('.s').html(`
-          <p>${data.questionText ?? ''}</p>
-          ${soalImageHtml}
-          <div class="list-group">${opsiHtml}</div>
-          ${batalHtml}
-      `);
-  
-      // attach change handlers
-      $(`input[name^="answer_${nomor}"]`).off('change').on('change', function () {
-          if (data.multiSelect) {
-              const selected = [];
-              $(`input[name="answer_${nomor}[]"]:checked`).each(function () {
-                  selected.push($(this).val());
-              });
-              jawabanSementara[nomor] = selected;
-          } else {
-              jawabanSementara[nomor] = $(this).val();
-          }
-  
-          sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
-          updateSoalTerjawab();
-          updatePanelNavigasi();
-  
-          // only auto-next on normal tests (not per-question), keep previous behavior
-          if (!data.multiSelect && current < jumlahSoal && !perQuestionMode) {
-              setTimeout(() => {
-                  current++;
-                  localStorage.setItem(currentKey, current.toString());
-                  getSoal(current);
-              }, 300);
-          }
-      });
-  
-      $('.batal-jawab').off('click').on('click', function () {
-          const nomorSoal = $(this).data('nomor');
-          delete jawabanSementara[nomorSoal];
-          sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
-          $(`input[name^="answer_${nomorSoal}"]`).prop('checked', false);
-          $(this).remove();
-          updateSoalTerjawab();
-          updatePanelNavigasi();
-      });
-    }
+      
   
     function updateSoalTerjawab() {
         const totalJawab = Object.keys(jawabanSementara).filter(k => {
@@ -521,31 +523,101 @@ $(document).ready(function () {
     }
   
     function updatePanelNavigasi() {
-      let html = '';
-      for (let i = 1; i <= jumlahSoal; i++) {
+        // --- Desktop panel (existing rendering) ---
+        let html = '';
+        for (let i = 1; i <= jumlahSoal; i++) {
+            const isCurrent = i === current;
+            const hasAnswer = Array.isArray(jawabanSementara[i]) 
+                ? jawabanSementara[i].length > 0 
+                : !!jawabanSementara[i];
+      
+            let statusClass = hasAnswer ? 'answered' : 'unanswered';
+            if (isCurrent) statusClass = 'active';
+      
+            html += `<button type="button" class="nav-soal ${statusClass}" data-index="${i}">${i}</button>`;
+        }
+        $('#soal-container').html(html);
+      
+        // desktop handlers (only when prev/next allowed)
+        if (!perQuestionMode) {
+          $('#soal-container .nav-soal').off('click').on('click', function () {
+              current = $(this).data('index');
+              localStorage.setItem(currentKey, current.toString());
+              getSoal(current);
+          });
+        } else {
+          $('#soal-container .nav-soal').css('cursor', 'not-allowed').off('click');
+        }
+      
+        // --- Mobile dropside creation (once) ---
+        if ($('#mobile-dropside-btn').length === 0) {
+          const btnHtml = `<button id="mobile-dropside-btn" class="dropside-btn" aria-label="Navigasi Soal" title="Navigasi Soal">
+                              <span class="icon">&#9776;</span>
+                           </button>`;
+          const panelHtml = `<div id="mobile-dropside-panel" class="dropside-panel" role="dialog" aria-label="Navigasi Soal Panel" aria-hidden="true">
+                               <div class="nav-grid" id="mobile-nav-grid"></div>
+                             </div>`;
+      
+          $('#mobile-nav-placeholder').append(btnHtml);
+          $('#mobile-nav-placeholder').append(panelHtml);
+      
+          // toggle panel
+          $('#mobile-dropside-btn').on('click', function (e) {
+            e.preventDefault();
+            const panel = $('#mobile-dropside-panel');
+            if (panel.is(':visible')) {
+              panel.hide().attr('aria-hidden','true');
+            } else {
+              panel.show().attr('aria-hidden','false');
+              setTimeout(() => $('#mobile-dropside-panel .nav-soal').first().focus(), 60);
+            }
+          });
+      
+          // close on outside click
+          $(document).on('click', function (e) {
+            const panel = $('#mobile-dropside-panel');
+            if (!panel.length) return;
+            if ($(e.target).closest('#mobile-dropside-panel, #mobile-dropside-btn').length === 0) {
+              panel.hide().attr('aria-hidden','true');
+            }
+          });
+      
+          // close on Escape
+          $(document).on('keydown', function (e) {
+            if (e.key === 'Escape') {
+              $('#mobile-dropside-panel').hide().attr('aria-hidden','true');
+            }
+          });
+        }
+      
+        // --- Populate mobile grid buttons ---
+        let mobileHtml = '';
+        for (let i = 1; i <= jumlahSoal; i++) {
           const isCurrent = i === current;
           const hasAnswer = Array.isArray(jawabanSementara[i]) 
               ? jawabanSementara[i].length > 0 
               : !!jawabanSementara[i];
-  
+      
           let statusClass = hasAnswer ? 'answered' : 'unanswered';
           if (isCurrent) statusClass = 'active';
-  
-          html += `<button type="button" class="nav-soal ${statusClass}" data-index="${i}">${i}</button>`;
-      }
-  
-      $('#soal-container').html(html);
-  
-      if (!perQuestionMode) {
-        $('.nav-soal').off('click').on('click', function () {
-            current = $(this).data('index');
-            localStorage.setItem(currentKey, current.toString());
-            getSoal(current);
+      
+          mobileHtml += `<button type="button" class="nav-soal ${statusClass}" data-index="${i}" aria-label="Soal ${i}">${i}</button>`;
+        }
+        $('#mobile-nav-grid').html(mobileHtml);
+      
+        // mobile handlers
+        $('#mobile-nav-grid .nav-soal').off('click').on('click', function (e) {
+          e.preventDefault();
+          const idx = $(this).data('index');
+          // if perQuestionMode and you want to prevent changing, keep same behavior as desktop
+          if (perQuestionMode) return;
+          current = idx;
+          localStorage.setItem(currentKey, current.toString());
+          $('#mobile-dropside-panel').hide().attr('aria-hidden','true');
+          getSoal(current);
         });
-      } else {
-        $('.nav-soal').css('cursor', 'not-allowed').off('click');
       }
-    }
+      
   
     // -----------------------
     // Per-question timer funcs

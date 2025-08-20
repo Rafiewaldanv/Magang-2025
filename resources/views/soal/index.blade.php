@@ -30,6 +30,7 @@
         @endif
     @endif
     @if($selection == null || ($selection != null && strtotime('now') >= strtotime($selection->test_time)))
+    <div id="mobile-nav-placeholder"></div>
     <div id="questmsdt" class="row" style="margin-bottom:100px">
         <div class="col-12 col-md-4 co mb-md-0">
             <div class="card">
