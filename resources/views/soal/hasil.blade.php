@@ -1,18 +1,43 @@
-@extends('template.main')
+@extends('template/main')
 
 @section('content')
-<div class="container main-container text-center mt-5 mb-5">
-    <div class="card shadow mx-auto" style="max-width: 650px">
-        <div class="card-body">
-            <h4 class="fw-bold text-success mb-3">✅ Selamat, jawaban Anda berhasil tersimpan!</h4>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
 
-            <p><strong>Nama Peserta:</strong> {{ $users->name }}</p>
-            <p><strong>Total Soal:</strong> {{ $result['total_question'] }}</p>
-            <p><strong>Benar:</strong> {{ $result['total_correct'] }}</p>
-            <p><strong>Salah:</strong> {{ $result['total_wrong'] }}</p>
-            <h2 class="fw-bold text-primary">Skor: {{ $result['score'] }}</h2>
+            <div class="card shadow-lg rounded-3">
+                <div class="card-body text-center p-5">
+                    {{-- Status --}}
+                    <h3 class="fw-bold text-success mb-3">
+                        {{ $status ?? 'selesai' }}
+                    </h3>
 
-            <a href="{{ route('home') }}" class="btn btn-success mt-3 px-4 py-2">Kembali ke Home</a>
+                    {{-- Message --}}
+                    <p class="lead mb-4">
+                        {{ $message ?? 'Test berhasil diselesaikan!' }}
+                    </p>
+
+                    {{-- Hasil --}}
+                    @if(isset($result))
+                        <div class="row mb-4">
+                            <div class="col-md-6 text-start">
+                                <p><strong>Score:</strong> {{ $result['score'] }}</p>
+                                <p><strong>Total Benar:</strong> {{ $result['total_correct'] }}</p>
+                            </div>
+                            <div class="col-md-6 text-start">
+                                <p><strong>Total Salah:</strong> {{ $result['total_wrong'] }}</p>
+                                <p><strong>Total Soal:</strong> {{ $result['total_question'] }}</p>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Tombol Redirect --}}
+                    <a href="{{ $redirect ?? url('/home') }}" class="btn btn-primary btn-lg">
+                        Kembali ke Home
+                    </a>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>

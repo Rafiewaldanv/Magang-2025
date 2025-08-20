@@ -264,40 +264,47 @@ const timerInterval = setInterval(updateTimer, 1000);
 
 // --- pada akhir file: ubah fungsi kirimJawaban() seperti ini ---
 function kirimJawaban() {
-  const jumlah = jumlahSoal;
-  const pilihan = jawabanSementara;
-
-  const form = $('<form>', {
-      method: 'POST',
-      action: '/soal/simpan',  });
-
-  const token = $('meta[name="csrf-token"]').attr('content');
-  form.append($('<input>', { type: 'hidden', name: '_token', value: token }));
-  form.append($('<input>', { type: 'hidden', name: 'jumlah', value: jumlah }));
-  form.append($('<input>', { type: 'hidden', name: 'test_id', value: testId }));
-  form.append($('<input>', { type: 'hidden', name: 'packet_id', value: packetId }));
-
-  // hitung time_taken (detik)
-  const now = Date.now();
-  const timeTakenMs = now - startTime;
-  const timeTakenSec = Math.max(0, Math.round(timeTakenMs / 1000));
-  form.append($('<input>', { type: 'hidden', name: 'time_taken', value: timeTakenSec }));
-
-  for (let i = 1; i <= jumlah; i++) {
-      form.append($('<input>', { type: 'hidden', name: `id[]`, value: i }));
-      form.append($('<input>', {
-          type: 'hidden',
-          name: `pilihan[${i}]`,
-          value: Array.isArray(pilihan[i]) ? pilihan[i].join(',') : (pilihan[i] || '')
-      }));
+    const form = document.getElementById("form");
+    const jumlah = document.getElementById("jumlah_soal").value;
+    const part = document.getElementById("part").value;
+    const pilihan = jawabanSementara;
+  
+    // hapus dulu input answers lama biar gak dobel
+    form.querySelectorAll('input[name^="answers"]').forEach(el => el.remove());
+  
+    // generate input answers sesuai format controller
+    for (let i = 1; i <= jumlah; i++) {
+      if (Array.isArray(pilihan[i])) {
+        pilihan[i].forEach(val => {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = `answers[${i}][]`;
+          input.value = val;
+          form.appendChild(input);
+        });
+      } else {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = `answers[${i}]`;
+        input.value = pilihan[i] || '';
+        form.appendChild(input);
+      }
+    }
+  
+    // hapus storage setelah siap submit
+    localStorage.removeItem(startKey);
+    sessionStorage.removeItem("jawabanSementara");
+  
+    // baru submit
+    form.submit();
   }
-
-  // hapus storage spesifik packet sebelum submit (prevent reuse)
-  localStorage.removeItem(startKey);
-  sessionStorage.removeItem('jawabanSementara');
-
-  $('body').append(form);
-  form.submit();
-}
+  
+  // attach listener ke form submit
+  document.getElementById("form").addEventListener("submit", function(e) {
+    e.preventDefault(); // cegah default
+    kirimJawaban();
+  });
+  
+  
 
 });

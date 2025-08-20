@@ -6,6 +6,7 @@ use App\Http\Controllers\SoalController;
 Route::get('/', function () {
     return redirect()->route('home');
 });
+
 // Import Soal Ke Database
 Route::get('/soal-adaptif-analogi', [SoalController::class, 'SoalAdaptifAnalogi'])->name('soal.adaptif.analogi');
 Route::get('/soal-adaptif-penalaran', [SoalController::class, 'SoalAdaptifPenalaran'])->name('soal.adaptif.penalaran');
@@ -18,6 +19,8 @@ Route::get('/soal-holland-riasec', [SoalController::class, 'SoalHollandRiasec'])
 Route::get('/soal-spasial-3d', [SoalController::class, 'SoalSpasial3D'])->name('soal.spasial.3d');
 Route::get('/soal-toeic', [SoalController::class, 'SoalToeic'])->name('soal.toeic');
 
+
+
 // 📃 View utama tes interaktifRoute::get('/soal-toeic', [SoalController::class, 'tampilkanSoalToeic']);
 Route::get('/home', [SoalController::class, 'home'])->name('home');
 Route::post('/soal/start', [SoalController::class, 'soalStart'])->name('soal.start');
@@ -29,6 +32,7 @@ Route::get('/soal', [SoalController::class, 'mulaiTes'])->name('soal.index');
 
 // 📦 API: Ambil soal berdasarkan nomor (dipanggil dari JS)
 // 📮 Simpan jawaban setelah memilih opsi (optional, jika dipakai per soal)
+// Route::post('/soal/save', [SoalController::class, ''])->name('soal.ambil');
 Route::post('/soal/simpan', [SoalController::class, 'simpanJawaban'])->name('soal.simpan');
 Route::get('/error', function () {
     return view('soal.error');
@@ -45,4 +49,5 @@ Route::get('/errorrr', function () {
 Route::get('/tes/selesai', function () {  return view('tes.selesai'); // Buat view ini untuk notifikasi akhir tes
 })->name('tes.selesai');
 
-Route::get('/soal/selesai}', [SoalController::class, 'soalSelesai'])->name('soal.selesai');
+Route::get('/soal/selesai}', function () {  return view('soal.selesai'); // Buat view ini untuk notifikasi akhir tes
+})->name('soal.selesai');

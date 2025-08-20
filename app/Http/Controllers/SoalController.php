@@ -565,6 +565,7 @@ private function isJson($string)
 // Method simpanJawaban yang sudah diperbaiki
 public function simpanJawaban(Request $request)
 {  
+    // dd($request->all());
     try {
         // ✅ Validasi input
         $request->validate([
@@ -609,13 +610,13 @@ public function simpanJawaban(Request $request)
         }
 
         // ✅ Cek apakah semua soal sudah dijawab
-        if (count($unanswered) > 0) {
-            return response()->json([
-                'status' => 'belum_lengkap',
-                'message' => 'Harap mengisi semua soal untuk melakukan submit.',
-                'unanswered' => $unanswered
-            ], 422);
-        }
+        // if (count($unanswered) > 0) {
+        //     return response()->json([
+        //         'status' => 'belum_lengkap',
+        //         'message' => 'Harap mengisi semua soal untuk melakukan submit.',
+        //         'unanswered' => $unanswered
+        //     ], 422);
+        // }
 
         // ✅ Simpan ke test_temporary (update atau create)
         TestTemporary::updateOrCreate(
@@ -678,100 +679,110 @@ public function simpanJawaban(Request $request)
 // ✅ Method terpisah untuk menghitung skor final
 private function calculateFinalScore($userId, $testId)
 {
+    // dd(request()->all());
     try {
         Log::info('calculateFinalScore called', [
             'user_id' => $userId,
             'test_id' => $testId
         ]);
 
-        $allTemps = TestTemporary::where([
-            'user_id' => $userId,
-            'test_id' => $testId
-        ])->get();
+        $temps = TestTemporary::where('user_id', $userId)
+                    ->where('test_id', $testId)
+                    ->orderBy('packet_id')
+                    ->get();
 
-        if ($allTemps->isEmpty()) {
-            Log::error('No temporary data found');
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Data jawaban tidak ditemukan.'
-            ], 404);
+        if ($temps->isEmpty()) {
+            Log::error('No temporary data found', compact('userId','testId'));
+            return redirect()->route('home')->with('error', 'Data jawaban tidak ditemukan.');
         }
 
-        $score = 0;
-        $totalQuestions = 0;
-        $finalAnswers = [];
+        // Kelompokkan per packet_id
+        $byPacket = $temps->groupBy('packet_id');
 
-        foreach ($allTemps as $temp) {
-            $partAnswers = json_decode($temp->json, true) ?? [];
-            $packetId = $temp->packet_id;
+        // Buat agregat untuk ditampilkan di view (total semua packet)
+        $grandTotalQuestions = 0;
+        $grandTotalCorrect   = 0;
 
-            foreach ($partAnswers as $number => $userAnswer) {
-                $finalAnswers[$number] = $userAnswer;
-                $totalQuestions++;
+        foreach ($byPacket as $packetId => $rows) {
+            if (empty($packetId)) {
+                Log::warning('Found temporary row without packet_id', [
+                    'user_id' => $userId,
+                    'test_id' => $testId
+                ]);
+                continue; // lewati yang packet_id nya null
+            }
 
-                // Hitung skor jika ingin aktifkan
-                $correctAnswer = $this->getCorrectAnswer($packetId, $number);
-                if ($correctAnswer && $this->isAnswerCorrect($userAnswer, $correctAnswer)) {
-                    $score++;
+            $answers = [];
+            $totalQuestions = 0;
+            $score = 0;
+
+            foreach ($rows as $temp) {
+                $partAnswers = json_decode($temp->json, true) ?: [];
+                foreach ($partAnswers as $number => $userAnswer) {
+                    // simpan jawaban terakhir untuk nomor yang sama
+                    $answers[$number] = $userAnswer;
+                    $totalQuestions++;
+
+                    $correctAnswer = $this->getCorrectAnswer($packetId, $number);
+                    if ($correctAnswer && $this->isAnswerCorrect($userAnswer, $correctAnswer)) {
+                        $score++;
+                    }
                 }
             }
+
+            // Selalu INSERT baris baru (history per attempt)
+            // Pastikan model Result mengizinkan mass-assign (lihat catatan di bawah)
+            Result::create([
+                'user_id' => $userId,
+                'test_id' => $testId,
+                'packet_id' => $packetId,
+                'json' => json_encode([
+                    'answers'        => $answers,
+                    'score'          => $score,
+                    'total_correct'  => $score,
+                    'total_wrong'    => $totalQuestions - $score,
+                    'total_question' => $totalQuestions,
+                ]),
+            ]);
+
+            $grandTotalQuestions += $totalQuestions;
+            $grandTotalCorrect   += $score;
         }
 
-        $totalCorrect = $score;
-        $totalWrong = $totalQuestions - $score;
+        // Bersihkan temporary jawaban
+        TestTemporary::where('user_id', $userId)
+            ->where('test_id', $testId)
+            ->delete();
 
-        // ✅ Simpan semua data ke kolom `json` sebagai nested array
-        $result = Result::updateOrCreate(
-            [
-                'user_id' => $userId,
-                'test_id' => $testId
-            ],
-            [
-                'packet_id' => null,
-                'json' => json_encode([
-                    'answers' => $finalAnswers,
-                    'score' => $score,
-                    'total_correct' => $totalCorrect,
-                    'total_wrong' => $totalWrong,
-                    'total_question' => $totalQuestions
-                ])
-            ]
-        );
+        // Data untuk view (agregat semua packet)
+        $finalScorePercent = $grandTotalQuestions > 0
+            ? round(($grandTotalCorrect / $grandTotalQuestions) * 100)
+            : 0;
 
-        Log::info('Result saved:', ['result_id' => $result->id]);
-
-        TestTemporary::where([
-            'user_id' => $userId,
-            'test_id' => $testId
-        ])->delete();
-
-        return response()->json([
-            'status' => 'selesai',
+        return view('soal.hasil', [
+            'status'  => 'selesai',
             'message' => 'Test berhasil diselesaikan!',
-            'result' => [
-                'score' => $score = round(($totalCorrect / $totalQuestions) * 100),
-                'total_correct' => $totalCorrect,
-                'total_wrong' => $totalWrong,
-                'total_question' => $totalQuestions
-                
+            'result'  => [
+                'score'          => $finalScorePercent,
+                'total_correct'  => $grandTotalCorrect,
+                'total_wrong'    => $grandTotalQuestions - $grandTotalCorrect,
+                'total_question' => $grandTotalQuestions,
             ],
-            'redirect' => route('tes.selesai')
+            'redirect' => route('home'),
         ]);
 
-    } catch (\Exception $e) {
+    } catch (\Throwable $e) { // pakai Throwable biar error non-Exception juga ketangkap
         Log::error('Error in calculateFinalScore: ' . $e->getMessage(), [
             'user_id' => $userId,
             'test_id' => $testId,
-            'trace' => $e->getTraceAsString()
+            'trace'   => $e->getTraceAsString(),
         ]);
 
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Gagal menghitung skor final.',
-            'debug' => config('app.debug') ? $e->getMessage() : null
-        ], 500);
+        return redirect()->route('home')->with('error', 'Gagal menghitung skor final.');
     }
-    }
+}
+
+
 
 private function getCorrectAnswer($packetId, $questionNumber)
 {

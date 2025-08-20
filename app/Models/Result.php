@@ -11,6 +11,7 @@ class Result extends Model
         'user_id',
         'test_id',
         'json',
+        'packet_id',
         'score',
     ];
 
