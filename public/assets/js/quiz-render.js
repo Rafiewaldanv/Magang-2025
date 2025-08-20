@@ -12,6 +12,61 @@ $(document).ready(function () {
     const perEndKey = `quizPerEnd_${packetId}`;
     const perCurrentKey = `quizPerCurrent_${packetId}`;
   
+    // --- Prevent browser back and show modal confirmation ---
+// PASTE THIS RIGHT AFTER your localStorage key declarations (currentKey, totalStartKey, perStartKey, perEndKey, perCurrentKey, totalDurationKey)
+(function initPreventBackAndConfirm() {
+    let allowLeave = false;
+  
+    function pushTestState() {
+      try { history.pushState({inTest: true}, '', location.href); } catch (e) { console.warn('history.pushState failed', e); }
+    }
+  
+    function onPopState(e) {
+      if (allowLeave) return;
+      $('#modalKembali').modal('show');
+      setTimeout(pushTestState, 50);
+    }
+  
+    pushTestState();
+    window.addEventListener('popstate', onPopState);
+  
+    $('#confirm-kembali').off('click').on('click', function (ev) {
+      ev.preventDefault();
+      allowLeave = true;
+      window.removeEventListener('popstate', onPopState);
+  
+      try {
+        localStorage.removeItem(currentKey);
+        localStorage.removeItem(totalStartKey);
+        localStorage.removeItem(totalDurationKey);
+        localStorage.removeItem(perStartKey);
+        localStorage.removeItem(perEndKey);
+        localStorage.removeItem(perCurrentKey);
+      } catch (e) { console.warn('error clearing storage keys', e); }
+      try { sessionStorage.removeItem('jawabanSementara'); } catch (e) {}
+  
+      $('#modalKembali').modal('hide');
+      setTimeout(() => {
+        const href = $(this).attr('href') || '/';
+        window.location.href = href;
+      }, 150);
+    });
+  
+    $('#modalKembali').on('hidden.bs.modal', function () {
+      if (!allowLeave) pushTestState();
+    });
+  
+    // optional: enable beforeunload browser prompt — uncomment if you want
+    /*
+    window.addEventListener('beforeunload', function (e) {
+      if (allowLeave) return;
+      const confirmationMessage = 'Jika Anda meninggalkan halaman, tes akan dibatalkan.';
+      (e || window.event).returnValue = confirmationMessage;
+      return confirmationMessage;
+    });
+    */
+  })();
+  
     // Mode
     const perQuestionMode = parseInt(packetId) === 7;
     const perQuestionDuration = 15 * 1000; // 15s
