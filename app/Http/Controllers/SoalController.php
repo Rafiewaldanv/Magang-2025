@@ -679,7 +679,6 @@ public function simpanJawaban(Request $request)
 // ✅ Method terpisah untuk menghitung skor final
 private function calculateFinalScore($userId, $testId)
 {
-    // dd(request()->all());
     try {
         Log::info('calculateFinalScore called', [
             'user_id' => $userId,
@@ -730,8 +729,7 @@ private function calculateFinalScore($userId, $testId)
                 }
             }
 
-            // Selalu INSERT baris baru (history per attempt)
-            // Pastikan model Result mengizinkan mass-assign (lihat catatan di bawah)
+            // Simpan hasil (history)
             Result::create([
                 'user_id' => $userId,
                 'test_id' => $testId,
@@ -754,6 +752,9 @@ private function calculateFinalScore($userId, $testId)
             ->where('test_id', $testId)
             ->delete();
 
+        // ---- Hapus packet_id dari session agar user tidak bisa kembali ke /soal ----
+        session()->forget('packet_id');
+
         // Data untuk view (agregat semua packet)
         $finalScorePercent = $grandTotalQuestions > 0
             ? round(($grandTotalCorrect / $grandTotalQuestions) * 100)
@@ -771,7 +772,7 @@ private function calculateFinalScore($userId, $testId)
             'redirect' => route('home'),
         ]);
 
-    } catch (\Throwable $e) { // pakai Throwable biar error non-Exception juga ketangkap
+    } catch (\Throwable $e) {
         Log::error('Error in calculateFinalScore: ' . $e->getMessage(), [
             'user_id' => $userId,
             'test_id' => $testId,
