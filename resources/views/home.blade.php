@@ -99,7 +99,8 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Tes Sedang Berlangsung</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+          <!-- HAPUS data-bs-dismiss supaya X tidak menutup modal -->
+          <button type="button" class="btn-close" id="modal-close-btn" aria-label="Tutup"></button>
         </div>
 
         <div class="modal-body">
@@ -123,6 +124,7 @@
     </div>
   </div>
 @endif
+
 
 <!-- Modal Kembali (untuk mencegah back langsung) -->
 <div class="modal fade" id="modalKembali" tabindex="-1" aria-hidden="true">
@@ -149,6 +151,74 @@
 {{-- JS section: pastikan hanya satu section js-extra per file --}}
 @section('js-extra')
 @parent
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const modalEl = document.getElementById('modalOngoingTest');
+  if (!modalEl) return;
+
+  // Buat instance Bootstrap modal dengan opsi yang mencegah close via backdrop / ESC
+  const bsModal = new bootstrap.Modal(modalEl, {
+    backdrop: 'static',
+    keyboard: false
+  });
+
+  // Tampilkan modal
+  bsModal.show();
+
+  // Pastikan tombol X tidak melakukan apa-apa (defensive)
+  const closeBtn = document.getElementById('modal-close-btn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      // optional: tampilkan pesan kecil agar user tahu harus pilih salah satu tombol di modal
+      // contoh sederhana (uncomment jika mau):
+      // alert('Silakan pilih "Lanjutkan Tes" atau "Tidak, Batalkan" terlebih dahulu.');
+    });
+  }
+
+  // Jika kamu ingin tombol "Tidak, Batalkan" menutup modal lalu melakukan cleanup, handle di sini:
+  const btnCancel = document.getElementById('btn-cancel-test');
+  if (btnCancel) {
+    btnCancel.addEventListener('click', function (e) {
+      e.preventDefault();
+
+      // contoh cleanup: hapus storage client & panggil endpoint cancel jika perlu
+      try { sessionStorage.removeItem('jawabanSementara'); } catch(e){}
+      // hapus localStorage yg terkait packet bila perlu (ganti nama key sesuai implementasimu)
+      // localStorage.removeItem(`quizStartTime_${packetId}`);
+
+      // lakukan request ke server untuk forget session (opsional)
+      fetch("{{ route('test.cancel') }}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').getAttribute('content')
+        },
+        body: JSON.stringify({ packet_id: (document.getElementById('modal-packet-name')?.dataset?.packetId || null) })
+      }).finally(() => {
+        bsModal.hide();
+        // reload supaya UI menyesuaikan
+        location.reload();
+      });
+    });
+  }
+
+  // tombol lanjutkan akan diarahkan oleh code lain; jika mau set link:
+  const btnContinue = document.getElementById('btn-continue-test');
+  if (btnContinue) {
+    // contoh: arahkan ke /soal?packet_id=... (sesuaikan)
+    const pkt = document.getElementById('modal-packet-name')?.dataset?.packetId;
+    if (pkt) btnContinue.setAttribute('href', '/soal?packet_id=' + encodeURIComponent(pkt));
+    // Bisa juga langsung hide modal on click:
+    btnContinue.addEventListener('click', function () {
+      // bsModal.hide(); // opsional
+    });
+  }
+
+});
+</script>
+
 <script>
 /**
  * Modal Ongoing handler + countdown that uses the same localStorage keys
