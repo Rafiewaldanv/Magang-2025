@@ -14,27 +14,113 @@ $(document).ready(function () {
   
     // --- Prevent browser back and show modal confirmation ---
 // PASTE THIS RIGHT AFTER your localStorage key declarations (currentKey, totalStartKey, perStartKey, perEndKey, perCurrentKey, totalDurationKey)
-(function initPreventBackAndConfirm() {
+// --- Prevent browser back and show modal confirmation (with DOUBLE-BACK prevention) ---
+// PASTE THIS RIGHT AFTER your localStorage key declarations (currentKey, totalStartKey, perStartKey, perEndKey, perCurrentKey, totalDurationKey)
+// --- Stronger Prevent browser back (immediate pushState) with double-back protection ---
+// --- Very strong prevent back / exit protection ---
+// PASTE THIS RIGHT AFTER your localStorage key declarations (currentKey, totalStartKey, perStartKey, perEndKey, perCurrentKey, totalDurationKey)
+// --- Prevent leaving WITHOUT pressing modal confirm (no browser alert) ---
+// Paste this inside $(document).ready(...) after your key declarations
+(function requireModalBeforeLeave() {
     let allowLeave = false;
+    let modalShown = false;
+    const INIT_PUSH = 60;
+    const SAFETY_PUSH = 2;
   
-    function pushTestState() {
-      try { history.pushState({inTest: true}, '', location.href); } catch (e) { console.warn('history.pushState failed', e); }
+    // pending navigation intent: { type: 'link'|'form'|'history', href, form }
+    let pendingNavigation = null;
+  
+    function pushStates(n = 1) {
+      try {
+        for (let i = 0; i < n; i++) history.pushState({ inTest: true }, '', location.href);
+      } catch (e) { console.warn('pushState failed', e); }
     }
   
+    // init heavy buffer
+    pushStates(INIT_PUSH);
+  
+    // show modal helper (sets modalShown)
+    function showExitModal() {
+      if (!modalShown) {
+        modalShown = true;
+        $('#modalKembali').modal('show');
+      }
+      // keep protection active by restoring a bit of history
+      pushStates(SAFETY_PUSH);
+    }
+  
+    // popstate (back) -> block and show modal, set pending as history
     function onPopState(e) {
       if (allowLeave) return;
-      $('#modalKembali').modal('show');
-      setTimeout(pushTestState, 50);
+      // mark intent as history navigation
+      pendingNavigation = { type: 'history' };
+      showExitModal();
     }
-  
-    pushTestState();
     window.addEventListener('popstate', onPopState);
   
+    // intercept clicks on same-origin anchors (capture phase)
+    function onDocumentClick(e) {
+      if (allowLeave) return;
+      const a = e.target.closest && e.target.closest('a');
+      if (!a) return;
+  
+      // ignore anchors that open new tab or have target/_blank or external origins
+      const href = a.getAttribute('href');
+      if (!href || href.startsWith('javascript:') || a.target === '_blank') return;
+  
+      // check same-origin (simple check)
+      const url = new URL(href, location.href);
+      if (url.origin !== location.origin) return;
+  
+      // allow anchors with data-no-protect to bypass (optional)
+      if (a.hasAttribute('data-no-protect')) return;
+  
+      // prevent navigation and show modal
+      e.preventDefault();
+      pendingNavigation = { type: 'link', href: url.href, anchor: a };
+      showExitModal();
+    }
+    document.addEventListener('click', onDocumentClick, true); // capture
+  
+    // intercept form submits
+    function onFormSubmit(e) {
+      if (allowLeave) return;
+      const f = e.target;
+      if (!(f && f.tagName === 'FORM')) return;
+      // optional: allow forms with data-no-protect
+      if (f.hasAttribute('data-no-protect')) return;
+  
+      e.preventDefault();
+      pendingNavigation = { type: 'form', form: f };
+      showExitModal();
+    }
+    document.addEventListener('submit', onFormSubmit, true);
+  
+    // keyboard shortcuts for back-like actions (Backspace when not typing, Alt+Left)
+    function onKeyDown(e) {
+      if (allowLeave) return;
+      const activeTag = document.activeElement && document.activeElement.tagName;
+      if ((e.altKey && e.key === 'ArrowLeft') ||
+          (e.key === 'Backspace' && !['INPUT','TEXTAREA','SELECT'].includes(activeTag))) {
+        e.preventDefault();
+        pendingNavigation = { type: 'history' };
+        showExitModal();
+      }
+    }
+    window.addEventListener('keydown', onKeyDown, { passive: false });
+  
+    // Confirm leave: clean storages then perform pending navigation
     $('#confirm-kembali').off('click').on('click', function (ev) {
       ev.preventDefault();
       allowLeave = true;
-      window.removeEventListener('popstate', onPopState);
   
+      // remove listeners so normal navigation works now
+      window.removeEventListener('popstate', onPopState);
+      document.removeEventListener('click', onDocumentClick, true);
+      document.removeEventListener('submit', onFormSubmit, true);
+      window.removeEventListener('keydown', onKeyDown);
+  
+      // cleanup storages
       try {
         localStorage.removeItem(currentKey);
         localStorage.removeItem(totalStartKey);
@@ -42,30 +128,46 @@ $(document).ready(function () {
         localStorage.removeItem(perStartKey);
         localStorage.removeItem(perEndKey);
         localStorage.removeItem(perCurrentKey);
-      } catch (e) { console.warn('error clearing storage keys', e); }
+      } catch (e) { console.warn('error clearing storage', e); }
       try { sessionStorage.removeItem('jawabanSementara'); } catch (e) {}
   
+      // hide modal then navigate based on pendingNavigation
       $('#modalKembali').modal('hide');
+  
       setTimeout(() => {
-        const href = $(this).attr('href') || '/';
-        window.location.href = href;
-      }, 150);
+        if (!pendingNavigation) {
+          // fallback to default anchor href if any, else root
+          const href = $(this).attr('href') || '/';
+          window.location.href = href;
+          return;
+        }
+  
+        if (pendingNavigation.type === 'link') {
+          window.location.href = pendingNavigation.href;
+        } else if (pendingNavigation.type === 'form') {
+          // allow form to submit now
+          try { pendingNavigation.form.submit(); } catch (e) { window.location.href = '/'; }
+        } else if (pendingNavigation.type === 'history') {
+          // go back one step - user wanted back
+          history.back();
+        } else {
+          const href = $(this).attr('href') || '/';
+          window.location.href = href;
+        }
+      }, 120);
     });
   
+    // if user cancels modal, reset modalShown and pendingNavigation
     $('#modalKembali').on('hidden.bs.modal', function () {
-      if (!allowLeave) pushTestState();
+      modalShown = false;
+      pendingNavigation = null;
+      // restore protection
+      pushStates(3);
     });
   
-    // optional: enable beforeunload browser prompt — uncomment if you want
-    /*
-    window.addEventListener('beforeunload', function (e) {
-      if (allowLeave) return;
-      const confirmationMessage = 'Jika Anda meninggalkan halaman, tes akan dibatalkan.';
-      (e || window.event).returnValue = confirmationMessage;
-      return confirmationMessage;
-    });
-    */
+    // note: no beforeunload — so no native alert
   })();
+  
   
     // Mode
     const perQuestionMode = parseInt(packetId) === 7;
