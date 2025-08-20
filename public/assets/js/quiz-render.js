@@ -1,310 +1,515 @@
 $(document).ready(function () {
-  const testId = $('#form input[name="test_id"]').val();
-  const packetId = $('#form input[name="packet_id"]').val();
-  const jumlahSoal = parseInt($('#jumlah_soal').val());
-  let current = 1;
-
-  let jawabanSementara = JSON.parse(sessionStorage.getItem('jawabanSementara')) || {};
-  Object.keys(jawabanSementara).forEach(k => { if (jawabanSementara[k] === "null") delete jawabanSementara[k]; });
-
-  getSoal(current);
-
-  $('#next').click(() => {
-      if (current < jumlahSoal) {
-          current++;
-          getSoal(current);
-      }
-  });
-
-  $('#prev').click(() => {
-      if (current > 1) {
-          current--;
-          getSoal(current);
-      }
-  });
-
-  function getSoal(nomor) {
-      $('#overlay-loading').show();
-      $.get(`/api/soal/${testId}/${packetId}/${nomor}`, function (data) {
-          $('#overlay-loading').hide();
-          tampilkanSoal(data, nomor);
-          updateNavigasi(nomor);
-          updatePanelNavigasi();
-          updateSoalTerjawab();
-      }).fail(function () {
-          $('#overlay-loading').hide();
-          alert("Gagal memuat soal. Silakan refresh halaman.");
-      });
-  }
-
-  function tampilkanSoal(data, nomor) {
-    $('.soal_number .num').text(`Soal Nomor ${nomor}`);
-    const answered = jawabanSementara[nomor] !== undefined && jawabanSementara[nomor] !== "";
-
-    // helper: dapatkan src gambar
-    const resolveImageSrc = (img) => {
-        if (!img) return null;
-        img = ('' + img).trim();
-        if (/^(https?:\/\/|\/|assets\/)/i.test(img)) return img.startsWith('/') ? img : (img.startsWith('http') ? img : '/' + img);
-        const base = data.path ? `/assets/images/${data.path}/` : `/assets/images/`;
-        return base + img;
-    };
-
-    const opsiHtml = (data.options || []).map(opt => {
-        const stored = jawabanSementara[nomor];
-        const isChecked = Array.isArray(stored)
-            ? stored.includes(opt.value)
-            : stored === opt.value;
-
-        const checkedAttr = isChecked ? 'checked' : '';
-
-        // resolve opt.image (could be full URL or filename)
-        const imgSrc = resolveImageSrc(opt.image);
-
-        const content = imgSrc
-            ? `<img src="${imgSrc}" class="q-img" alt="option-${opt.value}">`
-            : (opt.text ?? '');
-
-        return `
-            <label class="list-group-item d-flex align-items-center">
-                <input type="${data.multiSelect ? 'checkbox' : 'radio'}"
-                    name="answer_${nomor}${data.multiSelect ? '[]' : ''}" 
-                    value="${opt.value}" class="form-check-input me-2" ${checkedAttr}>
-                <div class="flex-grow-1 d-flex align-items-center">
-                    ${content}
-                    <div class="option-text ms-2">${opt.text ?? ''}</div>
-                </div>
-            </label>`;
-    }).join('');
-
-    // soal image(s) - bungkus dalam row agar sebaris
-    let soalImageHtml = '';
-    if (Array.isArray(data.questionImages) && data.questionImages.length) {
-        soalImageHtml = `<div class="q-image-row">` +
-            data.questionImages
-                .map(u => {
-                    const src = resolveImageSrc(u);
-                    return src ? `<img src="${src}" class="q-img" alt="soal-img">` : '';
-                })
-                .join('') +
-            `</div>`;
-    } else if (data.questionImage) {
-        soalImageHtml = `<div class="q-image-row"><img src="${resolveImageSrc(data.questionImage)}" class="q-img" alt="soal-img"></div>`;
-    }
-
-    const batalHtml = answered ? `
-        <div class="text-start mt-2">
-            <button type="button" class="btn btn-danger btn-sm batal-jawab" data-nomor="${nomor}">
-                Batal Pilihan
-            </button>
-        </div>` : '';
-
-    $('.s').html(`
-        <p>${data.questionText ?? ''}</p>
-        ${soalImageHtml}
-        <div class="list-group">${opsiHtml}</div>
-        ${batalHtml}
-    `);
-
-    // event handlers (unchanged logic)
-    $(`input[name^="answer_${nomor}"]`).off('change').on('change', function () {
-        if (data.multiSelect) {
-            const selected = [];
-            $(`input[name="answer_${nomor}[]"]:checked`).each(function () {
-                selected.push($(this).val());
-            });
-            jawabanSementara[nomor] = selected;
-        } else {
-            jawabanSementara[nomor] = $(this).val();
-        }
-
-        sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
-        updateSoalTerjawab();
-        updatePanelNavigasi();
-        if (!data.multiSelect && current < jumlahSoal) {
-            setTimeout(() => getSoal(++current), 300);
-        }
-    });
-
-    $('.batal-jawab').off('click').on('click', function () {
-        const nomorSoal = $(this).data('nomor');
-
-        // hapus jawaban di object
-        delete jawabanSementara[nomorSoal];
-        sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
-
-        // uncheck semua input pilihan (tanpa reload ulang soal)
-        $(`input[name^="answer_${nomorSoal}"]`).prop('checked', false);
-
-        // sembunyikan tombol batal (optional)
-        $(this).remove();
-
-        updateSoalTerjawab();
-        updatePanelNavigasi();
-    });
-}
-
-
-
-  function updateSoalTerjawab() {
-      const totalJawab = Object.keys(jawabanSementara).filter(k => {
-          const val = jawabanSementara[k];
-          return Array.isArray(val) ? val.length > 0 : val !== undefined && val !== '';
-      }).length;
-  
-      $('#answered').text(totalJawab);
-      $('#totals').text(jumlahSoal);
-  
-      $('#btn-submit').show().prop('disabled', false);
-  
-      if (!$('#btn-submit').data('bound')) {
-          $('#btn-submit').data('bound', true).on('click', function () {
-              // 🧠 HITUNG ULANG DI SINI
-              const currentJawab = Object.keys(jawabanSementara).filter(k => {
-                  const val = jawabanSementara[k];
-                  return Array.isArray(val) ? val.length > 0 : val !== undefined && val !== '';
-              }).length;
-  
-              const modalBody = currentJawab < jumlahSoal
-                  ? 'Masih ada soal yang belum dijawab. Yakin ingin mengumpulkan sekarang?'
-                  : 'Apakah Anda yakin ingin mengumpulkan semua jawaban?';
-              $('#konfirmasiModal .modal-body').text(modalBody);
-              $('#konfirmasiModal').modal('show');
-          });
-      }
-  
-      if (!$('#confirm-submit').data('bound')) {
-          $('#confirm-submit').data('bound', true).on('click', function () {
-              $('#konfirmasiModal').modal('hide');
-              kirimJawaban();
-          });
-      }
-  }
-  
-  
-  
-
-  function updateNavigasi(nomor) {
-      $('#prev').toggle(nomor > 1);
-      $('#next').toggle(nomor < jumlahSoal);
-  }
-
-  function updatePanelNavigasi() {
-    let html = '';
-    for (let i = 1; i <= jumlahSoal; i++) {
-        const isCurrent = i === current;
-        const hasAnswer = Array.isArray(jawabanSementara[i]) 
-            ? jawabanSementara[i].length > 0 
-            : !!jawabanSementara[i];
-
-        // pake class dari CSS custom
-        let statusClass = hasAnswer ? 'answered' : 'unanswered';
-        if (isCurrent) statusClass = 'active';
-
-        html += `<button type="button" class="nav-soal ${statusClass}" data-index="${i}">${i}</button>`;
-    }
-
-    $('#soal-container').html(html);
-
-    // klik navigasi soal
-    $('.nav-soal').off('click').on('click', function () {
-        current = $(this).data('index');
-        getSoal(current);
-    });
-}
-
-  // Tombol Submit diklik
-  
-
-  // --- di bagian atas (masih di $(document).ready(...)) --- // sudah ada di filemu
-// key unik per packet
-const startKey = `quizStartTime_${packetId}`;
-
-// total durasi (15 menit)
-const totalTime = 15 * 60 * 1000;
-
-// ambil / set startTime spesifik packet
-let startTime = localStorage.getItem(startKey);
-if (!startTime) {
-  // kalau belum ada, set sekarang (hanya set pertama kali saat user benar2 mulai)
-  startTime = Date.now();
-  localStorage.setItem(startKey, startTime);
-} else {
-  startTime = parseInt(startTime);
-}
-
-// timer update (update elemen #timer)
-function updateTimer() {
-  const now = Date.now();
-  const elapsed = now - startTime;
-  const remaining = totalTime - elapsed;
-
-  if (remaining <= 0) {
-      $('#timer').text('00:00');
-      // auto-submit apabila waktu habis — panggil kirimJawaban otomatis
-      // pastikan kirimJawaban sudah didefinisikan (diletakkan di file yang sama)
-      // hapus key sebelum submit agar tidak tersisa
-      localStorage.removeItem(startKey);
-      sessionStorage.removeItem('jawabanSementara');
-      // submit (tunda sedikit biar form ter-append dengan benar)
-      setTimeout(() => kirimJawaban(), 300);
-      return;
-  }
-
-  const minutes = Math.floor((remaining / 1000) / 60);
-  const seconds = Math.floor((remaining / 1000) % 60);
-  $('#timer').text(
-      `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  );
-}
-
-// jalankan timer setiap detik
-updateTimer();
-const timerInterval = setInterval(updateTimer, 1000);
-
-// --- pada akhir file: ubah fungsi kirimJawaban() seperti ini ---
-function kirimJawaban() {
     const form = document.getElementById("form");
-    const jumlah = document.getElementById("jumlah_soal").value;
-    const part = document.getElementById("part").value;
-    const pilihan = jawabanSementara;
+    const testId = $('#form input[name="test_id"]').val();
+    const packetId = $('#form input[name="packet_id"]').val();
+    const jumlahSoal = parseInt($('#jumlah_soal').val());
   
-    // hapus dulu input answers lama biar gak dobel
-    form.querySelectorAll('input[name^="answers"]').forEach(el => el.remove());
+    // Keys untuk persistence per packet
+    const currentKey = `quizCurrent_${packetId}`;
+    const totalStartKey = `quizTotalStart_${packetId}`;
+    const totalDurationKey = `quizTotalDuration_${packetId}`;
+    const perStartKey = `quizPerStart_${packetId}`;
+    const perEndKey = `quizPerEnd_${packetId}`;
+    const perCurrentKey = `quizPerCurrent_${packetId}`;
   
-    // generate input answers sesuai format controller
-    for (let i = 1; i <= jumlah; i++) {
-      if (Array.isArray(pilihan[i])) {
-        pilihan[i].forEach(val => {
-          const input = document.createElement("input");
-          input.type = "hidden";
-          input.name = `answers[${i}][]`;
-          input.value = val;
-          form.appendChild(input);
+    // Mode
+    const perQuestionMode = parseInt(packetId) === 7;
+    const perQuestionDuration = 15 * 1000; // 15s
+    let perQuestionInterval = null;
+    let perQuestionEnd = null;
+  
+    // state
+    let current = 1;
+    let jawabanSementara = JSON.parse(sessionStorage.getItem('jawabanSementara')) || {};
+    Object.keys(jawabanSementara).forEach(k => { if (jawabanSementara[k] === "null") delete jawabanSementara[k]; });
+  
+    // --- TOTAL TIMER (for normal tests) ---
+    // Determine total duration (ms). Try multiple fallbacks.
+    function detectTotalDurationMs() {
+      // 1) data attribute on form: <form data-total-duration="900" ...> in seconds
+      const dataDur = $('#form').data('totalDuration') || $('#form').data('total-duration');
+      if (dataDur) {
+        const s = parseInt(dataDur);
+        if (!isNaN(s) && s > 0) return s * 1000;
+      }
+  
+      // 2) hidden input / element with name/id "total_time" or "total_duration" (seconds)
+      const hidden = $('input[name="total_time"], input[name="total_duration"], #total_time, #total-duration').first();
+      if (hidden && hidden.val()) {
+        const s = parseInt(hidden.val());
+        if (!isNaN(s) && s > 0) return s * 1000;
+      }
+  
+      // 3) previously persisted duration in localStorage:
+      const persisted = parseInt(localStorage.getItem(totalDurationKey));
+      if (!isNaN(persisted) && persisted > 0) return persisted;
+  
+      // 4) fallback default: 30 minutes (in ms) — only fallback, not ideal but safe
+      return 30 * 60 * 1000;
+    }
+  
+    const totalDurationMs = detectTotalDurationMs();
+    // persist detected duration so subsequent loads use same base
+    localStorage.setItem(totalDurationKey, totalDurationMs.toString());
+  
+    let totalInterval = null;
+    let totalEnd = null; // timestamp ms when test should end
+  
+    function startTotalTimer() {
+      // don't start in per-question mode
+      if (perQuestionMode) return;
+  
+      // try restore start from storage
+      const savedStart = parseInt(localStorage.getItem(totalStartKey));
+      const now = Date.now();
+  
+      if (!isNaN(savedStart) && savedStart > 0) {
+        // compute end based on saved start
+        totalEnd = savedStart + totalDurationMs;
+      } else {
+        // start now
+        const start = now;
+        totalEnd = start + totalDurationMs;
+        localStorage.setItem(totalStartKey, start.toString());
+      }
+  
+      // clear existing interval first
+      if (totalInterval) clearInterval(totalInterval);
+  
+      // immediate tick then every 1 second
+      totalTick();
+      totalInterval = setInterval(totalTick, 1000);
+    }
+  
+    function stopTotalTimer() {
+      if (totalInterval) {
+        clearInterval(totalInterval);
+        totalInterval = null;
+      }
+    }
+  
+    function totalTick() {
+      const now = Date.now();
+      const remaining = totalEnd - now;
+  
+      if (remaining <= 0) {
+        // time up -> cleanup and submit
+        $('#timer').text('00:00');
+        // cleanup
+        localStorage.removeItem(totalStartKey);
+        // remove persistence for current too (we will submit)
+        localStorage.removeItem(currentKey);
+  
+        stopTotalTimer();
+        // remove per-question keys (safety)
+        localStorage.removeItem(perStartKey);
+        localStorage.removeItem(perEndKey);
+        localStorage.removeItem(perCurrentKey);
+  
+        sessionStorage.removeItem('jawabanSementara');
+  
+        // submit (delay slight to allow UI update)
+        setTimeout(() => {
+          if (typeof kirimJawaban === 'function') kirimJawaban();
+          else form.submit();
+        }, 250);
+        return;
+      }
+  
+      const minutes = Math.floor((remaining / 1000) / 60).toString().padStart(2, '0');
+      const seconds = Math.floor((remaining / 1000) % 60).toString().padStart(2, '0');
+      $('#timer').text(`${minutes}:${seconds}`);
+    }
+  
+    // --- restore current question on load (for BOTH modes)
+    const savedCurrent = parseInt(localStorage.getItem(currentKey));
+    if (!isNaN(savedCurrent) && savedCurrent >= 1 && savedCurrent <= jumlahSoal) {
+      // For normal tests: just resume at same question (do not auto-advance)
+      current = savedCurrent;
+    } else {
+      current = 1;
+    }
+  
+    // For per-question mode we also have separate saved keys handling (to potentially advance)
+    if (perQuestionMode) {
+      // if per-question saved, compute resume/advance like previous logic
+      const savedPerCurrent = parseInt(localStorage.getItem(perCurrentKey));
+      const savedPerStart = parseInt(localStorage.getItem(perStartKey));
+      if (!isNaN(savedPerCurrent) && !isNaN(savedPerStart)) {
+        const now = Date.now();
+        const elapsed = now - savedPerStart;
+        const passed = Math.floor(elapsed / perQuestionDuration);
+        let resumed = savedPerCurrent + passed;
+        if (resumed > jumlahSoal) {
+          // test elapsed fully -> submit
+          localStorage.removeItem(perCurrentKey);
+          localStorage.removeItem(perStartKey);
+          localStorage.removeItem(perEndKey);
+          localStorage.removeItem(currentKey);
+          setTimeout(() => {
+            sessionStorage.removeItem('jawabanSementara');
+            if (typeof kirimJawaban === 'function') kirimJawaban();
+            else form.submit();
+          }, 200);
+          return;
+        }
+        current = resumed;
+        // normalize start/end
+        const baseStart = savedPerStart + passed * perQuestionDuration;
+        const newEnd = baseStart + perQuestionDuration;
+        localStorage.setItem(perCurrentKey, current.toString());
+        localStorage.setItem(perStartKey, baseStart.toString());
+        localStorage.setItem(perEndKey, newEnd.toString());
+        perQuestionEnd = newEnd;
+      }
+    }
+  
+    // --- initial fetch of the current (restored) soal ---
+    getSoal(current);
+  
+    // --- click handlers ---
+    $('#next').off('click').on('click', () => {
+        if (current < jumlahSoal) {
+            current++;
+            // persist current
+            localStorage.setItem(currentKey, current.toString());
+            getSoal(current);
+        }
+    });
+  
+    if (!perQuestionMode) {
+      $('#prev').off('click').on('click', () => {
+          if (current > 1) {
+              current--;
+              localStorage.setItem(currentKey, current.toString());
+              getSoal(current);
+          }
+      });
+    } else {
+      $('#prev').hide();
+    }
+  
+    function getSoal(nomor) {
+        $('#overlay-loading').show();
+  
+        // stop per-question timer first to avoid races
+        stopPerQuestionTimer();
+  
+        $.get(`/api/soal/${testId}/${packetId}/${nomor}`, function (data) {
+            $('#overlay-loading').hide();
+            tampilkanSoal(data, nomor);
+            updateNavigasi(nomor);
+            updatePanelNavigasi();
+            updateSoalTerjawab();
+  
+            // persist current for normal tests too so refresh stays on same soal
+            localStorage.setItem(currentKey, nomor.toString());
+  
+            // Start timers based on mode
+            if (perQuestionMode) {
+              startPerQuestionTimer();
+              // ensure total timer is stopped to avoid conflict
+              stopTotalTimer();
+            } else {
+              // normal test -> start total timer (if not already)
+              startTotalTimer();
+              // also ensure per-question timer stopped
+              stopPerQuestionTimer();
+            }
+        }).fail(function () {
+            $('#overlay-loading').hide();
+            alert("Gagal memuat soal. Silakan refresh halaman.");
+        });
+    }
+  
+    function tampilkanSoal(data, nomor) {
+      $('.soal_number .num').text(`Soal Nomor ${nomor}`);
+      const answered = jawabanSementara[nomor] !== undefined && jawabanSementara[nomor] !== "";
+  
+      const resolveImageSrc = (img) => {
+          if (!img) return null;
+          img = ('' + img).trim();
+          if (/^(https?:\/\/|\/|assets\/)/i.test(img)) return img.startsWith('/') ? img : (img.startsWith('http') ? img : '/' + img);
+          const base = data.path ? `/assets/images/${data.path}/` : `/assets/images/`;
+          return base + img;
+      };
+  
+      const opsiHtml = (data.options || []).map(opt => {
+          const stored = jawabanSementara[nomor];
+          const isChecked = Array.isArray(stored)
+              ? stored.includes(opt.value)
+              : stored === opt.value;
+  
+          const checkedAttr = isChecked ? 'checked' : '';
+          const imgSrc = resolveImageSrc(opt.image);
+          const content = imgSrc ? `<img src="${imgSrc}" class="q-img" alt="option-${opt.value}">` : (opt.text ?? '');
+  
+          return `
+              <label class="list-group-item d-flex align-items-center">
+                  <input type="${data.multiSelect ? 'checkbox' : 'radio'}"
+                      name="answer_${nomor}${data.multiSelect ? '[]' : ''}" 
+                      value="${opt.value}" class="form-check-input me-2" ${checkedAttr}>
+                  <div class="flex-grow-1 d-flex align-items-center">
+                      ${content}
+                      <div class="option-text ms-2">${opt.text ?? ''}</div>
+                  </div>
+              </label>`;
+      }).join('');
+  
+      let soalImageHtml = '';
+      if (Array.isArray(data.questionImages) && data.questionImages.length) {
+          soalImageHtml = `<div class="q-image-row">` +
+              data.questionImages
+                  .map(u => {
+                      const src = resolveImageSrc(u);
+                      return src ? `<img src="${src}" class="q-img" alt="soal-img">` : '';
+                  })
+                  .join('') +
+              `</div>`;
+      } else if (data.questionImage) {
+          soalImageHtml = `<div class="q-image-row"><img src="${resolveImageSrc(data.questionImage)}" class="q-img" alt="soal-img"></div>`;
+      }
+  
+      const batalHtml = answered ? `
+          <div class="text-start mt-2">
+              <button type="button" class="btn btn-danger btn-sm batal-jawab" data-nomor="${nomor}">
+                  Batal Pilihan
+              </button>
+          </div>` : '';
+  
+      $('.s').html(`
+          <p>${data.questionText ?? ''}</p>
+          ${soalImageHtml}
+          <div class="list-group">${opsiHtml}</div>
+          ${batalHtml}
+      `);
+  
+      // attach change handlers
+      $(`input[name^="answer_${nomor}"]`).off('change').on('change', function () {
+          if (data.multiSelect) {
+              const selected = [];
+              $(`input[name="answer_${nomor}[]"]:checked`).each(function () {
+                  selected.push($(this).val());
+              });
+              jawabanSementara[nomor] = selected;
+          } else {
+              jawabanSementara[nomor] = $(this).val();
+          }
+  
+          sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
+          updateSoalTerjawab();
+          updatePanelNavigasi();
+  
+          // only auto-next on normal tests (not per-question), keep previous behavior
+          if (!data.multiSelect && current < jumlahSoal && !perQuestionMode) {
+              setTimeout(() => {
+                  current++;
+                  localStorage.setItem(currentKey, current.toString());
+                  getSoal(current);
+              }, 300);
+          }
+      });
+  
+      $('.batal-jawab').off('click').on('click', function () {
+          const nomorSoal = $(this).data('nomor');
+          delete jawabanSementara[nomorSoal];
+          sessionStorage.setItem('jawabanSementara', JSON.stringify(jawabanSementara));
+          $(`input[name^="answer_${nomorSoal}"]`).prop('checked', false);
+          $(this).remove();
+          updateSoalTerjawab();
+          updatePanelNavigasi();
+      });
+    }
+  
+    function updateSoalTerjawab() {
+        const totalJawab = Object.keys(jawabanSementara).filter(k => {
+            const val = jawabanSementara[k];
+            return Array.isArray(val) ? val.length > 0 : val !== undefined && val !== '';
+        }).length;
+  
+        $('#answered').text(totalJawab);
+        $('#totals').text(jumlahSoal);
+  
+        $('#btn-submit').show().prop('disabled', false);
+        if (!$('#btn-submit').data('bound')) {
+            $('#btn-submit').data('bound', true).on('click', function () {
+                const currentJawab = Object.keys(jawabanSementara).filter(k => {
+                    const val = jawabanSementara[k];
+                    return Array.isArray(val) ? val.length > 0 : val !== undefined && val !== '';
+                }).length;
+  
+                const modalBody = currentJawab < jumlahSoal
+                    ? 'Masih ada soal yang belum dijawab. Yakin ingin mengumpulkan sekarang?'
+                    : 'Apakah Anda yakin ingin mengumpulkan semua jawaban?';
+                $('#konfirmasiModal .modal-body').text(modalBody);
+                $('#konfirmasiModal').modal('show');
+            });
+        }
+  
+        if (!$('#confirm-submit').data('bound')) {
+            $('#confirm-submit').data('bound', true).on('click', function () {
+                $('#konfirmasiModal').modal('hide');
+                kirimJawaban();
+            });
+        }
+    }
+  
+    function updateNavigasi(nomor) {
+        if (perQuestionMode) {
+          $('#prev').hide();
+        } else {
+          $('#prev').toggle(nomor > 1);
+        }
+        $('#next').toggle(nomor < jumlahSoal);
+    }
+  
+    function updatePanelNavigasi() {
+      let html = '';
+      for (let i = 1; i <= jumlahSoal; i++) {
+          const isCurrent = i === current;
+          const hasAnswer = Array.isArray(jawabanSementara[i]) 
+              ? jawabanSementara[i].length > 0 
+              : !!jawabanSementara[i];
+  
+          let statusClass = hasAnswer ? 'answered' : 'unanswered';
+          if (isCurrent) statusClass = 'active';
+  
+          html += `<button type="button" class="nav-soal ${statusClass}" data-index="${i}">${i}</button>`;
+      }
+  
+      $('#soal-container').html(html);
+  
+      if (!perQuestionMode) {
+        $('.nav-soal').off('click').on('click', function () {
+            current = $(this).data('index');
+            localStorage.setItem(currentKey, current.toString());
+            getSoal(current);
         });
       } else {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = `answers[${i}]`;
-        input.value = pilihan[i] || '';
-        form.appendChild(input);
+        $('.nav-soal').css('cursor', 'not-allowed').off('click');
       }
     }
   
-    // hapus storage setelah siap submit
-    localStorage.removeItem(startKey);
-    sessionStorage.removeItem("jawabanSementara");
+    // -----------------------
+    // Per-question timer funcs
+    // -----------------------
+    function startPerQuestionTimer() {
+        stopPerQuestionTimer();
   
-    // baru submit
-    form.submit();
-  }
+        const now = Date.now();
+        const savedStart = parseInt(localStorage.getItem(perStartKey));
+        const savedPerCur = parseInt(localStorage.getItem(perCurrentKey));
   
-  // attach listener ke form submit
-  document.getElementById("form").addEventListener("submit", function(e) {
-    e.preventDefault(); // cegah default
-    kirimJawaban();
+        if (!isNaN(savedStart) && !isNaN(savedPerCur) && savedPerCur === current) {
+            const storedEnd = parseInt(localStorage.getItem(perEndKey));
+            if (!isNaN(storedEnd) && storedEnd > now) {
+                perQuestionEnd = storedEnd;
+            } else {
+                const newStart = now;
+                perQuestionEnd = newStart + perQuestionDuration;
+                localStorage.setItem(perStartKey, newStart.toString());
+                localStorage.setItem(perEndKey, perQuestionEnd.toString());
+                localStorage.setItem(perCurrentKey, current.toString());
+            }
+        } else {
+            const start = now;
+            perQuestionEnd = start + perQuestionDuration;
+            localStorage.setItem(perStartKey, start.toString());
+            localStorage.setItem(perEndKey, perQuestionEnd.toString());
+            localStorage.setItem(perCurrentKey, current.toString());
+        }
+  
+        perQuestionTick();
+        perQuestionInterval = setInterval(perQuestionTick, 200);
+    }
+  
+    function stopPerQuestionTimer() {
+        if (perQuestionInterval) {
+            clearInterval(perQuestionInterval);
+            perQuestionInterval = null;
+        }
+    }
+  
+    function perQuestionTick() {
+        const now = Date.now();
+        const remaining = perQuestionEnd - now;
+        if (remaining <= 0) {
+            // cleanup per-question saved keys for that slot
+            localStorage.removeItem(perStartKey);
+            localStorage.removeItem(perEndKey);
+            localStorage.removeItem(perCurrentKey);
+  
+            stopPerQuestionTimer();
+            if (current < jumlahSoal) {
+                current++;
+                localStorage.setItem(currentKey, current.toString());
+                getSoal(current);
+            } else {
+                kirimJawaban();
+            }
+            return;
+        }
+        const seconds = Math.ceil(remaining / 1000);
+        const minutesPart = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const secondsPart = (seconds % 60).toString().padStart(2, '0');
+        $('#timer').text(`${minutesPart}:${secondsPart}`);
+    }
+  
+    // -----------------------
+    // Submit / cleanup
+    // -----------------------
+    function kirimJawaban() {
+        // stop all timers
+        stopPerQuestionTimer();
+        stopTotalTimer();
+  
+        const jumlah = document.getElementById("jumlah_soal").value;
+        const pilihan = jawabanSementara;
+  
+        form.querySelectorAll('input[name^="answers"]').forEach(el => el.remove());
+  
+        for (let i = 1; i <= jumlah; i++) {
+          if (Array.isArray(pilihan[i])) {
+            pilihan[i].forEach(val => {
+              const input = document.createElement("input");
+              input.type = "hidden";
+              input.name = `answers[${i}][]`;
+              input.value = val;
+              form.appendChild(input);
+            });
+          } else {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = `answers[${i}]`;
+            input.value = pilihan[i] || '';
+            form.appendChild(input);
+          }
+        }
+  
+        // cleanup persistence
+        localStorage.removeItem(currentKey);
+        localStorage.removeItem(totalStartKey);
+        localStorage.removeItem(totalDurationKey);
+        localStorage.removeItem(perStartKey);
+        localStorage.removeItem(perEndKey);
+        localStorage.removeItem(perCurrentKey);
+  
+        sessionStorage.removeItem("jawabanSementara");
+  
+        form.submit();
+    }
+  
+    // attach submit listener
+    document.getElementById("form").addEventListener("submit", function(e) {
+      e.preventDefault();
+      kirimJawaban();
+    });
+  
+    // cleanup intervals on unload (but don't erase localStorage so we can resume)
+    $(window).on('beforeunload', function() {
+      stopPerQuestionTimer();
+      stopTotalTimer();
+    });
+  
   });
   
-  
-
-});
