@@ -392,26 +392,35 @@ $(document).ready(function () {
         };
       
         const opsiHtml = (data.options || []).map(opt => {
-            const stored = jawabanSementara[nomor];
-            const isChecked = Array.isArray(stored)
-                ? stored.includes(opt.value)
-                : stored === opt.value;
+          const stored = jawabanSementara[nomor];
+          const isChecked = Array.isArray(stored)
+              ? stored.includes(opt.value)
+              : stored === opt.value;
       
-            const checkedAttr = isChecked ? 'checked' : '';
-            const imgSrc = resolveImageSrc(opt.image);
-            const content = imgSrc ? `<img src="${imgSrc}" class="q-img" alt="option-${opt.value}">` : (opt.text ?? '');
+          const checkedAttr = isChecked ? 'checked' : '';
+          const imgSrc = resolveImageSrc(opt.image);
       
-            return `
-                <label class="list-group-item option-item d-flex align-items-center" role="option" tabindex="0">
-                    <input type="${data.multiSelect ? 'checkbox' : 'radio'}"
-                        name="answer_${nomor}${data.multiSelect ? '[]' : ''}" 
-                        value="${opt.value}" class="form-check-input me-2" ${checkedAttr}>
-                    <div class="flex-grow-1 d-flex align-items-center">
-                        ${content}
-                        <div class="option-text ms-2">${opt.text ?? ''}</div>
-                    </div>
-                </label>`;
-        }).join('');
+          let content = '';
+          if (imgSrc) {
+              content = `
+                  <img src="${imgSrc}" class="q-img" alt="option-${opt.value}">
+                  <div class="option-text ms-2">${opt.text ?? ''}</div>
+              `;
+          } else {
+              content = `<div class="option-text">${opt.text ?? ''}</div>`;
+          }
+      
+          return `
+              <label class="list-group-item option-item d-flex align-items-center" role="option" tabindex="0">
+                  <input type="${data.multiSelect ? 'checkbox' : 'radio'}"
+                      name="answer_${nomor}${data.multiSelect ? '[]' : ''}" 
+                      value="${opt.value}" class="form-check-input me-2" ${checkedAttr}>
+                  <div class="flex-grow-1 d-flex align-items-center">
+                      ${content}
+                  </div>
+              </label>`;
+      }).join('');
+      
       
         let soalImageHtml = '';
         if (Array.isArray(data.questionImages) && data.questionImages.length) {
