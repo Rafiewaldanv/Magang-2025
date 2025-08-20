@@ -1,6 +1,29 @@
 @extends('template/main')
 
 @section('content')
+<!-- Overlay Loading -->
+<div id="overlay-loading">
+    <div class="spinner"></div>
+</div>
+
+{{-- Header --}}
+<div class="bg-theme-1 bg-header">
+
+<div class="container text-center text-white">
+        <h2 id="timer">00:00</h2>
+
+</div>
+</div>
+<div class="custom-shape-divider-top-1617767620">
+    <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" 
+        viewBox="0 0 1200 120" preserveAspectRatio="none">
+        <path d="M0,0V7.23C0,65.52,268.63,112.77,
+                 600,112.77S1200,65.52,1200,7.23V0Z" 
+              class="shape-fill"></path>
+    </svg>
+</div>
+
+{{-- Content --}}
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -9,7 +32,7 @@
                 <div class="card-body text-center p-5">
                     {{-- Status --}}
                     <h3 class="fw-bold text-success mb-3">
-                        {{ $status ?? 'selesai' }}
+                        {{ $status ?? 'Jawaban Tersimpan' }}
                     </h3>
 
                     {{-- Message --}}

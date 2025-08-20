@@ -7,9 +7,9 @@
 </div>
 
 <div class="bg-theme-1 bg-header">
-    <div class="container text-center text-white">
-        {{-- <h3>{{ $questions->packet->name }}</h3> --}}
-    </div>
+<div class="container text-center text-white">
+        <h2 id="timesr">00:00</h2>
+</div>
 </div>
 <div class="custom-shape-divider-top-1617767620">
     <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
