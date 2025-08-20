@@ -565,7 +565,7 @@ private function isJson($string)
 // Method simpanJawaban yang sudah diperbaiki
 public function simpanJawaban(Request $request)
 {  
-    dd($request->all());
+    // dd($request->all());
     try {
         // ✅ Validasi input
         $request->validate([
