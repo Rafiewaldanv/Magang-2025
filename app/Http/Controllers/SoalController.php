@@ -16,10 +16,38 @@ class SoalController extends Controller
 {
 
     public function home()
-    {
-        $packets = Packet::all(); // ambil semua packet
-        return view('home', compact('packets'));
+{
+    \Log::info('[HOME] start request', [
+        'session_before' => session()->has('packet_id') ? session('packet_id') : null,
+        'session_all_keys' => array_keys(session()->all()),
+        'user_id' => auth()->check() ? auth()->id() : null,
+    ]);
+
+    $packets = Packet::all();
+    $ongoingTest = null;
+
+    // cek session dulu — jika ada, tampilkan ongoing
+    $packetId = session('packet_id');
+    if (!empty($packetId)) {
+        $ongoingTest = ['packet_id' => $packetId];
+        \Log::info('[HOME] detected packet_id in session -> show ongoing modal', ['packet_id' => $packetId]);
+    } else {
+        // fallback: kalau mau, cek TestTemporary untuk user login
+        if (auth()->check()) {
+            $userId = auth()->id();
+            $latestTemp = TestTemporary::where('user_id', $userId)->orderBy('created_at','desc')->first();
+            if ($latestTemp && $latestTemp->packet_id) {
+                session(['packet_id' => $latestTemp->packet_id]);
+                $ongoingTest = ['packet_id' => $latestTemp->packet_id];
+                \Log::info('[HOME] fallback set session packet_id from TestTemporary', ['packet_id' => $latestTemp->packet_id]);
+            }
+        }
+    }
+
+    \Log::info('[HOME] result', ['packetId' => $packetId, 'ongoingTest' => $ongoingTest]);
+    return view('home', compact('packets', 'ongoingTest'));
 }
+
 public function SoalAdaptifAnalogi()
 {
     $path = public_path('assets/soal/soal_adaptif_analogi.json');
@@ -395,11 +423,18 @@ public function soalStart(Request $request)
         'packet_id' => 'required|exists:packets,id'
     ]);
 
-    // Simpan ke session
     session(['packet_id' => $request->packet_id]);
+    session(['test_started_at' => now()->toDateTimeString()]);
+
+    \Log::info('[soalStart] set session packet_id', [
+        'packet_id' => $request->packet_id,
+        'session_keys' => array_keys(session()->all()),
+        'user' => auth()->check() ? auth()->id() : null
+    ]);
 
     return redirect()->route('soal.index');
 }
+
 
 
     // Step 2: tampilkan soal
@@ -560,7 +595,30 @@ private function isJson($string)
 // Simpan Jawaban
 
 // Method simpanJawaban yang sudah diperbaiki
+public function cancelTest(Request $request)
+{
+    try {
+        $userId = auth()->id();
 
+        // optional: terima packet_id di request untuk hapus temp spesifik
+        $packetId = $request->input('packet_id');
+
+        // hapus session packet_id
+        session()->forget('packet_id');
+
+        // optional: hapus temporary answers server-side (jika mau)
+        if ($packetId && $userId) {
+            TestTemporary::where('user_id', $userId)
+                ->where('packet_id', $packetId)
+                ->delete();
+        }
+
+        return response()->json(['ok' => true]);
+    } catch (\Throwable $e) {
+        \Log::error('cancelTest error: '.$e->getMessage());
+        return response()->json(['ok' => false, 'error' => 'Gagal membatalkan'], 500);
+    }
+}
 
 // Method simpanJawaban yang sudah diperbaiki
 public function simpanJawaban(Request $request)
@@ -702,6 +760,9 @@ private function calculateFinalScore($userId, $testId)
         $grandTotalQuestions = 0;
         $grandTotalCorrect   = 0;
 
+        // simpan packet ids yang terproses (untuk cleanup client & redirect)
+        $processedPacketIds = [];
+
         foreach ($byPacket as $packetId => $rows) {
             if (empty($packetId)) {
                 Log::warning('Found temporary row without packet_id', [
@@ -710,6 +771,8 @@ private function calculateFinalScore($userId, $testId)
                 ]);
                 continue; // lewati yang packet_id nya null
             }
+
+            $processedPacketIds[] = $packetId;
 
             $answers = [];
             $totalQuestions = 0;
@@ -752,15 +815,16 @@ private function calculateFinalScore($userId, $testId)
             ->where('test_id', $testId)
             ->delete();
 
-        // ---- Hapus packet_id dari session agar user tidak bisa kembali ke /soal ----
+        // Hapus packet_id dari session agar user tidak bisa kembali ke /soal
         session()->forget('packet_id');
 
-        // Data untuk view (agregat semua packet)
+        // Data hasil agregat (nilai keseluruhan across packets)
         $finalScorePercent = $grandTotalQuestions > 0
             ? round(($grandTotalCorrect / $grandTotalQuestions) * 100)
             : 0;
 
-        return view('soal.hasil', [
+        // Siapkan payload hasil untuk ditampilkan di view hasil
+        $hasilPayload = [
             'status'  => 'selesai',
             'message' => 'Test berhasil diselesaikan!',
             'result'  => [
@@ -770,7 +834,21 @@ private function calculateFinalScore($userId, $testId)
                 'total_question' => $grandTotalQuestions,
             ],
             'redirect' => route('home'),
-        ]);
+        ];
+
+        // Flash payload dan processed packet ids ke session (tersedia untuk request GET berikutnya)
+        session()->flash('hasil_payload', $hasilPayload);
+        session()->flash('processed_packet_ids', $processedPacketIds);
+
+        // Jika ada packet yang diproses, ambil yang pertama sebagai target route hasil (packet-based route)
+        $firstPacketId = !empty($processedPacketIds) ? $processedPacketIds[0] : null;
+
+        if ($firstPacketId) {
+            return redirect()->route('soal.hasil', ['packet_id' => $firstPacketId]);
+        }
+
+        // fallback: jika tidak ada packet id (hentikan di home)
+        return redirect()->route('home')->with('message', 'Test selesai, namun tidak ada packet untuk ditampilkan.');
 
     } catch (\Throwable $e) {
         Log::error('Error in calculateFinalScore: ' . $e->getMessage(), [
@@ -781,6 +859,33 @@ private function calculateFinalScore($userId, $testId)
 
         return redirect()->route('home')->with('error', 'Gagal menghitung skor final.');
     }
+}
+public function hasil(Request $request, $packet_id = null)
+{
+    // ambil payload yang di-flash oleh calculateFinalScore
+    $payload = session('hasil_payload');
+    $packetIds = session('processed_packet_ids', []);
+
+    if (empty($payload)) {
+        // jika user akses langsung atau flash sudah kedaluwarsa
+        return redirect()->route('home')->with('error', 'Hasil tidak ditemukan atau sudah kadaluarsa.');
+    }
+
+    // pastikan packet_id route cocok atau fallback
+    if ($packet_id && !in_array($packet_id, $packetIds)) {
+        // jika route packet_id tidak ada di processed list, redirect home
+        return redirect()->route('home')->with('error', 'Packet tidak ditemukan untuk hasil ini.');
+    }
+
+    // optional: hapus flash agar tidak tersisa
+    session()->forget('hasil_payload');
+    session()->forget('processed_packet_ids');
+
+    // render view hasil, sertakan packet_id agar view tahu konteks route
+    return view('soal.hasil', array_merge($payload, [
+        'packetId' => $packet_id,
+        'packetIds' => $packetIds,
+    ]));
 }
 
 

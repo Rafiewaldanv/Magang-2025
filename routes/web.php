@@ -26,6 +26,8 @@ Route::get('/home', [SoalController::class, 'home'])->name('home');
 Route::post('/soal/start', [SoalController::class, 'soalStart'])->name('soal.start');
 Route::post('/soal/prepare', [SoalController::class, 'prepareTes'])->name('soal.mulai');
 Route::get('/soal', [SoalController::class, 'mulaiTes'])->name('soal.index');
+// routes/web.php
+Route::get('/soal/hasil/{packet_id}', [SoalController::class, 'hasil'])->name('soal.hasil');
 
 
 
@@ -44,6 +46,12 @@ Route::get('/errorrr', function () {
     return view('soal.error');
 })->name('soal.errorrr');
 // 🚀 Submit saat waktu habis (auto-submit final)
+// routes/web.php
+Route::post('/test/cancel', [SoalController::class, 'cancelTest'])->name('test.cancel');
+
+// pastikan ada route /soal yang bisa diakses tanpa form (misalnya soal.index)
+// contoh (sesuaikan nama controller/route jika beda):
+// Route::get('/soal', [SoalController::class, 'index'])->name('soal.index');
 
 // 🧪  View setelah tes selesai
 Route::get('/tes/selesai', function () {  return view('tes.selesai'); // Buat view ini untuk notifikasi akhir tes
