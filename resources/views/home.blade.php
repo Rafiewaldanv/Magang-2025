@@ -8,117 +8,92 @@
 
 <!-- Header -->
 <div class="bg-theme-1 bg-header">
-<div class="container text-center text-white">
-        <h2 id="timer">00:00</h2>
-    </div>
+  <div class="container text-center text-white">
+    <h2 id="timer">00:00</h2>
+  </div>
 </div>
 
 <div class="custom-shape-divider-top-1617767620">
-    <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-        <path d="M0,0V7.23C0,65.52,268.63,112.77,600,112.77S1200,65.52,1200,7.23V0Z" class="shape-fill"></path>
-    </svg>
+  <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+    <path d="M0,0V7.23C0,65.52,268.63,112.77,600,112.77S1200,65.52,1200,7.23V0Z" class="shape-fill"></path>
+  </svg>
 </div>
 
 <!-- Isi Halaman -->
 <div class="container main-container text-center mt-5 mb-5">
-    <div class="card shadow mx-auto" style="max-width: 600px">
-        <div class="card-body">
-            <h4 class="fw-bold mb-3">Mulai Tes</h4>
-            <p class="mb-4">Pastikan kamu sudah siap dan koneksi internet stabil sebelum memulai.</p>
-            <button class="btn btn-primary text-uppercase mt-3 px-4 py-2" 
-                    data-bs-toggle="modal" data-bs-target="#tutorialModal">
-                Mulai Tes Sekarang
-            </button>
-        </div>
+  <div class="card shadow mx-auto" style="max-width: 600px">
+    <div class="card-body">
+      <h4 class="fw-bold mb-3">Mulai Tes</h4>
+      <p class="mb-4">Pastikan kamu sudah siap dan koneksi internet stabil sebelum memulai.</p>
+      <button class="btn btn-primary text-uppercase mt-3 px-4 py-2" 
+              data-bs-toggle="modal" data-bs-target="#tutorialModal">
+          Mulai Tes Sekarang
+      </button>
     </div>
+  </div>
 </div>
 
-<!-- Modal 1: Tutorial -->
+<!-- Modal Tutorial -->
 <div class="modal fade" id="tutorialModal" tabindex="-1" aria-labelledby="tutorialLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content" style="height: 60vh">
-            <div class="modal-header">
-                <h5 class="modal-title" id="tutorialLabel">
-                    <span class="bg-warning rounded-1 text-center px-3 py-2 me-2">
-                        <i class="fa fa-lightbulb-o text-dark" aria-hidden="true"></i>
-                    </span>
-                    Tutorial Tes
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Baca instruksi tes dengan seksama sebelum memulai.</p>
-                <ul>
-                    <li>Kerjakan dengan tenang.</li>
-                    <li>Pastikan koneksi internet stabil.</li>
-                    <li>Gunakan waktu sebaik mungkin.</li>
-                </ul>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bs-target="#confirmModal" data-bs-toggle="modal">
-                    Mengerti
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- {-- Modal Ongoing Test (muncul otomatis jika ada ongoingTest) --}} -->
-@if(!empty($ongoingTest))
-<div class="modal fade" id="modalOngoingTest" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content" style="height: 60vh">
       <div class="modal-header">
-        <h5 class="modal-title">Tes Sedang Berlangsung</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+        <h5 class="modal-title" id="tutorialLabel">
+          <span class="bg-warning rounded-1 text-center px-3 py-2 me-2">
+            <i class="fa fa-lightbulb-o text-dark" aria-hidden="true"></i>
+          </span>
+          Tutorial Tes
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p>Terdeteksi ada tes yang sedang berjalan. Ingin melanjutkan atau membatalkan tes?</p>
+        <p>Baca instruksi tes dengan seksama sebelum memulai.</p>
+        <ul>
+          <li>Kerjakan dengan tenang.</li>
+          <li>Pastikan koneksi internet stabil.</li>
+          <li>Gunakan waktu sebaik mungkin.</li>
+        </ul>
       </div>
       <div class="modal-footer">
-        <button type="button" id="btn-cancel-test" class="btn btn-secondary">Tidak, Batalkan</button>
-
-        {{-- Tombol Lanjutkan: gunakan route atau URL sesuai aplikasi kamu --}}
-        <a href="#" id="btn-continue-test" class="btn btn-primary">Lanjutkan Tes</a>
+        <button type="button" class="btn btn-primary" data-bs-target="#confirmModal" data-bs-toggle="modal">
+          Mengerti
+        </button>
       </div>
     </div>
   </div>
 </div>
-@endif
 
-<!-- Modal 2: Konfirmasi -->
-<!-- Modal 2: Konfirmasi -->
+<!-- Modal 2: Pilih Paket (dari tutorial -> confirm) -->
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="confirmLabel">Konfirmasi</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-                <p>Pilih jenis tes yang akan kamu kerjakan:</p>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmLabel">Konfirmasi</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <p>Pilih jenis tes yang akan kamu kerjakan:</p>
 
-                <form id="startTestForm" method="POST" action="{{ route('soal.start') }}">
-    @csrf
-    <select class="form-select mb-3" name="packet_id" required>
-        <option value="">-- Pilih Paket Tes --</option>
-        @foreach($packets as $p)
-            <option value="{{ $p->id }}">{{ $p->name }}</option>
-        @endforeach
-    </select>
+        <form id="startTestForm" method="POST" action="{{ route('soal.start') }}">
+          @csrf
+          <select class="form-select mb-3" name="packet_id" required>
+            <option value="">-- Pilih Paket Tes --</option>
+            @foreach($packets as $p)
+              <option value="{{ $p->id }}">{{ $p->name }}</option>
+            @endforeach
+          </select>
 
-    <button type="submit" class="btn btn-success">Lanjutkan Tes</button>
-    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Belum Siap</button>
-</form>
+          <button type="submit" class="btn btn-success">Lanjutkan Tes</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Belum Siap</button>
+        </form>
 
-
-
-            </div>
-        </div>
+      </div>
     </div>
+  </div>
 </div>
-{{-- ---------- Ongoing / Welcome modals (either one rendered) ---------- --}}
+
+<!-- Modal Ongoing Test (muncul otomatis bila $ongoingTest ada) -->
 @if(!empty($ongoingTest))
-  {{-- Modal: Tes Sedang Berlangsung --}}
   <div class="modal fade" id="modalOngoingTest" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -126,9 +101,20 @@
           <h5 class="modal-title">Tes Sedang Berlangsung</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
         </div>
+
         <div class="modal-body">
-          <p>Terdeteksi ada tes yang sedang berjalan. Ingin melanjutkan atau membatalkan tes?</p>
+          <p>Anda sedang mengerjakan:</p>
+          <h5 class="fw-bold" id="modal-packet-name">{{ $ongoingTest['packet_name'] ?? 'Paket Tes' }}</h5>
+
+          <div class="mt-3">
+            <small class="text-muted">Sisa Waktu:</small>
+            <div class="h3 fw-bold" id="modal-remaining">--:--</div>
+            <div class="small text-muted" id="modal-remaining-note"></div>
+          </div>
+
+          <p class="mt-3 text-muted">Jika keluar sekarang, tes akan dianggap dibatalkan.</p>
         </div>
+
         <div class="modal-footer">
           <button type="button" id="btn-cancel-test" class="btn btn-secondary">Tidak, Batalkan</button>
           <a href="#" id="btn-continue-test" class="btn btn-primary">Lanjutkan Tes</a>
@@ -136,44 +122,116 @@
       </div>
     </div>
   </div>
-@else
-  {{-- Modal: Welcome --}}
-  <div class="modal fade" id="modalWelcomeTest" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Selamat Datang di Tes Psikologanda</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
-        </div>
-        <div class="modal-body text-start">
-          <p>Selamat datang! Sebelum mulai, baca tutorial singkat agar lebih siap mengerjakan.</p>
-          <ul>
-            <li>Siapkan koneksi internet yang stabil.</li>
-            <li>Siapkan waktu sesuai durasi tes.</li>
-            <li>Klik <strong>Mulai Tes</strong> untuk melihat tutorial dan memilih paket.</li>
-          </ul>
-        </div>
-        <div class="modal-footer">
-          <button type="button" id="btn-welcome-later" class="btn btn-secondary" data-bs-dismiss="modal">Nanti Saja</button>
-          <button type="button" id="btn-welcome-start" class="btn btn-primary">Mulai Tes</button>
-        </div>
+@endif
+
+<!-- Modal Kembali (untuk mencegah back langsung) -->
+<div class="modal fade" id="modalKembali" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Konfirmasi Keluar Tes</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        Jika keluar, tes dianggap <strong>dibatalkan</strong> dan tidak bisa dilanjutkan lagi. 
+        Yakin ingin keluar?
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <a href="/" class="btn btn-danger" id="confirm-kembali">Ya, Keluar</a>
       </div>
     </div>
   </div>
-@endif
+</div>
 
-{{-- ---------- Single JS section for both modals ---------- --}}
+@endsection
+
+{{-- JS section: pastikan hanya satu section js-extra per file --}}
 @section('js-extra')
 @parent
 <script>
+/**
+ * Modal Ongoing handler + countdown that uses the same localStorage keys
+ * as your quiz-render.js. It will:
+ * - show packet name
+ * - compute remaining time from localStorage keys (total or per-question mode)
+ * - if not started yet, show full duration and "Belum dimulai"
+ * - when Continue pressed: ensure start keys exist then redirect to /soal?packet_id=...
+ * - when Cancel pressed: clear keys and call server cancel
+ *
+ * Requires server variable: `ongoingTest` (packet_id, packet_name, duration_minutes optional)
+ */
 document.addEventListener('DOMContentLoaded', function () {
-  // server data
   const ongoingTest = @json($ongoingTest ?? null);
+  if (!ongoingTest || !ongoingTest.packet_id) return;
 
-  // determine which modal to show
-  const hasOngoing = ongoingTest && ongoingTest.packet_id;
+  const packetId = String(ongoingTest.packet_id);
+  const packetName = ongoingTest.packet_name || 'Paket Tes';
+  const durationMinutesFromServer = parseInt(ongoingTest.duration_minutes || 0, 10);
 
-  // helper: show modal when bootstrap ready (retry a few times)
+  // localStorage keys — must match keys used in quiz-render.js
+  const currentKey = `quizCurrent_${packetId}`;
+  const totalStartKey = `quizTotalStart_${packetId}`;
+  const totalDurationKey = `quizTotalDuration_${packetId}`;
+  const perStartKey = `quizPerStart_${packetId}`;
+  const perEndKey = `quizPerEnd_${packetId}`;
+  const perCurrentKey = `quizPerCurrent_${packetId}`;
+
+  const nameEl = document.getElementById('modal-packet-name');
+  const remainingEl = document.getElementById('modal-remaining');
+  const noteEl = document.getElementById('modal-remaining-note');
+
+  if (nameEl) nameEl.textContent = packetName;
+
+  const perQuestionMode = parseInt(packetId, 10) === 7;
+  const perQuestionDuration = 15 * 1000; // 15s
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function readTotalDurationMs() {
+    const persisted = parseInt(localStorage.getItem(totalDurationKey), 10);
+    if (!isNaN(persisted) && persisted > 0) return persisted;
+    if (!isNaN(durationMinutesFromServer) && durationMinutesFromServer > 0) {
+      return durationMinutesFromServer * 60 * 1000;
+    }
+    return 30 * 60 * 1000; // fallback
+  }
+
+  function getTotalRemainingMs() {
+    const totalDurationMs = readTotalDurationMs();
+    const savedStart = parseInt(localStorage.getItem(totalStartKey), 10);
+    if (!isNaN(savedStart) && savedStart > 0) {
+      const rem = (savedStart + totalDurationMs) - Date.now();
+      return rem > 0 ? rem : 0;
+    }
+    return totalDurationMs;
+  }
+
+  function getPerQuestionRemainingMs() {
+    const savedEnd = parseInt(localStorage.getItem(perEndKey), 10);
+    if (!isNaN(savedEnd) && savedEnd > Date.now()) {
+      return savedEnd - Date.now();
+    }
+    return perQuestionDuration;
+  }
+
+  let countdownInterval = null;
+  function updateCountdownUI() {
+    let remMs = perQuestionMode ? getPerQuestionRemainingMs() : getTotalRemainingMs();
+    const totalSeconds = Math.floor(remMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    if (remainingEl) remainingEl.textContent = `${pad(minutes)}:${pad(seconds)}`;
+
+    if (perQuestionMode) {
+      const hasPerStart = !!localStorage.getItem(perStartKey) || !!localStorage.getItem(perEndKey);
+      noteEl.textContent = hasPerStart ? '' : 'Belum dimulai — durasi per-soal penuh ditampilkan.';
+    } else {
+      const hasTotalStart = !!localStorage.getItem(totalStartKey);
+      noteEl.textContent = hasTotalStart ? '' : 'Belum dimulai — durasi penuh ditampilkan.';
+    }
+  }
+
   function showModalWhenReady(modalId, onShow) {
     let tries = 12;
     const delay = 150;
@@ -195,45 +253,50 @@ document.addEventListener('DOMContentLoaded', function () {
     })();
   }
 
-  // attach handlers for ongoing modal
-  function attachOngoingHandlers(bsModal) {
-    const packetId = ongoingTest ? ongoingTest.packet_id : null;
+  function attachHandlers(bsModal) {
+    updateCountdownUI();
+    countdownInterval = setInterval(updateCountdownUI, 1000);
 
     const btnContinue = document.getElementById('btn-continue-test');
-    const btnCancel   = document.getElementById('btn-cancel-test');
-
     if (btnContinue) {
-      btnContinue.addEventListener('click', function (e) {
+      btnContinue._listener && btnContinue.removeEventListener('click', btnContinue._listener);
+      btnContinue._listener = function (e) {
         e.preventDefault();
+        if (perQuestionMode) {
+          if (!localStorage.getItem(perStartKey) || !localStorage.getItem(perEndKey)) {
+            const now = Date.now();
+            localStorage.setItem(perStartKey, String(now));
+            localStorage.setItem(perEndKey, String(now + perQuestionDuration));
+            localStorage.setItem(perCurrentKey, String(parseInt(localStorage.getItem(perCurrentKey) || '1', 10)));
+          }
+        } else {
+          if (!localStorage.getItem(totalStartKey)) {
+            const now = Date.now();
+            localStorage.setItem(totalStartKey, String(now));
+            localStorage.setItem(totalDurationKey, String(readTotalDurationMs()));
+          }
+        }
         bsModal.hide();
-        const targetUrl = '/soal' + (packetId ? ('?packet_id=' + encodeURIComponent(packetId)) : '');
-        window.location.href = targetUrl;
-      });
+        window.location.href = '/soal' + (packetId ? ('?packet_id=' + encodeURIComponent(packetId)) : '');
+      };
+      btnContinue.addEventListener('click', btnContinue._listener);
     }
 
+    const btnCancel = document.getElementById('btn-cancel-test');
     if (btnCancel) {
-      btnCancel.addEventListener('click', function (e) {
+      btnCancel._listener && btnCancel.removeEventListener('click', btnCancel._listener);
+      btnCancel._listener = function (e) {
         e.preventDefault();
-        // clear client storage
-        try { sessionStorage.removeItem('jawabanSementara'); } catch(e){}
-        if (packetId) {
-          const keys = [
-            `quizStartTime_${packetId}`,
-            `quizCurrent_${packetId}`,
-            `quizPerStart_${packetId}`,
-            `quizPerEnd_${packetId}`,
-            `quizPerCurrent_${packetId}`,
-            `quizTotalStart_${packetId}`,
-            `quizTotalDuration_${packetId}`
-          ];
-          keys.forEach(k => { try { localStorage.removeItem(k); } catch(e) {} });
-        } else {
-          ['quizStartTime','quizCurrent','quizTotalStart','quizTotalDuration'].forEach(k => {
-            try { localStorage.removeItem(k); } catch(e) {}
-          });
-        }
+        try {
+          localStorage.removeItem(currentKey);
+          localStorage.removeItem(totalStartKey);
+          localStorage.removeItem(totalDurationKey);
+          localStorage.removeItem(perStartKey);
+          localStorage.removeItem(perEndKey);
+          localStorage.removeItem(perCurrentKey);
+        } catch (err) { console.warn(err); }
+        try { sessionStorage.removeItem('jawabanSementara'); } catch(e) {}
 
-        // notify server to forget session packet (CSRF meta required)
         fetch("{{ route('test.cancel') }}", {
           method: 'POST',
           headers: {
@@ -245,54 +308,23 @@ document.addEventListener('DOMContentLoaded', function () {
           bsModal.hide();
           location.reload();
         });
+      };
+      btnCancel.addEventListener('click', btnCancel._listener);
+    }
+
+    const modalEl = document.getElementById('modalOngoingTest');
+    if (modalEl) {
+      modalEl.addEventListener('hidden.bs.modal', function onHidden() {
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+        }
+        modalEl.removeEventListener('hidden.bs.modal', onHidden);
       });
     }
   }
 
-  // attach handlers for welcome modal
-  function attachWelcomeHandlers(bsModal) {
-    const btnStart = document.getElementById('btn-welcome-start');
-    const btnLater = document.getElementById('btn-welcome-later');
-
-    if (btnStart) {
-      btnStart.addEventListener('click', function (e) {
-        e.preventDefault();
-        bsModal.hide();
-        setTimeout(function () {
-          const tutorialEl = document.getElementById('tutorialModal');
-          if (tutorialEl && typeof bootstrap !== 'undefined') {
-            const tutModal = new bootstrap.Modal(tutorialEl);
-            tutModal.show();
-          } else {
-            const confirmEl = document.getElementById('confirmModal');
-            if (confirmEl && typeof bootstrap !== 'undefined') {
-              const conf = new bootstrap.Modal(confirmEl);
-              conf.show();
-            } else {
-              // fallback: direct to start route (adjust route if needed)
-              window.location.href = "{{ route('soal.start') }}";
-            }
-          }
-        }, 220);
-      });
-    }
-
-    if (btnLater) {
-      btnLater.addEventListener('click', function () {
-        // user chose to see later — nothing else
-      });
-    }
-  }
-
-  // show desired modal and attach handlers
-  if (hasOngoing) {
-    showModalWhenReady('modalOngoingTest', attachOngoingHandlers);
-  } else {
-    showModalWhenReady('modalWelcomeTest', attachWelcomeHandlers);
-  }
-
+  showModalWhenReady('modalOngoingTest', attachHandlers);
 });
 </script>
-@endsection
-
 @endsection
