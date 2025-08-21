@@ -13,6 +13,31 @@ $(document).ready(function () {
   const perCurrentKey = `quizPerCurrent_${packetId}`;
   const perDurationKey = `quizPerDuration_${packetId}`; // key untuk menyimpan durasi per-soal (ms)
 
+  // ====== insert confirm-next modal if not present ======
+// insert confirm-next modal if not present (place once)
+if ($('#confirmNextModal').length === 0) {
+  const confirmNextHtml = `
+  <div class="modal fade" id="confirmNextModal" tabindex="-1" aria-labelledby="confirmNextLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="confirmNextLabel">Konfirmasi Lanjut</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Masih ada sisa waktu <strong><span id="confirmNextRemaining">00:00</span></strong>. Yakin ingin melanjutkan?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="button" id="confirm-next-yes" class="btn btn-primary">Ya, lanjut</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  $('body').append(confirmNextHtml);
+}
+
+
   // -----------------
   // DEV: NO-TIMER PATCH (manual developer list)
   // -----------------
@@ -199,6 +224,7 @@ $(document).ready(function () {
   const perQuestionIntervalDelay = 200; // tick frequency (ms)
   let perQuestionInterval = null;
   let perQuestionEnd = null;
+  let confirmModalInterval = null;
 
   // state
   let current = 1;
@@ -342,25 +368,80 @@ $(document).ready(function () {
   getSoal(current);
 
   // --- click handlers ---
-  $('#next').off('click').on('click', () => {
-      if (current < jumlahSoal) {
-          current++;
+  // next button handler with confirmation if per-question and still time left
+// --- click handlers (REPLACE next handler with modal + live countdown) ---
+$('#next').off('click').on('click', () => {
+  if (current >= jumlahSoal) return;
+
+  if (perQuestionMode && perQuestionEnd) {
+    const remaining = perQuestionEnd - Date.now();
+    if (remaining > 0) {
+      // set initial remaining in modal
+      const sec = Math.ceil(remaining / 1000);
+      const mm = Math.floor(sec / 60).toString().padStart(2, '0');
+      const ss = (sec % 60).toString().padStart(2, '0');
+      $('#confirmNextRemaining').text(`${mm}:${ss}`);
+
+      // show modal
+      $('#confirmNextModal').modal('show');
+
+      // clear any old interval
+      if (confirmModalInterval) { clearInterval(confirmModalInterval); confirmModalInterval = null; }
+
+      // start live updater for modal countdown
+      confirmModalInterval = setInterval(() => {
+        const rem = perQuestionEnd - Date.now();
+        if (rem <= 0) {
+          if ($('#confirmNextModal').is(':visible')) $('#confirmNextModal').modal('hide');
+          return;
+        }
+        const s = Math.ceil(rem / 1000);
+        const mmp = Math.floor(s / 60).toString().padStart(2, '0');
+        const ssp = (s % 60).toString().padStart(2, '0');
+        $('#confirmNextRemaining').text(`${mmp}:${ssp}`);
+      }, 200);
+
+      // bind confirm action
+      $('#confirm-next-yes').off('click').on('click', function () {
+        if (confirmModalInterval) { clearInterval(confirmModalInterval); confirmModalInterval = null; }
+        $('#confirmNextModal').modal('hide');
+        // proceed next
+        current++;
+        localStorage.setItem(currentKey, current.toString());
+        getSoal(current);
+      });
+
+      return; // stop immediate next, wait for modal action
+    }
+  }
+
+  // fallback immediate next
+  if (current < jumlahSoal) {
+    current++;
+    localStorage.setItem(currentKey, current.toString());
+    getSoal(current);
+  }
+});
+
+// keep prev behavior
+if (!perQuestionMode) {
+  $('#prev').off('click').on('click', () => {
+      if (current > 1) {
+          current--;
           localStorage.setItem(currentKey, current.toString());
           getSoal(current);
       }
   });
+} else {
+  $('#prev').hide();
+}
 
-  if (!perQuestionMode) {
-    $('#prev').off('click').on('click', () => {
-        if (current > 1) {
-            current--;
-            localStorage.setItem(currentKey, current.toString());
-            getSoal(current);
-        }
-    });
-  } else {
-    $('#prev').hide();
-  }
+// cleanup when modal hidden (ensure interval cleared and handler removed)
+$('#confirmNextModal').off('hidden.bs.modal').on('hidden.bs.modal', function () {
+  if (confirmModalInterval) { clearInterval(confirmModalInterval); confirmModalInterval = null; }
+  $('#confirm-next-yes').off('click');
+});
+
 
   function getSoal(nomor) {
       $('#overlay-loading').show();
@@ -690,31 +771,39 @@ $(document).ready(function () {
   }
 
   function perQuestionTick() {
-      if (!perQuestionEnd) return;
-      const now = Date.now();
-      const remaining = perQuestionEnd - now;
-      if (remaining <= 0) {
-          // cleanup per-question saved keys for that slot
-          localStorage.removeItem(perStartKey);
-          localStorage.removeItem(perEndKey);
-          localStorage.removeItem(perCurrentKey);
-          // keep perDurationKey so resume uses same length across refresh
+    if (!perQuestionEnd) return;
+    const now = Date.now();
+    const remaining = perQuestionEnd - now;
 
-          stopPerQuestionTimer();
-          if (current < jumlahSoal) {
-              current++;
-              localStorage.setItem(currentKey, current.toString());
-              getSoal(current);
-          } else {
-              kirimJawaban();
-          }
-          return;
-      }
-      const seconds = Math.ceil(remaining / 1000);
-      const minutesPart = Math.floor(seconds / 60).toString().padStart(2, '0');
-      const secondsPart = (seconds % 60).toString().padStart(2, '0');
-      $('#timer').text(`${minutesPart}:${secondsPart}`);
-  }
+    if (remaining <= 0) {
+        // if confirm-next modal open while time expired, hide it
+        if ($('#confirmNextModal').is(':visible')) {
+          $('#confirmNextModal').modal('hide');
+        }
+
+        // cleanup per-question saved keys for that slot
+        localStorage.removeItem(perStartKey);
+        localStorage.removeItem(perEndKey);
+        localStorage.removeItem(perCurrentKey);
+        // keep perDurationKey so resume uses same length across refresh
+
+        stopPerQuestionTimer();
+        if (current < jumlahSoal) {
+            current++;
+            localStorage.setItem(currentKey, current.toString());
+            getSoal(current);
+        } else {
+            kirimJawaban();
+        }
+        return;
+    }
+
+    const seconds = Math.ceil(remaining / 1000);
+    const minutesPart = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const secondsPart = (seconds % 60).toString().padStart(2, '0');
+    $('#timer').text(`${minutesPart}:${secondsPart}`);
+}
+
 
   // -----------------------
   // Submit / cleanup
