@@ -134,8 +134,16 @@
                     <span id="answered">0</span>/<span id="totals"></span> Soal Terjawab
                 </li>
                 <li class="nav-item ms-3">
-                    <a href="#" class="text-secondary" data-bs-toggle="modal" data-bs-target="#tutorialModal" title="Tutorial"><i class="fa fa-question-circle" style="font-size: 1.5rem"></i></a>
-                </li>
+  <button type="button"
+          class="btn btn-link text-secondary p-0"
+          data-bs-toggle="modal"
+          data-bs-target="#tutorialModal"
+          data-suppress-modal-kembali="1"
+          aria-label="Tutorial">
+    <i class="fa fa-question-circle" style="font-size: 1.5rem"></i>
+  </button>
+</li>
+
                 <li class="nav-item ms-3">
                     <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase " id="btn-submit" style="display: none">Submit</button>
                 </li>
@@ -224,45 +232,40 @@
 </div>
 
 @endsection
-
 @section('js-extra')
 <script src="{{ asset('assets/js/quiz-render.js') }}"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // ---------- helper CSRF ----------
+  // ---------- CSRF helper ----------
   function readCsrfToken() {
-    // 1) meta tag
     const meta = document.querySelector('meta[name="csrf-token"]');
     if (meta && meta.getAttribute('content')) return meta.getAttribute('content');
-
-    // 2) hidden input _token (if any form on page)
     const tokenInput = document.querySelector('input[name="_token"]');
     if (tokenInput && tokenInput.value) return tokenInput.value;
-
-    // 3) cookie XSRF-TOKEN (Laravel sets it by default)
     const cookieMatch = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
     if (cookieMatch && cookieMatch[1]) {
-      try {
-        // cookie is URL encoded
-        return decodeURIComponent(cookieMatch[1]);
-      } catch (e) {
-        return cookieMatch[1];
-      }
+      try { return decodeURIComponent(cookieMatch[1]); } catch (e) { return cookieMatch[1]; }
     }
-
     return '';
   }
-
   const csrf = readCsrfToken();
 
-  // ---------- common elements ----------
+  // ---------- push custom quiz state so we can identify our popstate events ----------
+  try {
+    window.history.replaceState({ source: 'quiz' }, '', window.location.href);
+    window.history.pushState({ source: 'quiz' }, '', window.location.href);
+  } catch (e) {
+    // ignore if not supported
+  }
+
+  // ---------- common elements & keys ----------
   const formEl = document.getElementById('form');
   const packetInput = formEl ? formEl.querySelector('input[name="packet_id"]') : null;
   const packetId = packetInput ? packetInput.value : null;
   window.__quizStartKey = packetId ? `quizStartTime_${packetId}` : 'quizStartTime';
 
-  // helper clear storage
+  // ---------- utility: clear local/session storage & timer ----------
   function clearQuizStorageAndTimerFor(packetIdToClear) {
     try {
       if (packetIdToClear) {
@@ -274,7 +277,6 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.removeItem(`quizTotalStart_${packetIdToClear}`);
         localStorage.removeItem(`quizTotalDuration_${packetIdToClear}`);
       } else {
-        // generic key
         localStorage.removeItem(window.__quizStartKey);
       }
     } catch (e) { console.warn('clear localStorage error', e); }
@@ -287,40 +289,50 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (e) {}
   }
 
-  // ---------- form submit interception ----------
-  if (formEl) {
-    // prevent double-binding
-    if (!formEl._hasSubmitHandler) {
-      formEl.addEventListener('submit', function (e) {
-        e.preventDefault();
-        // kirimJawaban defined elsewhere
-        if (typeof kirimJawaban === 'function') kirimJawaban();
-      });
-      formEl._hasSubmitHandler = true;
-    }
+  // ---------- form submit interception (call kirimJawaban once) ----------
+  if (formEl && !formEl._hasSubmitHandler) {
+    formEl.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (typeof kirimJawaban === 'function') kirimJawaban();
+    });
+    formEl._hasSubmitHandler = true;
   }
 
-  // ---------- soal.index back/popstate handling ----------
+  // ---------- keep legacy soal.index back behaviour if needed ----------
   @if(Route::is('soal.index'))
-    try {
-      history.pushState(null, null, location.href);
-      window.onpopstate = function (event) {
+  try {
+    // ensure we have our quiz states; legacy onpopstate triggers btn-kembali click
+    history.pushState({ source: 'quiz' }, '', location.href);
+    window.onpopstate = function (event) {
+      // only respond to our quiz-state popstates
+      if (event && event.state && event.state.source === 'quiz') {
         const btnKembali = document.getElementById('btn-kembali');
         if (btnKembali) btnKembali.click();
-      };
-    } catch (e) { console.warn('popstate init failed', e); }
+      }
+    };
+  } catch (e) { console.warn('popstate init failed', e); }
   @endif
 
-  // ---------- modalKembali (confirm-kembali) robust handler ----------
-  (function attachConfirmKembali() {
-    const confirmKembaliEl = document.getElementById('confirm-kembali');
-    if (!confirmKembaliEl) return;
+  // ---------- modalKembali instance ----------
+  const modalKembaliEl = document.getElementById('modalKembali');
+  const modalKembaliInstance = modalKembaliEl ? (bootstrap.Modal.getInstance(modalKembaliEl) || new bootstrap.Modal(modalKembaliEl, { backdrop: true })) : null;
+  const confirmKembaliBtn = document.getElementById('confirm-kembali');
 
-    // prevent attaching twice
-    if (confirmKembaliEl._attached) return;
-    confirmKembaliEl._attached = true;
+  // Quick cleanup on confirmKembali click (defensive)
+  if (confirmKembaliBtn && !confirmKembaliBtn._simpleCleanupAttached) {
+    confirmKembaliBtn.addEventListener('click', function () {
+      try { localStorage.removeItem(window.__quizStartKey); } catch(e){}
+      try { sessionStorage.removeItem('jawabanSementara'); } catch(e){}
+    });
+    confirmKembaliBtn._simpleCleanupAttached = true;
+  }
 
-    // helper to read packet id from DOM if not available from form
+  // ---------- robust cancel (fetch) for confirm-kembali ----------
+  (function attachConfirmCancelFetch() {
+    if (!confirmKembaliBtn) return;
+    if (confirmKembaliBtn._attachedFetch) return;
+    confirmKembaliBtn._attachedFetch = true;
+
     function getPacketIdFromDom() {
       const pktInput = document.querySelector('input[name="packet_id"]');
       if (pktInput && pktInput.value) return pktInput.value;
@@ -333,19 +345,18 @@ document.addEventListener('DOMContentLoaded', function () {
       return null;
     }
 
-    confirmKembaliEl.addEventListener('click', function (evt) {
-      evt.preventDefault();
-      evt.stopPropagation();
+    confirmKembaliBtn.addEventListener('click', function (ev) {
+      // prevent immediate navigation (if anchor) so we call server cancel first
+      ev.preventDefault();
+      ev.stopPropagation();
 
-      // disable & feedback
-      confirmKembaliEl.setAttribute('disabled', 'disabled');
-      confirmKembaliEl.classList.add('disabled');
-      const originalHTML = confirmKembaliEl.innerHTML;
-      confirmKembaliEl.innerHTML = 'Memproses...';
+      confirmKembaliBtn.setAttribute('disabled', 'disabled');
+      confirmKembaliBtn.classList.add('disabled');
+      const originalHTML = confirmKembaliBtn.innerHTML;
+      confirmKembaliBtn.innerHTML = 'Memproses...';
 
       const pkt = getPacketIdFromDom();
 
-      // send cancel request
       fetch("{{ route('test.cancel') }}", {
         method: 'POST',
         headers: {
@@ -362,62 +373,117 @@ document.addEventListener('DOMContentLoaded', function () {
         return resp.json().catch(()=>({ ok:true }));
       })
       .then(data => {
-        // cleanup client-side
         try { clearQuizStorageAndTimerFor(pkt); } catch(e){}
-
-        // hide modalKembali if open
         try {
-          const modalEl = document.getElementById('modalKembali');
-          if (modalEl) {
-            const bs = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+          if (modalKembaliEl) {
+            const bs = bootstrap.Modal.getInstance(modalKembaliEl) || new bootstrap.Modal(modalKembaliEl);
             bs.hide();
           }
         } catch(e){}
-
-        // redirect to href (default '/')
-        const href = confirmKembaliEl.getAttribute('href') || '/';
+        const href = confirmKembaliBtn.getAttribute('href') || '/';
         window.location.href = href;
       })
       .catch(err => {
         console.error('Cancel request failed:', err);
-        // restore button
-        confirmKembaliEl.removeAttribute('disabled');
-        confirmKembaliEl.classList.remove('disabled');
-        confirmKembaliEl.innerHTML = originalHTML;
+        confirmKembaliBtn.removeAttribute('disabled');
+        confirmKembaliBtn.classList.remove('disabled');
+        confirmKembaliBtn.innerHTML = originalHTML;
         alert('Gagal membatalkan tes. Silakan coba lagi.');
       });
     });
   })();
 
-  // ---------- optional: attach modalKembali popstate protection ----------
-  (function attachPopstateModalKembali() {
-    const modalKembaliEl = document.getElementById('modalKembali');
+  // ---------- suppression mechanism (capture click) to avoid race with other modals ----------
+  (function attachSuppressionAndPopstate() {
     if (!modalKembaliEl) return;
-    // prevent duplicate instance creation
-    if (!modalKembaliEl._popstateAttached) {
-      modalKembaliEl._popstateAttached = true;
-      try {
-        window.history.pushState(null, '', window.location.href);
-        window.addEventListener('popstate', function (e) {
-          // show modal only if not open
-          if (!document.body.classList.contains('modal-open')) {
-            const bs = new bootstrap.Modal(modalKembaliEl, { backdrop: true });
-            bs.show();
-          }
-          window.history.pushState(null, '', window.location.href);
-        });
-      } catch (err) {
-        console.warn('popstate not available', err);
-      }
+    if (modalKembaliEl._suppressionAttached) return;
+    modalKembaliEl._suppressionAttached = true;
 
-      // cleanup leftover backdrops when modal closed
-      modalKembaliEl.addEventListener('hidden.bs.modal', function () {
+    window.__suppressModalKembali = false;
+    let __suppressTimer = null;
+    function suppressTemporary(ms = 1200) {
+      window.__suppressModalKembali = true;
+      if (__suppressTimer) clearTimeout(__suppressTimer);
+      __suppressTimer = setTimeout(() => {
+        window.__suppressModalKembali = false;
+        __suppressTimer = null;
+      }, ms);
+    }
+
+    // capture phase: detect clicks that will open other modals and suppress modalKembali briefly
+    document.addEventListener('click', function (ev) {
+      try {
+        const opener = ev.target.closest ? ev.target.closest('[data-bs-toggle="modal"], [data-suppress-modal-kembali]') : null;
+        if (!opener) return;
+        const target = opener.getAttribute('data-bs-target') || opener.getAttribute('href') || '';
+        if (target && target.indexOf('#modalKembali') !== -1) return;
+        // if opener explicitly requests longer suppression, give it
+        if (opener.hasAttribute('data-suppress-modal-kembali') || opener.dataset.suppressModalKembali) {
+          suppressTemporary(2000);
+          return;
+        }
+        suppressTemporary(1200);
+      } catch (err) { /* ignore */ }
+    }, true);
+
+    // bootstrap modal lifecycle listeners — keep suppression accurate
+    document.querySelectorAll('.modal').forEach(function (mEl) {
+      mEl.addEventListener('show.bs.modal', function () {
+        window.__suppressModalKembali = true;
+      });
+      mEl.addEventListener('shown.bs.modal', function () {
+        window.__suppressModalKembali = true;
+      });
+      mEl.addEventListener('hidden.bs.modal', function () {
+        window.__suppressModalKembali = false;
+        // cleanup stray backdrop/class
         document.querySelectorAll('.modal-backdrop').forEach(node => node.remove());
         document.body.classList.remove('modal-open');
         document.body.style.paddingRight = '';
       });
+    });
+
+    // popstate handler — only respond to our custom quiz states and when suppression not active
+    try {
+      // ensure we have at least one pushed state earlier
+      try { window.history.pushState({ source: 'quiz' }, '', window.location.href); } catch (e) {}
+
+      window.addEventListener('popstate', function (e) {
+        // ONLY react if this popstate came from our quiz history
+        if (!e.state || e.state.source !== 'quiz') {
+          // not our quiz state — ignore
+          return;
+        }
+
+        // if suppression active or any other modal open, restore state and ignore
+        if (window.__suppressModalKembali || document.querySelector('.modal.show') || document.body.classList.contains('modal-open')) {
+          try { window.history.pushState({ source: 'quiz' }, '', window.location.href); } catch (err) {}
+          return;
+        }
+
+        // otherwise show modalKembali
+        try {
+          if (modalKembaliInstance) modalKembaliInstance.show();
+        } catch (err) {
+          console.warn('Could not show modalKembali', err);
+        }
+
+        // push state back to prevent leaving
+        try { window.history.pushState({ source: 'quiz' }, '', window.location.href); } catch (err) {}
+      });
+    } catch (err) {
+      console.warn('popstate init failed', err);
     }
   })();
+
+  // ---------- cleanup when modalKembali hidden (defensive) ----------
+  if (modalKembaliEl) {
+    modalKembaliEl.addEventListener('hidden.bs.modal', function () {
+      document.querySelectorAll('.modal-backdrop').forEach(node => node.remove());
+      document.body.classList.remove('modal-open');
+      document.body.style.paddingRight = '';
+    });
+  }
 
   // ---------- submit confirm modal handler ----------
   (function attachSubmitConfirm() {
@@ -436,7 +502,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (confirmSubmit && !confirmSubmit._attached) {
       confirmSubmit._attached = true;
       confirmSubmit.addEventListener('click', function (e) {
-        // clear and then submit form
         try { clearQuizStorageAndTimerFor(packetId); } catch(e){}
         if (formEl) {
           setTimeout(() => formEl.submit(), 150);
@@ -444,7 +509,6 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
-    // also ensure normal form submit clears storage (catch all)
     if (formEl && !formEl._clearAttached) {
       formEl._clearAttached = true;
       formEl.addEventListener('submit', function () {
@@ -453,11 +517,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   })();
 
-  // ---------- answered counter logic (kept intact) ----------
+  // ---------- answered counter logic ----------
   (function attachAnsweredCounter() {
     const jumlahSoalEl = document.getElementById('jumlah_soal');
     if (!jumlahSoalEl) return;
-    const jumlahSoal = parseInt(jumlahSoalEl.value);
+    const jumlahSoal = parseInt(jumlahSoalEl.value) || 0;
     const btnNextj = document.getElementById('btn-nextj');
 
     function updateSubmitStatus() {
