@@ -186,23 +186,44 @@
 /* Inline packet badge (kecil, di kiri timer) */
 .packet-left { display:flex; align-items:center; }
 
-/* style badge kecil */
+/* Inline packet badge (kiri timer) - desktop */
 .packet-badge-inline{
-  background: #ffffff ;
-  color: #000000;
+  background: linear-gradient(90deg, #ff7a18 0%, #ffb347 100%);
+  color: #fff;
   padding: 6px 10px;
-  border-radius: 5px;
+  border-radius: 10px;
   font-weight: 700;
   font-size: 0.95rem;
-  /* box-shadow: 0 6px 14px rgba(0,0,0,0.10); */
+  box-shadow: 0 6px 14px rgba(0,0,0,0.10);
   max-width: 240px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* responsive: kecilkan sedikit di layar kecil */
-@media (max-width: 576px) {
-  .packet-badge-inline { padding: 5px 8px; font-size: 0.85rem; max-width: 140px; }
-  #timer { font-size: 1.4rem; } /* optional: atur timer ukuran agar muat */
+/* Badge khusus mobile (bisa sedikit lebih kecil) */
+/* Mobile badge: full width inside its container (card-body) */
+.packet-badge-inline-mobile {
+  display: block;          /* jadi block element */
+  width: 100%;             /* penuh sesuai parent (.card-body) */
+  box-sizing: border-box;  /* padding dihitung dalam 100% */
+  padding: 10px 12px;      /* ruang di dalam */
+  border-radius: 10px;     /* sudut rounded (ubah sesuai selera) */
+  background: linear-gradient(90deg, #ff7a18 0%, #ffb347 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* sedikit penyesuaian untuk layar sangat kecil */
+@media (max-width: 360px) {
+  .packet-badge-inline-mobile {
+    padding: 8px 10px;
+    font-size: 0.88rem;
+  }
 }

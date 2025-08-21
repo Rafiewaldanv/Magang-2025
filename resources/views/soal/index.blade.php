@@ -20,6 +20,16 @@
 
 
 </div>
+@php
+  // definisi global untuk view: packetNameInline
+  $packetNameInline = null;
+
+  if (isset($packet) && !empty($packet->name)) {
+      $packetNameInline = $packet->name;
+  } elseif (session('packet_id') || session('selected_packet_id')) {
+      $packetNameInline = 'Paket #' . (session('packet_id') ?? session('selected_packet_id'));
+  }
+@endphp
 <div class="container main-container">
     @if($selection != null)
         @if(strtotime('now') < strtotime($selection->test_time))
@@ -37,20 +47,32 @@
     <div id="mobile-nav-placeholder"></div>
     <div id="questmsdt" class="row" style="margin-bottom:100px">
         <div class="col-12 col-md-4 co mb-md-0">
-            <div class="card">
-                <div class="card-header fw-bold text-center">Navigasi Soal</div>
-                <div class="card-body">
-                    <form id="form" method="POST" action="{{ route('soal.simpan', ['path' => $path]) }}">
-                        @csrf
-                        <input type="hidden" name="path" value="{{ $path }}">
-                        <input type="hidden" name="packet_id" value="{{ $packet->id }}">
-                        <input type="hidden" name="test_id" value="{{ $test->id }}">
-                        <input type="hidden" name="jumlah_soal" id="jumlah_soal" value="{{ $jumlah_soal }}">
-                        <input type="hidden" name="part" id="part" value="{{ $part }}">
-                        <div id="soal-container"></div>
-                    </form>
-                </div>
-            </div>
+        <div class="card">
+  <div class="card-header fw-bold text-center">
+    <span> Navigasi Soal </span>
+  </div>
+
+  <div class="card-body">
+    {{-- MOBILE: badge dipindah ke dalam card-body, tampil hanya di xs/sm --}}
+    @if(!empty($packetNameInline))
+      <div class="mb-3 d-block d-md-none">
+        <div class="packet-badge-inline-mobile" title="{{ $packetNameInline }}">
+          {{ $packetNameInline }}
+        </div>
+      </div>
+    @endif
+
+    <form id="form" method="POST" action="{{ route('soal.simpan', ['path' => $path]) }}">
+      @csrf
+      <input type="hidden" name="path" value="{{ $path }}">
+      <input type="hidden" name="packet_id" value="{{ $packet->id }}">
+      <input type="hidden" name="test_id" value="{{ $test->id }}">
+      <input type="hidden" name="jumlah_soal" id="jumlah_soal" value="{{ $jumlah_soal }}">
+      <input type="hidden" name="part" id="part" value="{{ $part }}">
+      <div id="soal-container"></div>
+    </form>
+  </div>
+</div>
         </div>
 
         <div class="col-12 col-md-8">
@@ -72,10 +94,13 @@
 @endphp
 
 <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
-  {{-- kiri: packet name (jika ada) --}}
+  {{-- kiri: packet name (desktop only) --}}
   <div class="packet-left">
     @if($packetNameInline)
-      <div class="packet-badge-inline" title="{{ $packetNameInline }}">{{ $packetNameInline }}</div>
+      {{-- DESKTOP: tampil pada md ke atas --}}
+      <div class="packet-badge-inline d-none d-md-inline-block" title="{{ $packetNameInline }}">
+        {{ $packetNameInline }}
+      </div>
     @endif
   </div>
 
@@ -84,6 +109,7 @@
     <h2 id="timer" class="mb-0 fw-bold">30:00</h2>
   </div>
 </div>
+
 
 
                                 <div class="soal_number card-header bg-transparent">
