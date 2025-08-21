@@ -106,7 +106,7 @@
 
   {{-- kanan: timer --}}
   <div class="text-end ms-3">
-    <h2 id="timer" class="mb-0 fw-bold">30:00</h2>
+    <h2 id="timer" class="mb-0 fw-bold">15:00</h2>
   </div>
 </div>
 
