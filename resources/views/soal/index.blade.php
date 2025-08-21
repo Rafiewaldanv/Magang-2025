@@ -134,8 +134,16 @@
                     <span id="answered">0</span>/<span id="totals"></span> Soal Terjawab
                 </li>
                 <li class="nav-item ms-3">
-                    <a href="#" class="text-secondary" data-bs-toggle="modal" data-bs-target="#tutorialModal" title="Tutorial"><i class="fa fa-question-circle" style="font-size: 1.5rem"></i></a>
-                </li>
+  <button type="button"
+          class="btn btn-link text-secondary p-0"
+          data-bs-toggle="modal"
+          data-bs-target="#tutorialModal"
+          data-suppress-modal-kembali="1"
+          aria-label="Tutorial">
+    <i class="fa fa-question-circle" style="font-size: 1.5rem"></i>
+  </button>
+</li>
+
                 <li class="nav-item ms-3">
                     <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase " id="btn-submit" style="display: none">Submit</button>
                 </li>
