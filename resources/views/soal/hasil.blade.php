@@ -30,9 +30,27 @@
             <div class="card shadow-lg rounded-3">
                 <div class="card-body text-center p-5">
 
+                    {{-- ===== determine whether to show score for this packet ===== --}}
+                    @php
+                        // konfigurasi: daftar packet id yang menampilkan skor
+                        // developer: ubah array ini sesuai kebutuhan
+                        $showScorePacketIds = isset($showScorePacketIds) ? $showScorePacketIds : [10000];
+
+                        // cari packet id yang aktif (coba beberapa var)
+                        $currentPacketId = null;
+                        if (isset($packetId) && $packetId !== '') {
+                            $currentPacketId = (int) $packetId;
+                        } elseif (isset($packet) && !empty($packet->id)) {
+                            $currentPacketId = (int) $packet->id;
+                        } elseif (isset($packet_id) && $packet_id !== '') {
+                            $currentPacketId = (int) $packet_id;
+                        }
+
+                        $showScore = in_array($currentPacketId, $showScorePacketIds, true);
+                    @endphp
+
                     {{-- ===== PACKET NAME (robust fallback) ===== --}}
                     @php
-                        // possible sources: $packet_name (from payload), $packetName, session flash, or fallback
                         $packetDisplayName = null;
 
                         if (isset($packet_name) && !empty($packet_name)) {
@@ -43,12 +61,8 @@
                             $packetDisplayName = session('packetName');
                         } elseif (isset($packet) && !empty($packet->name)) {
                             $packetDisplayName = $packet->name;
-                        } elseif (!empty($packetId)) {
-                            // controller may pass packetId as 'packetId' (camel) or 'packet_id' — try both
-                            $id = $packetId ?? ($packet_id ?? null);
-                            if (!empty($id)) {
-                                $packetDisplayName = 'Paket #' . $id;
-                            }
+                        } elseif (!empty($currentPacketId)) {
+                            $packetDisplayName = 'Paket #' . $currentPacketId;
                         }
 
                         if (empty($packetDisplayName)) {
@@ -63,53 +77,67 @@
                     </div>
                     {{-- ===== end packet name ===== --}}
 
-                    {{-- Score badge & dynamic text --}}
-                    @php
-                        $score = isset($result['score']) ? (int) $result['score'] : null;
-                        // default classes/text
-                        $scoreClass = 'score-neutral';
-                        $scoreText = $status ?? 'Selesai';
-                        $subText = $message ?? 'Test berhasil diselesaikan!';
-                        if ($score !== null) {
-                            if ($score > 75) {
-                                $scoreClass = 'score-green';
-                                $subText = 'Anda lulus';
-                            } elseif ($score > 50) {
-                                $scoreClass = 'score-yellow';
-                                $subText = 'Anda KKM saja';
-                            } else {
-                                $scoreClass = 'score-red';
-                                $subText = 'Anda tidak lulus, mohon mengulang';
+                    {{-- Conditional: show score or simple saved message --}}
+                    @if($showScore)
+                        {{-- Score badge & dynamic text --}}
+                        @php
+                            $score = isset($result['score']) ? (int) $result['score'] : null;
+                            // default classes/text
+                            $scoreClass = 'score-neutral';
+                            $scoreText = $status ?? 'Selesai';
+                            $subText = $message ?? 'Test berhasil diselesaikan!';
+                            if ($score !== null) {
+                                if ($score > 75) {
+                                    $scoreClass = 'score-green';
+                                    $subText = 'Anda lulus';
+                                } elseif ($score > 50) {
+                                    $scoreClass = 'score-yellow';
+                                    $subText = 'Anda KKM saja';
+                                } else {
+                                    $scoreClass = 'score-red';
+                                    $subText = 'Anda tidak lulus, mohon mengulang';
+                                }
                             }
-                        }
-                    @endphp
+                        @endphp
 
-                    <div class="d-flex justify-content-center mb-4">
-                        <div class="score-badge {{ $scoreClass }}" role="status" aria-label="Score">
-                            @if($score !== null)
-                                <span class="score-number">{{ $score }}<small class="percent">%</small></span>
-                            @else
-                                <span class="score-number">-</span>
-                            @endif
-                        </div>
-                    </div>
-
-                    {{-- small result message based on color --}}
-                    <h4 class="fw-bold mb-2 text-capitalize">{{ $score !== null ? $scoreText : ($status ?? 'Selesai') }}</h4>
-                    <p class="mb-4 result-subtext {{ $scoreClass }}-text">{{ $subText }}</p>
-
-                    {{-- Hasil detail (tetap ada, tidak diubah) --}}
-                    @if(isset($result))
-                        <div class="row mb-4">
-                            <div class="col-md-6 text-start">
-                                <p><strong>Score:</strong> {{ $result['score'] }}</p>
-                                <p><strong>Total Benar:</strong> {{ $result['total_correct'] }}</p>
-                            </div>
-                            <div class="col-md-6 text-start">
-                                <p><strong>Total Salah:</strong> {{ $result['total_wrong'] }}</p>
-                                <p><strong>Total Soal:</strong> {{ $result['total_question'] }}</p>
+                        <div class="d-flex justify-content-center mb-4">
+                            <div class="score-badge {{ $scoreClass }}" role="status" aria-label="Score">
+                                @if($score !== null)
+                                    <span class="score-number">{{ $score }}<small class="percent">%</small></span>
+                                @else
+                                    <span class="score-number">-</span>
+                                @endif
                             </div>
                         </div>
+
+                        {{-- small result message based on color --}}
+                        <h4 class="fw-bold mb-2 text-capitalize">{{ $score !== null ? $scoreText : ($status ?? 'Selesai') }}</h4>
+                        <p class="mb-4 result-subtext {{ $scoreClass }}-text">{{ $subText }}</p>
+
+                        {{-- Hasil detail (tetap ada, tidak diubah) --}}
+                        @if(isset($result))
+                            <div class="row mb-4">
+                                <div class="col-md-6 text-start">
+                                    <p><strong>Score:</strong> {{ $result['score'] }}</p>
+                                    <p><strong>Total Benar:</strong> {{ $result['total_correct'] }}</p>
+                                </div>
+                                <div class="col-md-6 text-start">
+                                    <p><strong>Total Salah:</strong> {{ $result['total_wrong'] }}</p>
+                                    <p><strong>Total Soal:</strong> {{ $result['total_question'] }}</p>
+                                </div>
+                            </div>
+                        @endif
+                    @else
+                        {{-- Simple confirmation message for packets that SHOULD NOT show score --}}
+                        <div class="mb-4">
+                          <div class="alert alert-success py-4" role="alert" style="font-size:1.05rem;">
+                            <h4 class="alert-heading">Selamat!</h4>
+                            <p class="mb-0">Jawaban Anda telah tersimpan.</p>
+                          </div>
+                        </div>
+
+                        {{-- optionally show minimal info --}}
+                        <p class="text-muted mb-4">Terima kasih telah menyelesaikan tes. Hasil akhir tidak ditampilkan untuk paket ini.</p>
                     @endif
 
                     {{-- Tombol Redirect --}}
