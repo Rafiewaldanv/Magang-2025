@@ -229,46 +229,56 @@
 <script src="{{ asset('assets/js/quiz-render.js') }}"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    // Deteksi apakah kita di halaman soal.index
-    @if(Route::is('soal.index'))
-        // Dorong state baru biar tombol back gak langsung balik ke home
-        history.pushState(null, null, location.href);
-
-        window.onpopstate = function (event) {
-            // Saat tombol back ditekan, trigger tombol kembali custom
-            const btnKembali = document.getElementById('btn-kembali');
-            if (btnKembali) btnKembali.click();
-        };
-    @endif
-});
-</script>
-
-<script>
-document.getElementById("form")?.addEventListener("submit", function(e) {
-    e.preventDefault(); // cegah langsung submit
-    kirimJawaban();     // pastikan isi jawaban ditambahkan dulu
-});
-</script>
-
-<script>
 document.addEventListener('DOMContentLoaded', function () {
-  // --- Shared setup: dedup & key discovery ---
-  const $form = document.getElementById('form');
-  const packetInput = $form ? $form.querySelector('input[name="packet_id"]') : null;
-  const packetId = packetInput ? packetInput.value : null;
-  // key unik per packet; fallback ke generic supaya tidak error bila packetId null
-  const START_KEY = packetId ? `quizStartTime_${packetId}` : 'quizStartTime';
-  window.__quizStartKey = START_KEY;
+  // ---------- helper CSRF ----------
+  function readCsrfToken() {
+    // 1) meta tag
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta && meta.getAttribute('content')) return meta.getAttribute('content');
 
-  // helper clear timer & related storage (meskipun timer dihapus, fungsi ini tetap berguna untuk membersihkan storage)
-  function clearQuizStorageAndTimer() {
+    // 2) hidden input _token (if any form on page)
+    const tokenInput = document.querySelector('input[name="_token"]');
+    if (tokenInput && tokenInput.value) return tokenInput.value;
+
+    // 3) cookie XSRF-TOKEN (Laravel sets it by default)
+    const cookieMatch = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    if (cookieMatch && cookieMatch[1]) {
+      try {
+        // cookie is URL encoded
+        return decodeURIComponent(cookieMatch[1]);
+      } catch (e) {
+        return cookieMatch[1];
+      }
+    }
+
+    return '';
+  }
+
+  const csrf = readCsrfToken();
+
+  // ---------- common elements ----------
+  const formEl = document.getElementById('form');
+  const packetInput = formEl ? formEl.querySelector('input[name="packet_id"]') : null;
+  const packetId = packetInput ? packetInput.value : null;
+  window.__quizStartKey = packetId ? `quizStartTime_${packetId}` : 'quizStartTime';
+
+  // helper clear storage
+  function clearQuizStorageAndTimerFor(packetIdToClear) {
     try {
-      localStorage.removeItem(window.__quizStartKey);
+      if (packetIdToClear) {
+        localStorage.removeItem(`quizStartTime_${packetIdToClear}`);
+        localStorage.removeItem(`quizCurrent_${packetIdToClear}`);
+        localStorage.removeItem(`quizPerStart_${packetIdToClear}`);
+        localStorage.removeItem(`quizPerEnd_${packetIdToClear}`);
+        localStorage.removeItem(`quizPerCurrent_${packetIdToClear}`);
+        localStorage.removeItem(`quizTotalStart_${packetIdToClear}`);
+        localStorage.removeItem(`quizTotalDuration_${packetIdToClear}`);
+      } else {
+        // generic key
+        localStorage.removeItem(window.__quizStartKey);
+      }
     } catch (e) { console.warn('clear localStorage error', e); }
-    try {
-      sessionStorage.removeItem('jawabanSementara');
-    } catch (e) {}
+    try { sessionStorage.removeItem('jawabanSementara'); } catch(e){}
     try {
       if (window.__quizTimerInterval) {
         clearInterval(window.__quizTimerInterval);
@@ -277,168 +287,211 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (e) {}
   }
 
-  // --- Navbar back override + modal handling ---
-  const btnKembali = document.getElementById('btn-kembali');
-  const modalKembaliEl = document.getElementById('modalKembali');
-  const confirmKembali = document.getElementById('confirm-kembali');
-
-  if (btnKembali) {
-    btnKembali.addEventListener('click', function (e) {
-      e.preventDefault();
-      if (modalKembaliEl) new bootstrap.Modal(modalKembaliEl).show();
-    });
+  // ---------- form submit interception ----------
+  if (formEl) {
+    // prevent double-binding
+    if (!formEl._hasSubmitHandler) {
+      formEl.addEventListener('submit', function (e) {
+        e.preventDefault();
+        // kirimJawaban defined elsewhere
+        if (typeof kirimJawaban === 'function') kirimJawaban();
+      });
+      formEl._hasSubmitHandler = true;
+    }
   }
 
-  if (confirmKembali) {
-    confirmKembali.addEventListener('click', function (e) {
-      // hapus storage & hentikan timer, lalu pindah halaman
-      clearQuizStorageAndTimer();
-      // biarkan href berjalan
-    });
-  }
+  // ---------- soal.index back/popstate handling ----------
+  @if(Route::is('soal.index'))
+    try {
+      history.pushState(null, null, location.href);
+      window.onpopstate = function (event) {
+        const btnKembali = document.getElementById('btn-kembali');
+        if (btnKembali) btnKembali.click();
+      };
+    } catch (e) { console.warn('popstate init failed', e); }
+  @endif
 
-  // Intercept browser back (popstate) untuk menampilkan modal juga
-  try {
-    window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', function (e) {
-      if (modalKembaliEl) {
-        new bootstrap.Modal(modalKembaliEl).show();
+  // ---------- modalKembali (confirm-kembali) robust handler ----------
+  (function attachConfirmKembali() {
+    const confirmKembaliEl = document.getElementById('confirm-kembali');
+    if (!confirmKembaliEl) return;
+
+    // prevent attaching twice
+    if (confirmKembaliEl._attached) return;
+    confirmKembaliEl._attached = true;
+
+    // helper to read packet id from DOM if not available from form
+    function getPacketIdFromDom() {
+      const pktInput = document.querySelector('input[name="packet_id"]');
+      if (pktInput && pktInput.value) return pktInput.value;
+      const badge = document.getElementById('modal-packet-name') || document.querySelector('.packet-badge-inline, .packet-badge-inline-mobile');
+      if (badge) {
+        if (badge.dataset && badge.dataset.packetId) return badge.dataset.packetId;
+        const m = (badge.textContent || '').match(/#(\d+)/);
+        if (m) return m[1];
+      }
+      return null;
+    }
+
+    confirmKembaliEl.addEventListener('click', function (evt) {
+      evt.preventDefault();
+      evt.stopPropagation();
+
+      // disable & feedback
+      confirmKembaliEl.setAttribute('disabled', 'disabled');
+      confirmKembaliEl.classList.add('disabled');
+      const originalHTML = confirmKembaliEl.innerHTML;
+      confirmKembaliEl.innerHTML = 'Memproses...';
+
+      const pkt = getPacketIdFromDom();
+
+      // send cancel request
+      fetch("{{ route('test.cancel') }}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': csrf
+        },
+        body: JSON.stringify({ packet_id: pkt })
+      })
+      .then(async resp => {
+        if (!resp.ok) {
+          const txt = await resp.text().catch(()=>null);
+          throw new Error('HTTP ' + resp.status + (txt ? ': '+txt : ''));
+        }
+        return resp.json().catch(()=>({ ok:true }));
+      })
+      .then(data => {
+        // cleanup client-side
+        try { clearQuizStorageAndTimerFor(pkt); } catch(e){}
+
+        // hide modalKembali if open
+        try {
+          const modalEl = document.getElementById('modalKembali');
+          if (modalEl) {
+            const bs = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            bs.hide();
+          }
+        } catch(e){}
+
+        // redirect to href (default '/')
+        const href = confirmKembaliEl.getAttribute('href') || '/';
+        window.location.href = href;
+      })
+      .catch(err => {
+        console.error('Cancel request failed:', err);
+        // restore button
+        confirmKembaliEl.removeAttribute('disabled');
+        confirmKembaliEl.classList.remove('disabled');
+        confirmKembaliEl.innerHTML = originalHTML;
+        alert('Gagal membatalkan tes. Silakan coba lagi.');
+      });
+    });
+  })();
+
+  // ---------- optional: attach modalKembali popstate protection ----------
+  (function attachPopstateModalKembali() {
+    const modalKembaliEl = document.getElementById('modalKembali');
+    if (!modalKembaliEl) return;
+    // prevent duplicate instance creation
+    if (!modalKembaliEl._popstateAttached) {
+      modalKembaliEl._popstateAttached = true;
+      try {
         window.history.pushState(null, '', window.location.href);
+        window.addEventListener('popstate', function (e) {
+          // show modal only if not open
+          if (!document.body.classList.contains('modal-open')) {
+            const bs = new bootstrap.Modal(modalKembaliEl, { backdrop: true });
+            bs.show();
+          }
+          window.history.pushState(null, '', window.location.href);
+        });
+      } catch (err) {
+        console.warn('popstate not available', err);
       }
-    });
-  } catch (e) {
-    console.warn('popstate not available', e);
-  }
 
-  // --- Submit handlers (navbar submit and confirm) ---
-  const btnSubmit = document.getElementById('btn-submit');
-  const confirmSubmit = document.getElementById('confirm-submit');
+      // cleanup leftover backdrops when modal closed
+      modalKembaliEl.addEventListener('hidden.bs.modal', function () {
+        document.querySelectorAll('.modal-backdrop').forEach(node => node.remove());
+        document.body.classList.remove('modal-open');
+        document.body.style.paddingRight = '';
+      });
+    }
+  })();
 
-  if (btnSubmit) {
-    btnSubmit.addEventListener('click', function (e) {
-      e.preventDefault();
-      const konf = document.getElementById('konfirmasiModal');
-      if (konf) new bootstrap.Modal(konf).show();
-    });
-  }
+  // ---------- submit confirm modal handler ----------
+  (function attachSubmitConfirm() {
+    const btnSubmit = document.getElementById('btn-submit');
+    const confirmSubmit = document.getElementById('confirm-submit');
 
-  if (confirmSubmit) {
-    confirmSubmit.addEventListener('click', function (e) {
-      // clear and then submit form
-      clearQuizStorageAndTimer();
-      if ($form) {
-        setTimeout(() => $form.submit(), 150);
-      }
-    });
-  }
+    if (btnSubmit && !btnSubmit._attached) {
+      btnSubmit._attached = true;
+      btnSubmit.addEventListener('click', function (e) {
+        e.preventDefault();
+        const konf = document.getElementById('konfirmasiModal');
+        if (konf) new bootstrap.Modal(konf).show();
+      });
+    }
 
-  // also ensure normal form submit clears storage (catch all)
-  if ($form) {
-    $form.addEventListener('submit', function () {
-      clearQuizStorageAndTimer();
-    });
-  }
+    if (confirmSubmit && !confirmSubmit._attached) {
+      confirmSubmit._attached = true;
+      confirmSubmit.addEventListener('click', function (e) {
+        // clear and then submit form
+        try { clearQuizStorageAndTimerFor(packetId); } catch(e){}
+        if (formEl) {
+          setTimeout(() => formEl.submit(), 150);
+        }
+      });
+    }
 
-  // NOTE: Timer-related logic removed as requested.
-});
-</script>
+    // also ensure normal form submit clears storage (catch all)
+    if (formEl && !formEl._clearAttached) {
+      formEl._clearAttached = true;
+      formEl.addEventListener('submit', function () {
+        try { clearQuizStorageAndTimerFor(packetId); } catch(e){}
+      });
+    }
+  })();
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
+  // ---------- answered counter logic (kept intact) ----------
+  (function attachAnsweredCounter() {
     const jumlahSoalEl = document.getElementById('jumlah_soal');
     if (!jumlahSoalEl) return;
     const jumlahSoal = parseInt(jumlahSoalEl.value);
-    const btnSubmit = document.getElementById('btn-nextj');
+    const btnNextj = document.getElementById('btn-nextj');
 
     function updateSubmitStatus() {
-        let totalTerjawab = 0;
-
-        for (let i = 1; i <= jumlahSoal; i++) {
-            const selector = `input[name="jawaban[${i}]"]:checked, input[name="jawaban[${i}][]"]:checked`;
-            if (document.querySelectorAll(selector).length > 0) {
-                totalTerjawab++;
-            }
-        }
-
-        // Update counter
-        const answeredEl = document.getElementById('answered');
-        if (answeredEl) answeredEl.innerText = totalTerjawab;
-
-        // Enable tombol kalau semua soal terjawab
-        if (btnSubmit) btnSubmit.disabled = totalTerjawab < jumlahSoal;
+      let totalTerjawab = 0;
+      for (let i = 1; i <= jumlahSoal; i++) {
+        const selector = `input[name="jawaban[${i}]"]:checked, input[name="jawaban[${i}][]"]:checked`;
+        if (document.querySelectorAll(selector).length > 0) totalTerjawab++;
+      }
+      const answeredEl = document.getElementById('answered');
+      if (answeredEl) answeredEl.innerText = totalTerjawab;
+      if (btnNextj) btnNextj.disabled = totalTerjawab < jumlahSoal;
     }
 
-    // Jalankan saat load
     updateSubmitStatus();
-
-    // Cek setiap kali user jawab soal
     document.querySelectorAll('input[type=radio], input[type=checkbox]').forEach(function (input) {
-        input.addEventListener('change', updateSubmitStatus);
+      input.addEventListener('change', updateSubmitStatus);
     });
 
-    // Proteksi saat submit diklik
-    if (btnSubmit) {
-      btnSubmit.addEventListener('click', function (e) {
-          const total = parseInt(document.getElementById('answered').innerText || '0');
-          if (total < jumlahSoal) {
-              e.preventDefault();
-              alert(`Masih ada ${jumlahSoal - total} soal yang belum dijawab!`);
-          }
+    if (btnNextj && !btnNextj._protectAttached) {
+      btnNextj._protectAttached = true;
+      btnNextj.addEventListener('click', function (e) {
+        const total = parseInt(document.getElementById('answered').innerText || '0');
+        if (total < jumlahSoal) {
+          e.preventDefault();
+          alert(`Masih ada ${jumlahSoal - total} soal yang belum dijawab!`);
+        }
       });
     }
-});
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const modalKembaliEl = document.getElementById('modalKembali');
-  // jika modal ada, buat satu instance dan simpan
-  const modalKembali = modalKembaliEl ? new bootstrap.Modal(modalKembaliEl, { backdrop: true }) : null;
-  const confirmKembali = document.getElementById('confirm-kembali');
+  })();
 
-  // handler tombol 'Keluar' (konfirmasi)
-  if (confirmKembali) {
-    confirmKembali.addEventListener('click', function () {
-      // bersihkan storage jika perlu
-      try { localStorage.removeItem(window.__quizStartKey); } catch(e){}
-      try { sessionStorage.removeItem('jawabanSementara'); } catch(e){}
-      // biarkan <a href="/"> menjalankan redirect
-    });
-  }
-
-  // Intercept browser back: show modal hanya jika belum terbuka
-  try {
-    // pastikan ada satu pushState supaya popstate dipicu
-    window.history.pushState(null, '', window.location.href);
-
-    window.addEventListener('popstate', function (e) {
-      if (!modalKembali) return;
-      // jika modal belum terbuka, tampilkan. jika sudah terbuka, jangan show lagi.
-      if (!document.body.classList.contains('modal-open')) {
-        modalKembali.show();
-      }
-      // kembali dorong state agar user tidak langsung navigasi away
-      // (ini mencegah back action, tapi jangan lakukan push berkali-kali terus menerus)
-      window.history.pushState(null, '', window.location.href);
-    });
-  } catch (err) {
-    console.warn('popstate not available', err);
-  }
-
-  // Pastikan saat modal tertutup, semua backdrop & class dibersihkan
-  if (modalKembaliEl) {
-    modalKembaliEl.addEventListener('hidden.bs.modal', function () {
-      // hapus semua backdrop sisa jika ada
-      document.querySelectorAll('.modal-backdrop').forEach(node => node.remove());
-      // hapus kelas modal-open pada body (jika masih ada)
-      document.body.classList.remove('modal-open');
-      // (opsional) restore scroll
-      document.body.style.paddingRight = '';
-    });
-  }
-});
-
+}); // end DOMContentLoaded
 </script>
 @endsection
+
 
 @section('css-extra')
 <link rel="stylesheet" href="{{ asset('css/style.css') }}">
