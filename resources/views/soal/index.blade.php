@@ -8,7 +8,8 @@
 
 <div class="bg-theme-1 bg-header">
     <div class="container text-center text-white">
-        {{-- Timer dihapus sesuai permintaan --}}
+        <!-- restored timer display (handled by quiz-render.js) -->
+        <h2 id="timesr">00:00</h2>
     </div>
 </div>
 <div class="custom-shape-divider-top-1617767620">
@@ -56,6 +57,11 @@
                     <div class="row mb-5">
                         <div class="col-12">
                             <div class="card soal rounded-1 mb-3">
+                                {{-- restored timer in card header (quiz-render.js controls behavior) --}}
+                                <div class="card-header bg-transparent text-end">
+                                    <h2 id="timer" class="mb-0 fw-bold">30:00</h2>
+                                </div>
+
                                 <div class="soal_number card-header bg-transparent">
                                     <i class="fa fa-edit"></i> <span class="num fw-bold"></span>
                                 </div>

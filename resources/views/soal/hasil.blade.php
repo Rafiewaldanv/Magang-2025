@@ -8,12 +8,11 @@
 
 {{-- Header --}}
 <div class="bg-theme-1 bg-header">
-
-<div class="container text-center text-white">
-        <h2 id="timer">00:00</h2>
-
+  <div class="container text-center text-white">
+    <h2 id="timer">00:00</h2>
+  </div>
 </div>
-</div>
+
 <div class="custom-shape-divider-top-1617767620">
     <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" 
         viewBox="0 0 1200 120" preserveAspectRatio="none">
@@ -30,17 +29,43 @@
 
             <div class="card shadow-lg rounded-3">
                 <div class="card-body text-center p-5">
-                    {{-- Status --}}
-                    <h3 class="fw-bold text-success mb-3">
-                        {{ $status ?? 'selesai' }}
-                    </h3>
 
-                    {{-- Message --}}
-                    <p class="lead mb-4">
-                        {{ $message ?? 'Test berhasil diselesaikan!' }}
-                    </p>
+                    {{-- Score badge & dynamic text --}}
+                    @php
+                        $score = isset($result['score']) ? (int) $result['score'] : null;
+                        // default classes/text
+                        $scoreClass = 'score-neutral';
+                        $scoreText = $status ?? 'Selesai';
+                        $subText = $message ?? 'Test berhasil diselesaikan!';
+                        if ($score !== null) {
+                            if ($score > 75) {
+                                $scoreClass = 'score-green';
+                                $subText = 'Anda lulus';
+                            } elseif ($score > 50) {
+                                $scoreClass = 'score-yellow';
+                                $subText = 'Anda KKM saja';
+                            } else {
+                                $scoreClass = 'score-red';
+                                $subText = 'Anda tidak lulus, mohon mengulang';
+                            }
+                        }
+                    @endphp
 
-                    {{-- Hasil --}}
+                    <div class="d-flex justify-content-center mb-4">
+                        <div class="score-badge {{ $scoreClass }}" role="status" aria-label="Score">
+                            @if($score !== null)
+                                <span class="score-number">{{ $score }}<small class="percent">%</small></span>
+                            @else
+                                <span class="score-number">-</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- small result message based on color --}}
+                    <h4 class="fw-bold mb-2 text-capitalize">{{ $score !== null ? $scoreText : ($status ?? 'Selesai') }}</h4>
+                    <p class="mb-4 result-subtext {{ $scoreClass }}-text">{{ $subText }}</p>
+
+                    {{-- Hasil detail (tetap ada, tidak diubah) --}}
                     @if(isset($result))
                         <div class="row mb-4">
                             <div class="col-md-6 text-start">
@@ -65,6 +90,53 @@
     </div>
 </div>
 @endsection
+
+@section('css-extra')
+<link rel="stylesheet" href="{{ asset('css/style.css') }}">
+<style>
+/* Score badge */
+.score-badge{
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  font-weight: 700;
+}
+
+/* Number style */
+.score-number{
+  font-size: 2.6rem;
+  line-height: 1;
+  color: #fff;
+}
+.score-number .percent{
+  font-size: 0.6rem;
+  margin-left: 4px;
+  vertical-align: top;
+}
+
+/* color variants */
+.score-green{ background: #28a745; }   /* success */
+.score-yellow{ background: #ffc107; color: #212529; } /* warning */
+.score-red{ background: #dc3545; }     /* danger */
+.score-neutral{ background: #6c757d; }
+
+/* Subtext color matching */
+.score-green-text{ color: #28a745; font-weight:600; }
+.score-yellow-text{ color: #8a6d00; font-weight:600; } /* darker yellow-ish */
+.score-red-text{ color: #dc3545; font-weight:600; }
+
+/* keep responsiveness */
+@media (max-width: 576px){
+  .score-badge{ width: 120px; height: 120px; }
+  .score-number{ font-size: 2rem; }
+}
+</style>
+@endsection
+
 @section('js-extra')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -121,4 +193,3 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endsection
-
