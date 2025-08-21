@@ -92,7 +92,6 @@
   </div>
 </div>
 
-<!-- Modal Ongoing Test (muncul otomatis bila $ongoingTest ada) -->
 @php
   // Ambil packet id & name dari ongoingTest (dukungan array / object)
   $ongoingPacketId = null;
@@ -138,43 +137,207 @@
   }
 @endphp
 
+<!-- Modal Ongoing Test (muncul otomatis bila $ongoingTest ada) -->
 @if(!empty($ongoingTest))
-  <div class="modal fade" id="modalOngoingTest" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+  <style>
+    /* simple modern styling for the ongoing modal */
+    .modal-simple .modal-content {
+      border: 0;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    .modal-simple .modal-header {
+      padding: 16px 18px;
+      border-bottom: 0;
+      background: #fff;
+    }
+    .modal-simple .modal-title { font-weight:700; margin:0; }
+    .modal-simple .modal-sub { font-size:.88rem; color:#6c757d; margin-top:4px; }
+    .modal-simple .modal-body { padding: 16px 18px; background: #fbfbfc; }
+    .modal-simple .status-pill {
+      display:inline-flex;
+      align-items:center;
+      padding:.28rem .7rem;
+      border-radius:999px;
+      font-weight:600;
+      font-size:.88rem;
+      background:#fff3cd;
+      color:#856404;
+    }
+    .modal-simple .status-ended {
+      background:#f8d7da;
+      color:#842029;
+    }
+    .modal-simple .pkg-name { font-weight:700; margin-bottom:.15rem; }
+    .modal-simple .meta { font-size:.86rem; color:#6c757d; }
+    .modal-simple .current-q { font-weight:600; font-size:1rem; }
+    .modal-simple .btn-ghost {
+      border:1px solid rgba(0,0,0,0.06);
+      background:#fff;
+      color:#212529;
+    }
+    @media (max-width:420px) { .modal-dialog { margin:1rem; } }
+  </style>
+
+  <div class="modal fade modal-simple" id="modalOngoingTest" tabindex="-1" aria-hidden="true" aria-labelledby="modalOngoingTitle" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Tes Sedang Berlangsung</h5>
+        <div class="modal-header d-flex justify-content-between align-items-start">
+          <div>
+            <h5 id="modalOngoingTitle" class="modal-title">Peringatan</h5>
+            <div class="modal-sub">Ada tes yang sedang berlangsung — lanjutkan pada perangkat yang sama.</div>
+          </div>
           <button type="button" class="btn-close" id="modal-close-btn" aria-label="Tutup"></button>
         </div>
 
         <div class="modal-body">
-          <p>Anda sedang mengerjakan:</p>
+          <div class="mb-2 meta">Anda sedang mengerjakan</div>
 
-          {{-- tampilkan nama paket dan sertakan data-packet-id supaya JS mudah akses --}}
-          <h5 class="fw-bold" id="modal-packet-name" data-packet-id="{{ e($ongoingPacketId) }}">
-            {{ e($ongoingPacketName) }}
-          </h5>
+          <div class="d-flex align-items-start justify-content-between mb-3">
+            <div>
+              <div id="modal-packet-name" class="pkg-name" data-packet-id="{{ e($ongoingPacketId) }}">{{ e($ongoingPacketName) }}</div>
+              <div id="modal-remaining-note" class="meta" aria-live="polite"></div>
+            </div>
 
-          <div class="mt-3">
-            <small class="text-muted">Sisa Waktu:</small>
-            <div class="h3 fw-bold" id="modal-remaining">--:--</div>
-            <div class="small text-muted" id="modal-remaining-note"></div>
+            <div class="text-end">
+              <div class="meta">Status terakhir</div>
+              <div id="modal-remaining" class="status-pill" aria-live="polite">Ongoing</div>
+            </div>
           </div>
 
-          <p class="mt-3 text-muted">Jika keluar sekarang, tes akan dianggap dibatalkan.</p>
-        </div>
+          <div class="mb-2">
+            <div class="meta">Terakhir di soal</div>
+            <div id="modal-current-question" class="current-q">Nomor -</div>
+          </div>
 
-        <div class="modal-footer">
-          <button type="button" id="btn-cancel-test" class="btn btn-secondary">Tidak, Batalkan</button>
-          <a href="#" id="btn-continue-test" class="btn btn-primary">Lanjutkan Tes</a>
+          <div class="d-grid gap-2 mt-3">
+            <button type="button" id="btn-cancel-test" class="btn btn-ghost btn-lg">Tidak, Batalkan</button>
+            <a href="#" id="btn-continue-test" class="btn btn-primary btn-lg">Lanjutkan Tes</a>
+          </div>
+
+          <p class="mt-3 mb-0 small text-muted">Jika keluar sekarang, tes akan dianggap dibatalkan dan tidak bisa dilanjutkan lagi.</p>
         </div>
       </div>
     </div>
   </div>
+
+  <script>
+  (function(){
+    try {
+      const ongoing = @json($ongoingTest ?? null);
+      if (!ongoing || !ongoing.packet_id) return;
+
+      const pid = String(ongoing.packet_id);
+      const statusEl = document.getElementById('modal-remaining');
+      const noteEl = document.getElementById('modal-remaining-note');
+      const packetNameEl = document.getElementById('modal-packet-name');
+      const currentQuestionEl = document.getElementById('modal-current-question');
+
+      // keys used by quiz code
+      const perStartKey = `quizPerStart_${pid}`;
+      const perEndKey = `quizPerEnd_${pid}`;
+      const totalStartKey = `quizTotalStart_${pid}`;
+      const currentKey = `quizCurrent_${pid}`;
+      const finishedKey = `quizFinished_${pid}`; // optional
+
+      function readLS(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+      function readIntLS(k){ const v=readLS(k); if (!v) return NaN; const n=parseInt(v,10); return isNaN(n)?NaN:n; }
+
+      function isFinishedByStorage(){
+        try {
+          if (readLS(finishedKey)) return true;
+          const hasPerStart = !!readLS(perStartKey);
+          const hasPerEnd = !!readLS(perEndKey);
+          const hasTotalStart = !!readLS(totalStartKey);
+          const hasCurrent = !isNaN(readIntLS(currentKey));
+          return !(hasPerStart || hasPerEnd || hasTotalStart || hasCurrent);
+        } catch(e){ return false; }
+      }
+
+      function setStatusOngoing(){
+        if(!statusEl) return;
+        statusEl.textContent = 'Ongoing';
+        statusEl.classList.remove('status-ended');
+        statusEl.classList.add('status-pill');
+        statusEl.style.background = '#fff3cd';
+        statusEl.style.color = '#856404';
+      }
+      function setStatusEnded(){
+        if(!statusEl) return;
+        statusEl.textContent = 'Berakhir';
+        statusEl.classList.add('status-ended');
+        statusEl.style.background = '#f8d7da';
+        statusEl.style.color = '#842029';
+      }
+
+      function getCurrentQuestion(){
+        const saved = readIntLS(currentKey);
+        if (!isNaN(saved) && saved > 0) return saved;
+        const s = parseInt(ongoing.current_question ?? ongoing.currentQuestion ?? 0, 10);
+        if (!isNaN(s) && s > 0) return s;
+        return null;
+      }
+
+      function updateUI(){
+        if (packetNameEl && ongoing.packet_name) packetNameEl.textContent = ongoing.packet_name;
+        if (noteEl) noteEl.textContent = ongoing.info ?? '';
+
+        const serverFinished = !!(ongoing.is_finished || ongoing.finished || ongoing.status === 'finished');
+        const finished = serverFinished || isFinishedByStorage();
+        if (finished) setStatusEnded(); else setStatusOngoing();
+
+        const cur = getCurrentQuestion();
+        currentQuestionEl.textContent = cur ? ('Nomor ' + cur) : 'Nomor -';
+      }
+
+      updateUI();
+
+      // listen storage changes (tab sync)
+      window.addEventListener('storage', function(ev){
+        if (!ev.key) { updateUI(); return; }
+        const relevant = [perStartKey, perEndKey, totalStartKey, currentKey, finishedKey];
+        if (relevant.includes(ev.key)) setTimeout(updateUI, 100);
+      }, false);
+
+      // poll fallback while modal open
+      const poll = setInterval(updateUI, 1500);
+      const modalEl = document.getElementById('modalOngoingTest');
+      if (modalEl) {
+        modalEl.addEventListener('hidden.bs.modal', function(){ clearInterval(poll); }, { once:true });
+      }
+
+      // wire continue button
+      const btnContinue = document.getElementById('btn-continue-test');
+      if (btnContinue) {
+        const pkt = packetNameEl?.dataset?.packetId || pid;
+        btnContinue.setAttribute('href', '/soal?packet_id=' + encodeURIComponent(pkt));
+      }
+
+      // cancel behavior
+      const btnCancel = document.getElementById('btn-cancel-test');
+      if (btnCancel) {
+        btnCancel.addEventListener('click', function(e){
+          e.preventDefault();
+          try { sessionStorage.removeItem('jawabanSementara'); } catch(e){}
+          fetch("{{ route('test.cancel') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').getAttribute('content') },
+            body: JSON.stringify({ packet_id: pid })
+          }).finally(()=> { const bs = bootstrap.Modal.getInstance(modalEl); if(bs) bs.hide(); location.reload(); });
+        });
+      }
+
+      // prevent close via X button
+      const closeBtn = document.getElementById('modal-close-btn');
+      if (closeBtn) closeBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
+
+    } catch(err){
+      console.warn('modal ongoing init error', err);
+    }
+  })();
+  </script>
 @endif
-
-
-
 
 <!-- Modal Kembali (untuk mencegah back langsung) -->
 <div class="modal fade" id="modalKembali" tabindex="-1" aria-hidden="true">
@@ -201,272 +364,50 @@
 {{-- JS section: pastikan hanya satu section js-extra per file --}}
 @section('js-extra')
 @parent
+
 <script>
+  // expose ongoingTest for other scripts if needed
   const ongoingTest = @json($ongoingTest ?? null);
 
-// 1) coba ambil dari object ongoingTest
-let packetId = ongoingTest && (ongoingTest.packet_id ?? ongoingTest.packetId ?? ongoingTest.id) ? String(ongoingTest.packet_id ?? ongoingTest.packetId ?? ongoingTest.id) : null;
-let packetName = ongoingTest && (ongoingTest.packet_name ?? ongoingTest.packetName) ? (ongoingTest.packet_name ?? ongoingTest.packetName) : null;
+  // derive packetId & packetName robustly (Blade set + DOM fallback)
+  let packetId = ongoingTest && (ongoingTest.packet_id ?? ongoingTest.packetId ?? ongoingTest.id) ? String(ongoingTest.packet_id ?? ongoingTest.packetId ?? ongoingTest.id) : null;
+  let packetName = ongoingTest && (ongoingTest.packet_name ?? ongoingTest.packetName) ? (ongoingTest.packet_name ?? ongoingTest.packetName) : null;
 
-// 2) fallback: ambil dari DOM (diset oleh Blade)
-const nameEl = document.getElementById('modal-packet-name');
-if ((!packetId || packetId === 'null') && nameEl && nameEl.dataset && nameEl.dataset.packetId) {
-  packetId = String(nameEl.dataset.packetId);
-}
-if (!packetName && nameEl) {
-  // gunakan textContent yang sudah diisi Blade
-  packetName = (nameEl.textContent || nameEl.innerText || '').trim() || packetName;
-}
+  const nameEl = document.getElementById('modal-packet-name');
+  if ((!packetId || packetId === 'null') && nameEl && nameEl.dataset && nameEl.dataset.packetId) {
+    packetId = String(nameEl.dataset.packetId);
+  }
+  if (!packetName && nameEl) {
+    packetName = (nameEl.textContent || nameEl.innerText || '').trim() || packetName;
+  }
 
-// 3) fallback akhir: gunakan value dari Blade (disisipkan langsung) — ini aman karena Blade sudah menentukan ongoingPacketName
-packetId = packetId || "{{ $ongoingPacketId ?? '' }}";
-packetName = packetName || "{{ addslashes($ongoingPacketName ?? 'Paket Tes') }}";
-
+  packetId = packetId || "{{ $ongoingPacketId ?? '' }}";
+  packetName = packetName || "{{ addslashes($ongoingPacketName ?? 'Paket Tes') }}";
 </script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const modalEl = document.getElementById('modalOngoingTest');
   if (!modalEl) return;
 
-  // Buat instance Bootstrap modal dengan opsi yang mencegah close via backdrop / ESC
+  // Show modal in a safe way
   const bsModal = new bootstrap.Modal(modalEl, {
     backdrop: 'static',
     keyboard: false
   });
-
-  // Tampilkan modal
   bsModal.show();
 
-  // Pastikan tombol X tidak melakukan apa-apa (defensive)
+  // defensive: disable close X behaviour
   const closeBtn = document.getElementById('modal-close-btn');
   if (closeBtn) {
     closeBtn.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
-      // optional: tampilkan pesan kecil agar user tahu harus pilih salah satu tombol di modal
-      // contoh sederhana (uncomment jika mau):
-      // alert('Silakan pilih "Lanjutkan Tes" atau "Tidak, Batalkan" terlebih dahulu.');
     });
   }
 
-  // Jika kamu ingin tombol "Tidak, Batalkan" menutup modal lalu melakukan cleanup, handle di sini:
-  const btnCancel = document.getElementById('btn-cancel-test');
-  if (btnCancel) {
-    btnCancel.addEventListener('click', function (e) {
-      e.preventDefault();
-
-      // contoh cleanup: hapus storage client & panggil endpoint cancel jika perlu
-      try { sessionStorage.removeItem('jawabanSementara'); } catch(e){}
-      // hapus localStorage yg terkait packet bila perlu (ganti nama key sesuai implementasimu)
-      // localStorage.removeItem(`quizStartTime_${packetId}`);
-
-      // lakukan request ke server untuk forget session (opsional)
-      fetch("{{ route('test.cancel') }}", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').getAttribute('content')
-        },
-        body: JSON.stringify({ packet_id: (document.getElementById('modal-packet-name')?.dataset?.packetId || null) })
-      }).finally(() => {
-        bsModal.hide();
-        // reload supaya UI menyesuaikan
-        location.reload();
-      });
-    });
-  }
-
-  // tombol lanjutkan akan diarahkan oleh code lain; jika mau set link:
-  const btnContinue = document.getElementById('btn-continue-test');
-  if (btnContinue) {
-    // contoh: arahkan ke /soal?packet_id=... (sesuaikan)
-    const pkt = document.getElementById('modal-packet-name')?.dataset?.packetId;
-    if (pkt) btnContinue.setAttribute('href', '/soal?packet_id=' + encodeURIComponent(pkt));
-    // Bisa juga langsung hide modal on click:
-    btnContinue.addEventListener('click', function () {
-      // bsModal.hide(); // opsional
-    });
-  }
-
+  // wire cancel & continue already handled in modal script above; nothing more needed here
 });
 </script>
 
-<script>
-/**
- * Modal Ongoing handler + countdown that uses the same localStorage keys
- * as your quiz-render.js. It will:
- * - show packet name
- * - compute remaining time from localStorage keys (total or per-question mode)
- * - if not started yet, show full duration and "Belum dimulai"
- * - when Continue pressed: ensure start keys exist then redirect to /soal?packet_id=...
- * - when Cancel pressed: clear keys and call server cancel
- *
- * Requires server variable: `ongoingTest` (packet_id, packet_name, duration_minutes optional)
- */
-document.addEventListener('DOMContentLoaded', function () {
-  const ongoingTest = @json($ongoingTest ?? null);
-  if (!ongoingTest || !ongoingTest.packet_id) return;
-
-  const packetId = String(ongoingTest.packet_id);
-  const packetName = ongoingTest.packet_name || 'Paket Tes';
-  const durationMinutesFromServer = parseInt(ongoingTest.duration_minutes || 0, 10);
-
-  // localStorage keys — must match keys used in quiz-render.js
-  const currentKey = `quizCurrent_${packetId}`;
-  const totalStartKey = `quizTotalStart_${packetId}`;
-  const totalDurationKey = `quizTotalDuration_${packetId}`;
-  const perStartKey = `quizPerStart_${packetId}`;
-  const perEndKey = `quizPerEnd_${packetId}`;
-  const perCurrentKey = `quizPerCurrent_${packetId}`;
-
-  const nameEl = document.getElementById('modal-packet-name');
-  const remainingEl = document.getElementById('modal-remaining');
-  const noteEl = document.getElementById('modal-remaining-note');
-
-  if (nameEl) nameEl.textContent = packetName;
-
-  const perQuestionMode = parseInt(packetId, 10) === 7;
-  const perQuestionDuration = 15 * 1000; // 15s
-
-  function pad(n){ return String(n).padStart(2,'0'); }
-
-  function readTotalDurationMs() {
-    const persisted = parseInt(localStorage.getItem(totalDurationKey), 10);
-    if (!isNaN(persisted) && persisted > 0) return persisted;
-    if (!isNaN(durationMinutesFromServer) && durationMinutesFromServer > 0) {
-      return durationMinutesFromServer * 60 * 1000;
-    }
-    return 30 * 60 * 1000; // fallback
-  }
-
-  function getTotalRemainingMs() {
-    const totalDurationMs = readTotalDurationMs();
-    const savedStart = parseInt(localStorage.getItem(totalStartKey), 10);
-    if (!isNaN(savedStart) && savedStart > 0) {
-      const rem = (savedStart + totalDurationMs) - Date.now();
-      return rem > 0 ? rem : 0;
-    }
-    return totalDurationMs;
-  }
-
-  function getPerQuestionRemainingMs() {
-    const savedEnd = parseInt(localStorage.getItem(perEndKey), 10);
-    if (!isNaN(savedEnd) && savedEnd > Date.now()) {
-      return savedEnd - Date.now();
-    }
-    return perQuestionDuration;
-  }
-
-  let countdownInterval = null;
-  function updateCountdownUI() {
-    let remMs = perQuestionMode ? getPerQuestionRemainingMs() : getTotalRemainingMs();
-    const totalSeconds = Math.floor(remMs / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    if (remainingEl) remainingEl.textContent = `${pad(minutes)}:${pad(seconds)}`;
-
-    if (perQuestionMode) {
-      const hasPerStart = !!localStorage.getItem(perStartKey) || !!localStorage.getItem(perEndKey);
-      noteEl.textContent = hasPerStart ? '' : 'Belum dimulai — durasi per-soal penuh ditampilkan.';
-    } else {
-      const hasTotalStart = !!localStorage.getItem(totalStartKey);
-      noteEl.textContent = hasTotalStart ? '' : 'Belum dimulai — durasi penuh ditampilkan.';
-    }
-  }
-
-  function showModalWhenReady(modalId, onShow) {
-    let tries = 12;
-    const delay = 150;
-    (function attempt() {
-      if (typeof bootstrap !== 'undefined' && document.getElementById(modalId)) {
-        try {
-          const modalEl = document.getElementById(modalId);
-          const bsModal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
-          bsModal.show();
-          if (typeof onShow === 'function') onShow(bsModal);
-          return;
-        } catch (err) {
-          console.warn('showModal error', err);
-        }
-      }
-      tries--;
-      if (tries > 0) setTimeout(attempt, delay);
-      else console.warn('Modal not shown: bootstrap or element unavailable:', modalId);
-    })();
-  }
-
-  function attachHandlers(bsModal) {
-    updateCountdownUI();
-    countdownInterval = setInterval(updateCountdownUI, 1000);
-
-    const btnContinue = document.getElementById('btn-continue-test');
-    if (btnContinue) {
-      btnContinue._listener && btnContinue.removeEventListener('click', btnContinue._listener);
-      btnContinue._listener = function (e) {
-        e.preventDefault();
-        if (perQuestionMode) {
-          if (!localStorage.getItem(perStartKey) || !localStorage.getItem(perEndKey)) {
-            const now = Date.now();
-            localStorage.setItem(perStartKey, String(now));
-            localStorage.setItem(perEndKey, String(now + perQuestionDuration));
-            localStorage.setItem(perCurrentKey, String(parseInt(localStorage.getItem(perCurrentKey) || '1', 10)));
-          }
-        } else {
-          if (!localStorage.getItem(totalStartKey)) {
-            const now = Date.now();
-            localStorage.setItem(totalStartKey, String(now));
-            localStorage.setItem(totalDurationKey, String(readTotalDurationMs()));
-          }
-        }
-        bsModal.hide();
-        window.location.href = '/soal' + (packetId ? ('?packet_id=' + encodeURIComponent(packetId)) : '');
-      };
-      btnContinue.addEventListener('click', btnContinue._listener);
-    }
-
-    const btnCancel = document.getElementById('btn-cancel-test');
-    if (btnCancel) {
-      btnCancel._listener && btnCancel.removeEventListener('click', btnCancel._listener);
-      btnCancel._listener = function (e) {
-        e.preventDefault();
-        try {
-          localStorage.removeItem(currentKey);
-          localStorage.removeItem(totalStartKey);
-          localStorage.removeItem(totalDurationKey);
-          localStorage.removeItem(perStartKey);
-          localStorage.removeItem(perEndKey);
-          localStorage.removeItem(perCurrentKey);
-        } catch (err) { console.warn(err); }
-        try { sessionStorage.removeItem('jawabanSementara'); } catch(e) {}
-
-        fetch("{{ route('test.cancel') }}", {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name=\"csrf-token\"]').getAttribute('content')
-          },
-          body: JSON.stringify({ packet_id: packetId })
-        }).then(resp => resp.json()).finally(() => {
-          bsModal.hide();
-          location.reload();
-        });
-      };
-      btnCancel.addEventListener('click', btnCancel._listener);
-    }
-
-    const modalEl = document.getElementById('modalOngoingTest');
-    if (modalEl) {
-      modalEl.addEventListener('hidden.bs.modal', function onHidden() {
-        if (countdownInterval) {
-          clearInterval(countdownInterval);
-          countdownInterval = null;
-        }
-        modalEl.removeEventListener('hidden.bs.modal', onHidden);
-      });
-    }
-  }
-
-  showModalWhenReady('modalOngoingTest', attachHandlers);
-});
-</script>
 @endsection
