@@ -17,6 +17,9 @@
         <path d="M0,0V7.23C0,65.52,268.63,112.77,600,112.77S1200,65.52,1200,7.23V0Z" class="shape-fill"></path>
     </svg>
 </div>
+
+
+</div>
 <div class="container main-container">
     @if($selection != null)
         @if(strtotime('now') < strtotime($selection->test_time))
@@ -58,9 +61,30 @@
                         <div class="col-12">
                             <div class="card soal rounded-1 mb-3">
                                 {{-- restored timer in card header (quiz-render.js controls behavior) --}}
-                                <div class="card-header bg-transparent text-end">
-                                    <h2 id="timer" class="mb-0 fw-bold">30:00</h2>
-                                </div>
+                                @php
+  // cari nama paket: prioritas dari $packet->name, lalu session packet_id/selected_packet_id
+  $packetNameInline = null;
+  if (isset($packet) && !empty($packet->name)) {
+    $packetNameInline = $packet->name;
+  } elseif (session('packet_id') || session('selected_packet_id')) {
+    $packetNameInline = 'Paket #' . (session('packet_id') ?? session('selected_packet_id'));
+  }
+@endphp
+
+<div class="card-header bg-transparent d-flex align-items-center justify-content-between">
+  {{-- kiri: packet name (jika ada) --}}
+  <div class="packet-left">
+    @if($packetNameInline)
+      <div class="packet-badge-inline" title="{{ $packetNameInline }}">{{ $packetNameInline }}</div>
+    @endif
+  </div>
+
+  {{-- kanan: timer --}}
+  <div class="text-end ms-3">
+    <h2 id="timer" class="mb-0 fw-bold">30:00</h2>
+  </div>
+</div>
+
 
                                 <div class="soal_number card-header bg-transparent">
                                     <i class="fa fa-edit"></i> <span class="num fw-bold"></span>

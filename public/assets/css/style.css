@@ -182,3 +182,27 @@
   .dropside-panel { display: none !important; }
   #soal-container { display: block !important; }
 }
+/* Packet name banner (orange) */
+/* Inline packet badge (kecil, di kiri timer) */
+.packet-left { display:flex; align-items:center; }
+
+/* style badge kecil */
+.packet-badge-inline{
+  background: #ffffff ;
+  color: #000000;
+  padding: 6px 10px;
+  border-radius: 5px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  /* box-shadow: 0 6px 14px rgba(0,0,0,0.10); */
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* responsive: kecilkan sedikit di layar kecil */
+@media (max-width: 576px) {
+  .packet-badge-inline { padding: 5px 8px; font-size: 0.85rem; max-width: 140px; }
+  #timer { font-size: 1.4rem; } /* optional: atur timer ukuran agar muat */
+}
