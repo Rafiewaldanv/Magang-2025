@@ -30,6 +30,39 @@
             <div class="card shadow-lg rounded-3">
                 <div class="card-body text-center p-5">
 
+                    {{-- ===== PACKET NAME (robust fallback) ===== --}}
+                    @php
+                        // possible sources: $packet_name (from payload), $packetName, session flash, or fallback
+                        $packetDisplayName = null;
+
+                        if (isset($packet_name) && !empty($packet_name)) {
+                            $packetDisplayName = $packet_name;
+                        } elseif (isset($packetName) && !empty($packetName)) {
+                            $packetDisplayName = $packetName;
+                        } elseif (session('packetName')) {
+                            $packetDisplayName = session('packetName');
+                        } elseif (isset($packet) && !empty($packet->name)) {
+                            $packetDisplayName = $packet->name;
+                        } elseif (!empty($packetId)) {
+                            // controller may pass packetId as 'packetId' (camel) or 'packet_id' — try both
+                            $id = $packetId ?? ($packet_id ?? null);
+                            if (!empty($id)) {
+                                $packetDisplayName = 'Paket #' . $id;
+                            }
+                        }
+
+                        if (empty($packetDisplayName)) {
+                            $packetDisplayName = 'Paket Tes';
+                        }
+                    @endphp
+
+                    <div class="mb-3">
+                        <div class="result-packet-badge" title="{{ $packetDisplayName }}">
+                            {{ $packetDisplayName }}
+                        </div>
+                    </div>
+                    {{-- ===== end packet name ===== --}}
+
                     {{-- Score badge & dynamic text --}}
                     @php
                         $score = isset($result['score']) ? (int) $result['score'] : null;
@@ -94,6 +127,22 @@
 @section('css-extra')
 <link rel="stylesheet" href="{{ asset('css/style.css') }}">
 <style>
+/* Packet badge on result page */
+.result-packet-badge{
+  display: inline-block;
+  background: linear-gradient(90deg, #ff7a18 0%, #ffb347 100%);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1rem;
+}
+
 /* Score badge */
 .score-badge{
   width: 100px;
@@ -133,6 +182,7 @@
 @media (max-width: 576px){
   .score-badge{ width: 120px; height: 120px; }
   .score-number{ font-size: 2rem; }
+  .result-packet-badge { font-size: 0.95rem; padding: 8px 12px; }
 }
 </style>
 @endsection

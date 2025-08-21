@@ -735,6 +735,7 @@ public function simpanJawaban(Request $request)
 }
 
 // ✅ Method terpisah untuk menghitung skor final
+// ✅ Method terpisah untuk menghitung skor final
 private function calculateFinalScore($userId, $testId)
 {
     try {
@@ -762,6 +763,8 @@ private function calculateFinalScore($userId, $testId)
 
         // simpan packet ids yang terproses (untuk cleanup client & redirect)
         $processedPacketIds = [];
+        // simpan nama paket per packet id supaya bisa dikirim ke view setelah session dihapus
+        $processedPacketNames = [];
 
         foreach ($byPacket as $packetId => $rows) {
             if (empty($packetId)) {
@@ -773,6 +776,15 @@ private function calculateFinalScore($userId, $testId)
             }
 
             $processedPacketIds[] = $packetId;
+
+            // Ambil nama paket (jika ada) — gunakan model Packet
+            try {
+                $pkt = \App\Models\Packet::find($packetId);
+                $processedPacketNames[$packetId] = $pkt ? $pkt->name : null;
+            } catch (\Throwable $e) {
+                // jika model tidak tersedia atau gagal, set null dan lanjut
+                $processedPacketNames[$packetId] = null;
+            }
 
             $answers = [];
             $totalQuestions = 0;
@@ -823,6 +835,13 @@ private function calculateFinalScore($userId, $testId)
             ? round(($grandTotalCorrect / $grandTotalQuestions) * 100)
             : 0;
 
+        // Jika ada packet yang diproses, ambil yang pertama sebagai target route hasil (packet-based route)
+        $firstPacketId = !empty($processedPacketIds) ? $processedPacketIds[0] : null;
+        $firstPacketName = null;
+        if ($firstPacketId && isset($processedPacketNames[$firstPacketId])) {
+            $firstPacketName = $processedPacketNames[$firstPacketId];
+        }
+
         // Siapkan payload hasil untuk ditampilkan di view hasil
         $hasilPayload = [
             'status'  => 'selesai',
@@ -834,14 +853,16 @@ private function calculateFinalScore($userId, $testId)
                 'total_question' => $grandTotalQuestions,
             ],
             'redirect' => route('home'),
+            // tambahkan packet info agar view tidak tergantung session yang dihapus
+            'packet_id'   => $firstPacketId,
+            'packet_name' => $firstPacketName ?? null,
         ];
 
         // Flash payload dan processed packet ids ke session (tersedia untuk request GET berikutnya)
         session()->flash('hasil_payload', $hasilPayload);
         session()->flash('processed_packet_ids', $processedPacketIds);
-
-        // Jika ada packet yang diproses, ambil yang pertama sebagai target route hasil (packet-based route)
-        $firstPacketId = !empty($processedPacketIds) ? $processedPacketIds[0] : null;
+        // juga simpan nama paket map bila butuh (opsional)
+        session()->flash('processed_packet_names', $processedPacketNames);
 
         if ($firstPacketId) {
             return redirect()->route('soal.hasil', ['packet_id' => $firstPacketId]);
@@ -865,6 +886,7 @@ public function hasil(Request $request, $packet_id = null)
     // ambil payload yang di-flash oleh calculateFinalScore
     $payload = session('hasil_payload');
     $packetIds = session('processed_packet_ids', []);
+    $processedNames = session('processed_packet_names', []);
 
     if (empty($payload)) {
         // jika user akses langsung atau flash sudah kedaluwarsa
@@ -877,9 +899,27 @@ public function hasil(Request $request, $packet_id = null)
         return redirect()->route('home')->with('error', 'Packet tidak ditemukan untuk hasil ini.');
     }
 
+    // get packet_name: prioritas dari payload, lalu dari processed names, lalu DB lookup
+    $packetName = $payload['packet_name'] ?? null;
+    if (empty($packetName) && $packet_id && !empty($processedNames) && isset($processedNames[$packet_id])) {
+        $packetName = $processedNames[$packet_id];
+    }
+    if (empty($packetName) && $packet_id) {
+        try {
+            $pkt = \App\Models\Packet::find($packet_id);
+            $packetName = $pkt ? $pkt->name : null;
+        } catch (\Throwable $e) {
+            $packetName = null;
+        }
+    }
+
     // optional: hapus flash agar tidak tersisa
     session()->forget('hasil_payload');
     session()->forget('processed_packet_ids');
+    session()->forget('processed_packet_names');
+
+    // tambahkan packetName ke payload yang dikirim ke view
+    $payload['packet_name'] = $packetName ?? ($payload['packet_name'] ?? null);
 
     // render view hasil, sertakan packet_id agar view tahu konteks route
     return view('soal.hasil', array_merge($payload, [
@@ -887,6 +927,7 @@ public function hasil(Request $request, $packet_id = null)
         'packetIds' => $packetIds,
     ]));
 }
+
 
 
 
