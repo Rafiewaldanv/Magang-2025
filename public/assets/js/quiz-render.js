@@ -11,6 +11,44 @@ $(document).ready(function () {
     const perStartKey = `quizPerStart_${packetId}`;
     const perEndKey = `quizPerEnd_${packetId}`;
     const perCurrentKey = `quizPerCurrent_${packetId}`;
+
+    // --- MANUAL: developer-set NO-TIMER by listing packet IDs ---
+// -----------------
+// DEV: NO-TIMER PATCH
+// -----------------
+(function detectNoTimer() {
+  // developer: isi array ini dengan ID packet yang TIDAK punya batas waktu
+  const developerNoTimerPackets = [8, 9, 10]; // <-- sesuaikan
+
+  // safe parse packetId (trim whitespace)
+  const pidRaw = ('' + packetId).trim();
+  const pid = parseInt(pidRaw, 10);
+
+  // set global flag
+  window.__quizIsUnlimited = (!isNaN(pid) && developerNoTimerPackets.includes(pid));
+
+  // debug (hapus kalau sudah OK)
+  console.log('detectNoTimer → packetId:', pidRaw, 'parsed:', pid, 'unlimited:', window.__quizIsUnlimited);
+
+  if (window.__quizIsUnlimited) {
+    // clear any stored timer data to avoid resuming previous timers
+    try {
+      localStorage.removeItem(totalStartKey);
+      localStorage.removeItem(totalDurationKey);
+      localStorage.removeItem(perStartKey);
+      localStorage.removeItem(perEndKey);
+      localStorage.removeItem(perCurrentKey);
+      localStorage.removeItem(currentKey);
+    } catch (e) { console.warn('clear storages error', e); }
+
+    // set UI text immediately (if element exists)
+    if ($('#timer').length) {
+      $('#timer').text('Tidak ada batas waktu').addClass('no-timer');
+    }
+  }
+})();
+
+
   
     // --- Prevent browser back and show modal confirmation ---
 // PASTE THIS RIGHT AFTER your localStorage key declarations (currentKey, totalStartKey, perStartKey, perEndKey, perCurrentKey, totalDurationKey)
@@ -214,6 +252,7 @@ $(document).ready(function () {
   
     function startTotalTimer() {
       // don't start in per-question mode
+      if (window.__quizIsUnlimited) return;
       if (perQuestionMode) return;
   
       // try restore start from storage
@@ -363,14 +402,16 @@ $(document).ready(function () {
             localStorage.setItem(currentKey, nomor.toString());
   
             // Start timers based on mode
-            if (perQuestionMode) {
+            if (window.__quizIsUnlimited) {
+              // ensure timers are stopped and timer UI is set
+              stopTotalTimer();
+              stopPerQuestionTimer();
+              $('#timer').text('Tidak ada batas waktu').addClass('no-timer');
+            } else if (perQuestionMode) {
               startPerQuestionTimer();
-              // ensure total timer is stopped to avoid conflict
               stopTotalTimer();
             } else {
-              // normal test -> start total timer (if not already)
               startTotalTimer();
-              // also ensure per-question timer stopped
               stopPerQuestionTimer();
             }
         }).fail(function () {
@@ -632,6 +673,7 @@ $(document).ready(function () {
     // Per-question timer funcs
     // -----------------------
     function startPerQuestionTimer() {
+      if (window.__quizIsUnlimited) return;
         stopPerQuestionTimer();
   
         const now = Date.now();
