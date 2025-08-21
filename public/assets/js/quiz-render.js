@@ -202,7 +202,7 @@ $(document).ready(function () {
       if (!isNaN(persisted) && persisted > 0) return persisted;
   
       // 4) fallback default: 30 minutes (in ms) — only fallback, not ideal but safe
-      return 30 * 60 * 1000;
+      return 1 * 60 * 1000;
     }
   
     const totalDurationMs = detectTotalDurationMs();
