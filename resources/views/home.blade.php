@@ -93,19 +93,67 @@
 </div>
 
 <!-- Modal Ongoing Test (muncul otomatis bila $ongoingTest ada) -->
+@php
+  // Ambil packet id & name dari ongoingTest (dukungan array / object)
+  $ongoingPacketId = null;
+  $ongoingPacketName = null;
+
+  if (!empty($ongoingTest)) {
+    if (is_array($ongoingTest)) {
+      $ongoingPacketId = $ongoingTest['packet_id'] ?? null;
+      $ongoingPacketName = $ongoingTest['packet_name'] ?? null;
+    } else {
+      $ongoingPacketId = $ongoingTest->packet_id ?? null;
+      $ongoingPacketName = $ongoingTest->packet_name ?? null;
+    }
+  }
+
+  // Jika name belum ada, coba cari di koleksi $packets (jika controller mengirimkan)
+  if (empty($ongoingPacketName) && !empty($ongoingPacketId) && !empty($packets)) {
+    foreach ($packets as $p) {
+      $pId = is_object($p) ? ($p->id ?? null) : ($p['id'] ?? null);
+      $pName = is_object($p) ? ($p->name ?? null) : ($p['name'] ?? null);
+      if ((string)$pId === (string)$ongoingPacketId) {
+        $ongoingPacketName = $pName ?? null;
+        break;
+      }
+    }
+  }
+
+  // Jika masih kosong, coba ambil langsung dari model Packet (DB lookup) sebagai fallback
+  if (empty($ongoingPacketName) && !empty($ongoingPacketId)) {
+    try {
+      $pkt = \App\Models\Packet::find($ongoingPacketId);
+      if ($pkt && !empty($pkt->name)) {
+        $ongoingPacketName = $pkt->name;
+      }
+    } catch (\Throwable $e) {
+      // silent fail — biarkan fallback nanti
+    }
+  }
+
+  // fallback final
+  if (empty($ongoingPacketName)) {
+    $ongoingPacketName = 'Paket Tes';
+  }
+@endphp
+
 @if(!empty($ongoingTest))
   <div class="modal fade" id="modalOngoingTest" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Tes Sedang Berlangsung</h5>
-          <!-- HAPUS data-bs-dismiss supaya X tidak menutup modal -->
           <button type="button" class="btn-close" id="modal-close-btn" aria-label="Tutup"></button>
         </div>
 
         <div class="modal-body">
           <p>Anda sedang mengerjakan:</p>
-          <h5 class="fw-bold" id="modal-packet-name">{{ $ongoingTest['packet_name'] ?? 'Paket Tes' }}</h5>
+
+          {{-- tampilkan nama paket dan sertakan data-packet-id supaya JS mudah akses --}}
+          <h5 class="fw-bold" id="modal-packet-name" data-packet-id="{{ e($ongoingPacketId) }}">
+            {{ e($ongoingPacketName) }}
+          </h5>
 
           <div class="mt-3">
             <small class="text-muted">Sisa Waktu:</small>
@@ -124,6 +172,8 @@
     </div>
   </div>
 @endif
+
+
 
 
 <!-- Modal Kembali (untuk mencegah back langsung) -->
@@ -151,6 +201,28 @@
 {{-- JS section: pastikan hanya satu section js-extra per file --}}
 @section('js-extra')
 @parent
+<script>
+  const ongoingTest = @json($ongoingTest ?? null);
+
+// 1) coba ambil dari object ongoingTest
+let packetId = ongoingTest && (ongoingTest.packet_id ?? ongoingTest.packetId ?? ongoingTest.id) ? String(ongoingTest.packet_id ?? ongoingTest.packetId ?? ongoingTest.id) : null;
+let packetName = ongoingTest && (ongoingTest.packet_name ?? ongoingTest.packetName) ? (ongoingTest.packet_name ?? ongoingTest.packetName) : null;
+
+// 2) fallback: ambil dari DOM (diset oleh Blade)
+const nameEl = document.getElementById('modal-packet-name');
+if ((!packetId || packetId === 'null') && nameEl && nameEl.dataset && nameEl.dataset.packetId) {
+  packetId = String(nameEl.dataset.packetId);
+}
+if (!packetName && nameEl) {
+  // gunakan textContent yang sudah diisi Blade
+  packetName = (nameEl.textContent || nameEl.innerText || '').trim() || packetName;
+}
+
+// 3) fallback akhir: gunakan value dari Blade (disisipkan langsung) — ini aman karena Blade sudah menentukan ongoingPacketName
+packetId = packetId || "{{ $ongoingPacketId ?? '' }}";
+packetName = packetName || "{{ addslashes($ongoingPacketName ?? 'Paket Tes') }}";
+
+</script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const modalEl = document.getElementById('modalOngoingTest');

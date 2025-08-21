@@ -29,8 +29,34 @@ class SoalController extends Controller
     // cek session dulu — jika ada, tampilkan ongoing
     $packetId = session('packet_id');
     if (!empty($packetId)) {
-        $ongoingTest = ['packet_id' => $packetId];
-        \Log::info('[HOME] detected packet_id in session -> show ongoing modal', ['packet_id' => $packetId]);
+        // lookup nama paket dari koleksi $packets dulu (lebih efisien)
+        $packetName = null;
+        if (!empty($packets)) {
+            $found = $packets->firstWhere('id', $packetId);
+            if ($found) {
+                $packetName = $found->name ?? null;
+            }
+        }
+
+        // fallback ke DB lookup jika koleksi tidak mengandung id (safety)
+        if (empty($packetName)) {
+            try {
+                $pkt = Packet::find($packetId);
+                if ($pkt) $packetName = $pkt->name ?? null;
+            } catch (\Throwable $e) {
+                \Log::warning('[HOME] packet DB lookup failed', ['packet_id' => $packetId, 'err' => $e->getMessage()]);
+            }
+        }
+
+        // final fallback text
+        if (empty($packetName)) $packetName = 'Paket Tes';
+
+        $ongoingTest = [
+            'packet_id'   => $packetId,
+            'packet_name' => $packetName,
+        ];
+
+        \Log::info('[HOME] detected packet_id in session -> show ongoing modal', ['packet_id' => $packetId, 'packet_name' => $packetName]);
     } else {
         // fallback: kalau mau, cek TestTemporary untuk user login
         if (auth()->check()) {
@@ -38,8 +64,29 @@ class SoalController extends Controller
             $latestTemp = TestTemporary::where('user_id', $userId)->orderBy('created_at','desc')->first();
             if ($latestTemp && $latestTemp->packet_id) {
                 session(['packet_id' => $latestTemp->packet_id]);
-                $ongoingTest = ['packet_id' => $latestTemp->packet_id];
-                \Log::info('[HOME] fallback set session packet_id from TestTemporary', ['packet_id' => $latestTemp->packet_id]);
+
+                // ambil nama paket dengan cara yang sama
+                $packetName = null;
+                if (!empty($packets)) {
+                    $found = $packets->firstWhere('id', $latestTemp->packet_id);
+                    if ($found) $packetName = $found->name ?? null;
+                }
+                if (empty($packetName)) {
+                    try {
+                        $pkt = Packet::find($latestTemp->packet_id);
+                        if ($pkt) $packetName = $pkt->name ?? null;
+                    } catch (\Throwable $e) {
+                        \Log::warning('[HOME] packet DB lookup failed in fallback', ['packet_id' => $latestTemp->packet_id, 'err' => $e->getMessage()]);
+                    }
+                }
+                if (empty($packetName)) $packetName = 'Paket Tes';
+
+                $ongoingTest = [
+                    'packet_id'   => $latestTemp->packet_id,
+                    'packet_name' => $packetName,
+                ];
+
+                \Log::info('[HOME] fallback set session packet_id from TestTemporary', ['packet_id' => $latestTemp->packet_id, 'packet_name' => $packetName]);
             }
         }
     }
@@ -47,6 +94,7 @@ class SoalController extends Controller
     \Log::info('[HOME] result', ['packetId' => $packetId, 'ongoingTest' => $ongoingTest]);
     return view('home', compact('packets', 'ongoingTest'));
 }
+
 
 public function SoalAdaptifAnalogi()
 {
