@@ -1,42 +1,164 @@
-psikologanda.com — Test Online Web
-<p align="center"> <a href="https://psikologanda.com" target="_blank"><strong>psikologanda.com</strong></a> — Sistem Ujian / Test Online berbasis web </p>
-Ringkasan
+# psikologanda.com — Test Online Web
 
-psikologanda.com adalah web aplikasi Test Online yang dibangun menggunakan Laravel (Blade + PHP) dengan tujuan menyediakan platform ujian psikologi dan asesmen online yang ringan, dapat diintegrasikan, dan mudah dipelihara. Proyek ini dibuat oleh tim magang dari S1 Teknik Komputer — Universitas Diponegoro. 
-Diponegoro University
+<p align="center">
+  <strong>psikologanda.com</strong> — Sistem Ujian / Test Online berbasis web
+</p>
 
-Tim
+---
 
-Farhan Nasrullah — Frontend & Integrator (FE & BE)
+## Ringkasan
 
-Rafie Waldan Valerie — Backend & Database
+**psikologanda.com** adalah aplikasi web Test Online berbasis **Laravel** yang dirancang untuk menyelenggarakan ujian dan asesmen psikologi secara daring: ringan, terintegrasi, dan mudah dipelihara.
 
-Fitur Utama
+**Tim Magang (Universitas Diponegoro)**
 
-Sistem autentikasi pengguna (siswa/admin)
+* **Farhan Nasrullah** — Frontend & Integrator (FE & BE)
+* **Rafie Waldan Valerie** — Backend & Database
 
-Manajemen paket soal dan bank soal (CRUD)
+---
 
-Timer per paket soal, autosubmit saat waktu habis
+## Fitur Utama
 
-Penyimpanan jawaban sementara (sessionStorage / localStorage) dan sinkronisasi antar halaman
+* Otentikasi pengguna (siswa/admin)
+* Manajemen paket soal dan bank soal (CRUD)
+* Timer per paket soal + autosubmit saat waktu habis
+* Penyimpanan jawaban sementara (sessionStorage / localStorage)
+* Perhitungan skor otomatis (per soal & total)
+* Dashboard admin untuk melihat hasil dan statistik
 
-Perhitungan skor otomatis dan tampilan hasil (per soal + total)
+---
 
-Impor/ekspor soal (CSV/JSON) — opsional
+## Teknologi
 
-Dashboard admin untuk melihat statistik tes dan hasil
+* Backend: **Laravel (PHP)**
+* Frontend: **Blade**, Vanilla **JavaScript**
+* Database: **MySQL / MariaDB**
+* Build: Composer, NPM (Vite / Laravel Mix)
 
-Teknologi
+---
 
-Backend: Laravel (PHP)
+## Instalasi & Jalankan (Lokal)
 
-Frontend: Blade, vanilla JavaScript (localStorage/sessionStorage untuk state kuis), Bootstrap (opsional)
+> Pastikan PHP, Composer, Node.js/NPM, dan MySQL sudah terpasang.
 
-Database: MySQL / MariaDB
+1. Clone repo
 
-Tools: Composer, NPM (Vite / Laravel Mix), Git
+```bash
+git clone https://github.com/<org-or-user>/test-online.git
+cd test-online
+```
 
-Persiapan & Instalasi (lokal)
+2. Install dependency
 
-Asumsi: Anda sudah memiliki PHP, Composer, Node.js/NPM, dan MySQL terpasang.
+```bash
+composer install
+npm install
+```
+
+3. Siapkan environment
+
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+Edit `.env` untuk menyesuaikan database, `APP_URL`, dan konfigurasi lain seperti mail.
+
+4. Migrasi dan seeder (opsional)
+
+```bash
+php artisan migrate
+php artisan db:seed   # jika tersedia seeder
+```
+
+5. Link storage & build assets
+
+```bash
+php artisan storage:link
+npm run build   # atau npm run dev
+```
+
+6. Jalankan server
+
+```bash
+php artisan serve
+```
+
+Buka `http://127.0.0.1:8000` atau sesuai `APP_URL`.
+
+---
+
+## Struktur Penting
+
+* `routes/web.php` — routes untuk halaman
+* `app/Http/Controllers/` — controllers (pisahkan Admin / Test / Result)
+* `resources/views/` — Blade templates
+* `resources/js` & `resources/css` — assets frontend
+* `database/migrations` & `database/seeders` — schema dan seed data
+
+---
+
+## Catatan Pengembangan (Frontend & UX penting)
+
+* **Timer & Autosubmit**: Pastikan autosubmit men-set `localStorage.setItem('quizFinished_<packetId>', '1')` agar modal/status berubah setelah submit.
+* **Sinkronisasi soal**: Selalu update `localStorage.quizCurrent_<packetId>` saat berpindah soal agar modal dan indikator nomor soal tersinkron.
+* **Penyimpanan jawaban sementara**: Gunakan `sessionStorage` atau `localStorage` untuk menyimpan jawaban sementara dan hapus kunci terkait setelah submit final.
+* **Unique IDs**: Hindari duplicate `id` pada elemen form soal — gunakan `question-{{ $question->id }}` atau format dinamis lain.
+
+---
+
+## Deployment (Singkat)
+
+* Pastikan `APP_ENV=production` dan variabel `.env` untuk DB/Mail/URL sudah benar
+* Jalankan migrasi di server: `php artisan migrate --force`
+* Setup queue/cron jika fitur background digunakan
+* Konfigurasi Nginx/Apache sesuai panduan Laravel
+
+---
+
+## Testing
+
+* Jika ada test: `php artisan test`
+* Lakukan manual testing untuk alur ujian (mulai tes, submit manual, autosubmit ketika waktu habis, perhitungan skor)
+
+---
+
+## Cara Berkontribusi
+
+1. Fork repo → buat branch fitur: `feature/namafitur`
+2. Buat PR dengan deskripsi perubahan dan langkah testing
+3. Ikuti style guide (PSR-12 untuk PHP; konsistensi naming pada JS/Blade)
+
+---
+
+## Pelaporan Masalah
+
+* Gunakan GitHub Issues: sertakan langkah reproduksi, versi aplikasi, screenshot/log jika perlu
+* Untuk isu terkait scoring/data hasil, tandai sebagai `bug` dan beri prioritas tinggi
+
+---
+
+## Lisensi
+
+Lisensi proyek ini: **MIT** (ubah bila perlu)
+
+---
+
+## Kontak
+
+* **Farhan Nasrullah** — Frontend & Integrator — `replace-with-email@example.com`
+* **Rafie Waldan Valerie** — Backend & Database — `replace-with-email@example.com`
+
+> Ganti kontak di atas dengan alamat email yang valid sebelum publish.
+
+---
+
+## File Tambahan yang Direkomendasikan
+
+* `CONTRIBUTING.md` — panduan kontribusi singkat
+* `ISSUE_TEMPLATE.md` / `PULL_REQUEST_TEMPLATE.md` — template untuk konsistensi issue/PR
+* `DEVELOPMENT.md` — catatan teknis (konvensi, script build, environment)
+
+---
+
+Terima kasih! Jika mau, saya bisa tambahkan `CONTRIBUTING.md` atau template Issue/PR siap pakai.
