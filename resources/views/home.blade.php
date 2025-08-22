@@ -1,12 +1,10 @@
 @extends('template.main')
 
 @section('content')
-<!-- Overlay Loading -->
 <div id="overlay-loading">
-    <div class="spinner"></div>
+  <div class="spinner"></div>
 </div>
 
-<!-- Header -->
 <div class="bg-theme-1 bg-header">
   <div class="container text-center text-white">
     <h2 id="timer">00:00</h2>
@@ -19,21 +17,18 @@
   </svg>
 </div>
 
-<!-- Isi Halaman -->
 <div class="container main-container text-center mt-5 mb-5">
   <div class="card shadow mx-auto" style="max-width: 600px">
     <div class="card-body">
       <h4 class="fw-bold mb-3">Mulai Tes</h4>
       <p class="mb-4">Pastikan kamu sudah siap dan koneksi internet stabil sebelum memulai.</p>
-      <button class="btn btn-primary text-uppercase mt-3 px-4 py-2" 
-              data-bs-toggle="modal" data-bs-target="#tutorialModal">
-          Mulai Tes Sekarang
+      <button class="btn btn-primary text-uppercase mt-3 px-4 py-2" data-bs-toggle="modal" data-bs-target="#tutorialModal">
+        Mulai Tes Sekarang
       </button>
     </div>
   </div>
 </div>
 
-<!-- Modal Tutorial -->
 <div class="modal fade" id="tutorialModal" tabindex="-1" aria-labelledby="tutorialLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content" style="height: 60vh">
@@ -55,15 +50,12 @@
         </ul>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-bs-target="#confirmModal" data-bs-toggle="modal">
-          Mengerti
-        </button>
+        <button type="button" class="btn btn-primary" data-bs-target="#confirmModal" data-bs-toggle="modal">Mengerti</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal 2: Pilih Paket (dari tutorial -> confirm) -->
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -93,7 +85,6 @@
 </div>
 
 @php
-  // Ambil packet id & name dari ongoingTest (dukungan array / object)
   $ongoingPacketId = null;
   $ongoingPacketName = null;
 
@@ -107,7 +98,6 @@
     }
   }
 
-  // Jika name belum ada, coba cari di koleksi $packets (jika controller mengirimkan)
   if (empty($ongoingPacketName) && !empty($ongoingPacketId) && !empty($packets)) {
     foreach ($packets as $p) {
       $pId = is_object($p) ? ($p->id ?? null) : ($p['id'] ?? null);
@@ -119,7 +109,6 @@
     }
   }
 
-  // Jika masih kosong, coba ambil langsung dari model Packet (DB lookup) sebagai fallback
   if (empty($ongoingPacketName) && !empty($ongoingPacketId)) {
     try {
       $pkt = \App\Models\Packet::find($ongoingPacketId);
@@ -127,31 +116,23 @@
         $ongoingPacketName = $pkt->name;
       }
     } catch (\Throwable $e) {
-      // silent fail — biarkan fallback nanti
     }
   }
 
-  // fallback final
   if (empty($ongoingPacketName)) {
     $ongoingPacketName = 'Paket Tes';
   }
 @endphp
 
-<!-- Modal Ongoing Test (muncul otomatis bila $ongoingTest ada) -->
 @if(!empty($ongoingTest))
   <style>
-    /* simple modern styling for the ongoing modal */
     .modal-simple .modal-content {
       border: 0;
       border-radius: 10px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.08);
       overflow: hidden;
     }
-    .modal-simple .modal-header {
-      padding: 16px 18px;
-      border-bottom: 0;
-      background: #fff;
-    }
+    .modal-simple .modal-header { padding: 16px 18px; border-bottom: 0; background: #fff; }
     .modal-simple .modal-title { font-weight:700; margin:0; }
     .modal-simple .modal-sub { font-size:.88rem; color:#6c757d; margin-top:4px; }
     .modal-simple .modal-body { padding: 16px 18px; background: #fbfbfc; }
@@ -165,10 +146,7 @@
       background:#fff3cd;
       color:#856404;
     }
-    .modal-simple .status-ended {
-      background:#f8d7da;
-      color:#842029;
-    }
+    .modal-simple .status-ended { background:#f8d7da; color:#842029; }
     .modal-simple .pkg-name { font-weight:700; margin-bottom:.15rem; }
     .modal-simple .meta { font-size:.86rem; color:#6c757d; }
     .modal-simple .current-q { font-weight:600; font-size:1rem; }
@@ -234,12 +212,11 @@
       const packetNameEl = document.getElementById('modal-packet-name');
       const currentQuestionEl = document.getElementById('modal-current-question');
 
-      // keys used by quiz code
       const perStartKey = `quizPerStart_${pid}`;
       const perEndKey = `quizPerEnd_${pid}`;
       const totalStartKey = `quizTotalStart_${pid}`;
       const currentKey = `quizCurrent_${pid}`;
-      const finishedKey = `quizFinished_${pid}`; // optional
+      const finishedKey = `quizFinished_${pid}`;
 
       function readLS(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
       function readIntLS(k){ const v=readLS(k); if (!v) return NaN; const n=parseInt(v,10); return isNaN(n)?NaN:n; }
@@ -293,28 +270,24 @@
 
       updateUI();
 
-      // listen storage changes (tab sync)
       window.addEventListener('storage', function(ev){
         if (!ev.key) { updateUI(); return; }
         const relevant = [perStartKey, perEndKey, totalStartKey, currentKey, finishedKey];
         if (relevant.includes(ev.key)) setTimeout(updateUI, 100);
       }, false);
 
-      // poll fallback while modal open
       const poll = setInterval(updateUI, 1500);
       const modalEl = document.getElementById('modalOngoingTest');
       if (modalEl) {
         modalEl.addEventListener('hidden.bs.modal', function(){ clearInterval(poll); }, { once:true });
       }
 
-      // wire continue button
       const btnContinue = document.getElementById('btn-continue-test');
       if (btnContinue) {
         const pkt = packetNameEl?.dataset?.packetId || pid;
         btnContinue.setAttribute('href', '/soal?packet_id=' + encodeURIComponent(pkt));
       }
 
-      // cancel behavior
       const btnCancel = document.getElementById('btn-cancel-test');
       if (btnCancel) {
         btnCancel.addEventListener('click', function(e){
@@ -328,18 +301,14 @@
         });
       }
 
-      // prevent close via X button
       const closeBtn = document.getElementById('modal-close-btn');
       if (closeBtn) closeBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); });
 
-    } catch(err){
-      console.warn('modal ongoing init error', err);
-    }
+    } catch(err){ }
   })();
   </script>
 @endif
 
-<!-- Modal Kembali (untuk mencegah back langsung) -->
 <div class="modal fade" id="modalKembali" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
@@ -361,15 +330,12 @@
 
 @endsection
 
-{{-- JS section: pastikan hanya satu section js-extra per file --}}
 @section('js-extra')
 @parent
 
 <script>
-  // expose ongoingTest for other scripts if needed
   const ongoingTest = @json($ongoingTest ?? null);
 
-  // derive packetId & packetName robustly (Blade set + DOM fallback)
   let packetId = ongoingTest && (ongoingTest.packet_id ?? ongoingTest.packetId ?? ongoingTest.id) ? String(ongoingTest.packet_id ?? ongoingTest.packetId ?? ongoingTest.id) : null;
   let packetName = ongoingTest && (ongoingTest.packet_name ?? ongoingTest.packetName) ? (ongoingTest.packet_name ?? ongoingTest.packetName) : null;
 
@@ -390,14 +356,12 @@ document.addEventListener('DOMContentLoaded', function () {
   const modalEl = document.getElementById('modalOngoingTest');
   if (!modalEl) return;
 
-  // Show modal in a safe way
   const bsModal = new bootstrap.Modal(modalEl, {
     backdrop: 'static',
     keyboard: false
   });
   bsModal.show();
 
-  // defensive: disable close X behaviour
   const closeBtn = document.getElementById('modal-close-btn');
   if (closeBtn) {
     closeBtn.addEventListener('click', function (e) {
@@ -405,8 +369,6 @@ document.addEventListener('DOMContentLoaded', function () {
       e.stopPropagation();
     });
   }
-
-  // wire cancel & continue already handled in modal script above; nothing more needed here
 });
 </script>
 

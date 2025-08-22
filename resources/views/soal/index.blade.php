@@ -1,14 +1,12 @@
 @extends('template/main')
 
 @section('content')
-<!-- Overlay Loading -->
 <div id="overlay-loading">
     <div class="spinner"></div>
 </div>
 
 <div class="bg-theme-1 bg-header">
     <div class="container text-center text-white">
-        <!-- restored timer display (handled by quiz-render.js) -->
         <h2 id="timesr">00:00</h2>
     </div>
 </div>
@@ -18,23 +16,19 @@
     </svg>
 </div>
 
-
-</div>
 @php
-  // definisi global untuk view: packetNameInline
   $packetNameInline = null;
-
   if (isset($packet) && !empty($packet->name)) {
       $packetNameInline = $packet->name;
   } elseif (session('packet_id') || session('selected_packet_id')) {
       $packetNameInline = 'Paket #' . (session('packet_id') ?? session('selected_packet_id'));
   }
 @endphp
+
 <div class="container main-container">
     @if($selection != null)
         @if(strtotime('now') < strtotime($selection->test_time))
         <div class="row">
-            <!-- Alert -->
             <div class="col-12 mb-2">
                 <div class="alert alert-danger fade show text-center" role="alert">
                     Tes akan dilaksanakan pada tanggal <strong>{{ \Ajifatur\Helpers\DateTimeExt::full($selection->test_time) }}</strong> mulai pukul <strong>{{ date('H:i:s', strtotime($selection->test_time)) }}</strong>.
@@ -43,36 +37,36 @@
         </div>
         @endif
     @endif
+
     @if($selection == null || ($selection != null && strtotime('now') >= strtotime($selection->test_time)))
     <div id="mobile-nav-placeholder"></div>
     <div id="questmsdt" class="row" style="margin-bottom:100px">
         <div class="col-12 col-md-4 co mb-md-0">
-        <div class="card">
-  <div class="card-header fw-bold text-center">
-    <span> Navigasi Soal </span>
-  </div>
+            <div class="card">
+                <div class="card-header fw-bold text-center">
+                    <span> Navigasi Soal </span>
+                </div>
 
-  <div class="card-body">
-    {{-- MOBILE: badge dipindah ke dalam card-body, tampil hanya di xs/sm --}}
-    @if(!empty($packetNameInline))
-      <div class="mb-3 d-block d-md-none">
-        <div class="packet-badge-inline-mobile" title="{{ $packetNameInline }}">
-          {{ $packetNameInline }}
-        </div>
-      </div>
-    @endif
+                <div class="card-body">
+                    @if(!empty($packetNameInline))
+                      <div class="mb-3 d-block d-md-none">
+                        <div class="packet-badge-inline-mobile" title="{{ $packetNameInline }}">
+                          {{ $packetNameInline }}
+                        </div>
+                      </div>
+                    @endif
 
-    <form id="form" method="POST" action="{{ route('soal.simpan', ['path' => $path]) }}">
-      @csrf
-      <input type="hidden" name="path" value="{{ $path }}">
-      <input type="hidden" name="packet_id" value="{{ $packet->id }}">
-      <input type="hidden" name="test_id" value="{{ $test->id }}">
-      <input type="hidden" name="jumlah_soal" id="jumlah_soal" value="{{ $jumlah_soal }}">
-      <input type="hidden" name="part" id="part" value="{{ $part }}">
-      <div id="soal-container"></div>
-    </form>
-  </div>
-</div>
+                    <form id="form" method="POST" action="{{ route('soal.simpan', ['path' => $path]) }}">
+                      @csrf
+                      <input type="hidden" name="path" value="{{ $path }}">
+                      <input type="hidden" name="packet_id" value="{{ $packet->id }}">
+                      <input type="hidden" name="test_id" value="{{ $test->id }}">
+                      <input type="hidden" name="jumlah_soal" id="jumlah_soal" value="{{ $jumlah_soal }}">
+                      <input type="hidden" name="part" id="part" value="{{ $part }}">
+                      <div id="soal-container"></div>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <div class="col-12 col-md-8">
@@ -82,35 +76,20 @@
                     <div class="row mb-5">
                         <div class="col-12">
                             <div class="card soal rounded-1 mb-3">
-                                {{-- restored timer in card header (quiz-render.js controls behavior) --}}
-                                @php
-  // cari nama paket: prioritas dari $packet->name, lalu session packet_id/selected_packet_id
-  $packetNameInline = null;
-  if (isset($packet) && !empty($packet->name)) {
-    $packetNameInline = $packet->name;
-  } elseif (session('packet_id') || session('selected_packet_id')) {
-    $packetNameInline = 'Paket #' . (session('packet_id') ?? session('selected_packet_id'));
-  }
-@endphp
 
 <div class="card-header bg-transparent d-flex align-items-center justify-content-between">
-  {{-- kiri: packet name (desktop only) --}}
   <div class="packet-left">
     @if($packetNameInline)
-      {{-- DESKTOP: tampil pada md ke atas --}}
       <div class="packet-badge-inline d-none d-md-inline-block" title="{{ $packetNameInline }}">
         {{ $packetNameInline }}
       </div>
     @endif
   </div>
 
-  {{-- kanan: timer --}}
   <div class="text-end ms-3">
     <h2 id="timer" class="mb-0 fw-bold">Sisa Waktu</h2>
   </div>
 </div>
-
-
 
                                 <div class="soal_number card-header bg-transparent">
                                     <i class="fa fa-edit"></i> <span class="num fw-bold"></span>
@@ -127,6 +106,7 @@
             </form>
         </div>
     </div>
+
     <nav class="navbar navbar-expand-lg fixed-bottom navbar-light bg-white shadow">
         <div class="container">
             <ul class="navbar nav ms-auto">
@@ -134,15 +114,15 @@
                     <span id="answered">0</span>/<span id="totals"></span> Soal Terjawab
                 </li>
                 <li class="nav-item ms-3">
-  <button type="button"
-          class="btn btn-link text-secondary p-0"
-          data-bs-toggle="modal"
-          data-bs-target="#tutorialModal"
-          data-suppress-modal-kembali="1"
-          aria-label="Tutorial">
-    <i class="fa fa-question-circle" style="font-size: 1.5rem"></i>
-  </button>
-</li>
+                    <button type="button"
+                            class="btn btn-link text-secondary p-0"
+                            data-bs-toggle="modal"
+                            data-bs-target="#tutorialModal"
+                            data-suppress-modal-kembali="1"
+                            aria-label="Tutorial">
+                      <i class="fa fa-question-circle" style="font-size: 1.5rem"></i>
+                    </button>
+                </li>
 
                 <li class="nav-item ms-3">
                     <button onclick="deleteItems()" class="btn btn-md btn-primary text-uppercase " id="btn-submit" style="display: none">Submit</button>
@@ -150,7 +130,7 @@
             </ul>
         </div>
     </nav>
-    <!-- Modal Tutorial -->
+
     <div class="modal fade" id="tutorialModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content" style="height: 60vh">
@@ -163,7 +143,7 @@
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                
+
                 <div class="modal-body text-start overflow-auto">
                     <h6 class="fw-bold">Panduan Mengerjakan Tes:</h6>
                     <ol class="mt-2">
@@ -175,16 +155,16 @@
                         <li>Kamu bisa mengganti jawaban kapan saja sebelum menekan tombol <b>Submit</b>.</li>
                         <li>Setelah menekan tombol <b>Submit</b>, jawaban akan disimpan dan <b>tidak dapat diubah kembali</b>.</li>
                     </ol>
-                    
+
                     <div class="alert alert-info mt-3" role="alert">
                         ℹ️ Tips: Kerjakan soal yang mudah terlebih dahulu agar lebih efisien.
                     </div>
-                    
+
                     <div class="alert alert-warning mt-2" role="alert">
                         ⚠️ Waktu pengerjaan terbatas, pastikan memanfaatkan waktu dengan baik.
                     </div>
                 </div>
-                
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-primary text-uppercase" data-bs-dismiss="modal">Mengerti</button>
                 </div>
@@ -238,39 +218,25 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // ---------- helper CSRF ----------
   function readCsrfToken() {
-    // 1) meta tag
     const meta = document.querySelector('meta[name="csrf-token"]');
     if (meta && meta.getAttribute('content')) return meta.getAttribute('content');
-
-    // 2) hidden input _token (if any form on page)
     const tokenInput = document.querySelector('input[name="_token"]');
     if (tokenInput && tokenInput.value) return tokenInput.value;
-
-    // 3) cookie XSRF-TOKEN (Laravel sets it by default)
     const cookieMatch = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
     if (cookieMatch && cookieMatch[1]) {
-      try {
-        // cookie is URL encoded
-        return decodeURIComponent(cookieMatch[1]);
-      } catch (e) {
-        return cookieMatch[1];
-      }
+      try { return decodeURIComponent(cookieMatch[1]); } catch (e) { return cookieMatch[1]; }
     }
-
     return '';
   }
 
   const csrf = readCsrfToken();
 
-  // ---------- common elements ----------
   const formEl = document.getElementById('form');
   const packetInput = formEl ? formEl.querySelector('input[name="packet_id"]') : null;
   const packetId = packetInput ? packetInput.value : null;
   window.__quizStartKey = packetId ? `quizStartTime_${packetId}` : 'quizStartTime';
 
-  // helper clear storage
   function clearQuizStorageAndTimerFor(packetIdToClear) {
     try {
       if (packetIdToClear) {
@@ -282,10 +248,9 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.removeItem(`quizTotalStart_${packetIdToClear}`);
         localStorage.removeItem(`quizTotalDuration_${packetIdToClear}`);
       } else {
-        // generic key
         localStorage.removeItem(window.__quizStartKey);
       }
-    } catch (e) { console.warn('clear localStorage error', e); }
+    } catch (e) {}
     try { sessionStorage.removeItem('jawabanSementara'); } catch(e){}
     try {
       if (window.__quizTimerInterval) {
@@ -295,20 +260,16 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch (e) {}
   }
 
-  // ---------- form submit interception ----------
   if (formEl) {
-    // prevent double-binding
     if (!formEl._hasSubmitHandler) {
       formEl.addEventListener('submit', function (e) {
         e.preventDefault();
-        // kirimJawaban defined elsewhere
         if (typeof kirimJawaban === 'function') kirimJawaban();
       });
       formEl._hasSubmitHandler = true;
     }
   }
 
-  // ---------- soal.index back/popstate handling ----------
   @if(Route::is('soal.index'))
     try {
       history.pushState(null, null, location.href);
@@ -316,19 +277,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const btnKembali = document.getElementById('btn-kembali');
         if (btnKembali) btnKembali.click();
       };
-    } catch (e) { console.warn('popstate init failed', e); }
+    } catch (e) {}
   @endif
 
-  // ---------- modalKembali (confirm-kembali) robust handler ----------
   (function attachConfirmKembali() {
     const confirmKembaliEl = document.getElementById('confirm-kembali');
-    if (!confirmKembaliEl) return;
-
-    // prevent attaching twice
-    if (confirmKembaliEl._attached) return;
+    if (!confirmKembaliEl || confirmKembaliEl._attached) return;
     confirmKembaliEl._attached = true;
 
-    // helper to read packet id from DOM if not available from form
     function getPacketIdFromDom() {
       const pktInput = document.querySelector('input[name="packet_id"]');
       if (pktInput && pktInput.value) return pktInput.value;
@@ -345,7 +301,6 @@ document.addEventListener('DOMContentLoaded', function () {
       evt.preventDefault();
       evt.stopPropagation();
 
-      // disable & feedback
       confirmKembaliEl.setAttribute('disabled', 'disabled');
       confirmKembaliEl.classList.add('disabled');
       const originalHTML = confirmKembaliEl.innerHTML;
@@ -353,7 +308,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const pkt = getPacketIdFromDom();
 
-      // send cancel request
       fetch("{{ route('test.cancel') }}", {
         method: 'POST',
         headers: {
@@ -370,10 +324,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return resp.json().catch(()=>({ ok:true }));
       })
       .then(data => {
-        // cleanup client-side
         try { clearQuizStorageAndTimerFor(pkt); } catch(e){}
-
-        // hide modalKembali if open
         try {
           const modalEl = document.getElementById('modalKembali');
           if (modalEl) {
@@ -381,14 +332,10 @@ document.addEventListener('DOMContentLoaded', function () {
             bs.hide();
           }
         } catch(e){}
-
-        // redirect to href (default '/')
         const href = confirmKembaliEl.getAttribute('href') || '/';
         window.location.href = href;
       })
       .catch(err => {
-        console.error('Cancel request failed:', err);
-        // restore button
         confirmKembaliEl.removeAttribute('disabled');
         confirmKembaliEl.classList.remove('disabled');
         confirmKembaliEl.innerHTML = originalHTML;
@@ -397,37 +344,28 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   })();
 
-  // ---------- optional: attach modalKembali popstate protection ----------
   (function attachPopstateModalKembali() {
     const modalKembaliEl = document.getElementById('modalKembali');
-    if (!modalKembaliEl) return;
-    // prevent duplicate instance creation
-    if (!modalKembaliEl._popstateAttached) {
-      modalKembaliEl._popstateAttached = true;
-      try {
+    if (!modalKembaliEl || modalKembaliEl._popstateAttached) return;
+    modalKembaliEl._popstateAttached = true;
+    try {
+      window.history.pushState(null, '', window.location.href);
+      window.addEventListener('popstate', function (e) {
+        if (!document.body.classList.contains('modal-open')) {
+          const bs = new bootstrap.Modal(modalKembaliEl, { backdrop: true });
+          bs.show();
+        }
         window.history.pushState(null, '', window.location.href);
-        window.addEventListener('popstate', function (e) {
-          // show modal only if not open
-          if (!document.body.classList.contains('modal-open')) {
-            const bs = new bootstrap.Modal(modalKembaliEl, { backdrop: true });
-            bs.show();
-          }
-          window.history.pushState(null, '', window.location.href);
-        });
-      } catch (err) {
-        console.warn('popstate not available', err);
-      }
-
-      // cleanup leftover backdrops when modal closed
-      modalKembaliEl.addEventListener('hidden.bs.modal', function () {
-        document.querySelectorAll('.modal-backdrop').forEach(node => node.remove());
-        document.body.classList.remove('modal-open');
-        document.body.style.paddingRight = '';
       });
-    }
+    } catch (err) {}
+
+    modalKembaliEl.addEventListener('hidden.bs.modal', function () {
+      document.querySelectorAll('.modal-backdrop').forEach(node => node.remove());
+      document.body.classList.remove('modal-open');
+      document.body.style.paddingRight = '';
+    });
   })();
 
-  // ---------- submit confirm modal handler ----------
   (function attachSubmitConfirm() {
     const btnSubmit = document.getElementById('btn-submit');
     const confirmSubmit = document.getElementById('confirm-submit');
@@ -444,7 +382,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (confirmSubmit && !confirmSubmit._attached) {
       confirmSubmit._attached = true;
       confirmSubmit.addEventListener('click', function (e) {
-        // clear and then submit form
         try { clearQuizStorageAndTimerFor(packetId); } catch(e){}
         if (formEl) {
           setTimeout(() => formEl.submit(), 150);
@@ -452,7 +389,6 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
 
-    // also ensure normal form submit clears storage (catch all)
     if (formEl && !formEl._clearAttached) {
       formEl._clearAttached = true;
       formEl.addEventListener('submit', function () {
@@ -461,7 +397,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   })();
 
-  // ---------- answered counter logic (kept intact) ----------
   (function attachAnsweredCounter() {
     const jumlahSoalEl = document.getElementById('jumlah_soal');
     if (!jumlahSoalEl) return;
@@ -496,10 +431,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   })();
 
-}); // end DOMContentLoaded
+});
 </script>
 @endsection
-
 
 @section('css-extra')
 <link rel="stylesheet" href="{{ asset('css/style.css') }}">
@@ -525,7 +459,5 @@ document.addEventListener('DOMContentLoaded', function () {
   white-space: nowrap;
 }
 .list-group-item .q-img { margin-right: 10px; }
-
-/* Kotak navigasi soal */
 </style>
 @endsection

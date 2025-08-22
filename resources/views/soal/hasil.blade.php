@@ -1,12 +1,10 @@
 @extends('template/main')
 
 @section('content')
-<!-- Overlay Loading -->
 <div id="overlay-loading">
     <div class="spinner"></div>
 </div>
 
-{{-- Header --}}
 <div class="bg-theme-1 bg-header">
   <div class="container text-center text-white">
     <h2 id="timer">00:00</h2>
@@ -22,21 +20,15 @@
     </svg>
 </div>
 
-{{-- Content --}}
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
-
             <div class="card shadow-lg rounded-3">
                 <div class="card-body text-center p-5">
 
-                    {{-- ===== determine whether to show score for this packet ===== --}}
                     @php
-                        // konfigurasi: daftar packet id yang menampilkan skor
-                        // developer: ubah array ini sesuai kebutuhan
                         $showScorePacketIds = isset($showScorePacketIds) ? $showScorePacketIds : [10000];
 
-                        // cari packet id yang aktif (coba beberapa var)
                         $currentPacketId = null;
                         if (isset($packetId) && $packetId !== '') {
                             $currentPacketId = (int) $packetId;
@@ -49,7 +41,6 @@
                         $showScore = in_array($currentPacketId, $showScorePacketIds, true);
                     @endphp
 
-                    {{-- ===== PACKET NAME (robust fallback) ===== --}}
                     @php
                         $packetDisplayName = null;
 
@@ -75,14 +66,10 @@
                             {{ $packetDisplayName }}
                         </div>
                     </div>
-                    {{-- ===== end packet name ===== --}}
 
-                    {{-- Conditional: show score or simple saved message --}}
                     @if($showScore)
-                        {{-- Score badge & dynamic text --}}
                         @php
                             $score = isset($result['score']) ? (int) $result['score'] : null;
-                            // default classes/text
                             $scoreClass = 'score-neutral';
                             $scoreText = $status ?? 'Selesai';
                             $subText = $message ?? 'Test berhasil diselesaikan!';
@@ -110,11 +97,9 @@
                             </div>
                         </div>
 
-                        {{-- small result message based on color --}}
                         <h4 class="fw-bold mb-2 text-capitalize">{{ $score !== null ? $scoreText : ($status ?? 'Selesai') }}</h4>
                         <p class="mb-4 result-subtext {{ $scoreClass }}-text">{{ $subText }}</p>
 
-                        {{-- Hasil detail (tetap ada, tidak diubah) --}}
                         @if(isset($result))
                             <div class="row mb-4">
                                 <div class="col-md-6 text-start">
@@ -128,7 +113,6 @@
                             </div>
                         @endif
                     @else
-                        {{-- Simple confirmation message for packets that SHOULD NOT show score --}}
                         <div class="mb-4">
                           <div class="alert alert-success py-4" role="alert" style="font-size:1.05rem;">
                             <h4 class="alert-heading">Selamat!</h4>
@@ -136,17 +120,14 @@
                           </div>
                         </div>
 
-                        {{-- optionally show minimal info --}}
                         <p class="text-muted mb-4">Terima kasih telah menyelesaikan tes. Hasil akhir tidak ditampilkan untuk paket ini.</p>
                     @endif
 
-                    {{-- Tombol Redirect --}}
                     <a href="{{ $redirect ?? url('/home') }}" class="btn btn-primary btn-lg">
                         Kembali ke Home
                     </a>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
@@ -155,7 +136,6 @@
 @section('css-extra')
 <link rel="stylesheet" href="{{ asset('css/style.css') }}">
 <style>
-/* Packet badge on result page */
 .result-packet-badge{
   display: inline-block;
   background: linear-gradient(90deg, #ff7a18 0%, #ffb347 100%);
@@ -171,7 +151,6 @@
   font-size: 1rem;
 }
 
-/* Score badge */
 .score-badge{
   width: 100px;
   height: 100px;
@@ -183,7 +162,6 @@
   font-weight: 700;
 }
 
-/* Number style */
 .score-number{
   font-size: 2.6rem;
   line-height: 1;
@@ -195,18 +173,15 @@
   vertical-align: top;
 }
 
-/* color variants */
-.score-green{ background: #28a745; }   /* success */
-.score-yellow{ background: #ffc107; color: #212529; } /* warning */
-.score-red{ background: #dc3545; }     /* danger */
+.score-green{ background: #28a745; }
+.score-yellow{ background: #ffc107; color: #212529; }
+.score-red{ background: #dc3545; }
 .score-neutral{ background: #6c757d; }
 
-/* Subtext color matching */
 .score-green-text{ color: #28a745; font-weight:600; }
-.score-yellow-text{ color: #8a6d00; font-weight:600; } /* darker yellow-ish */
+.score-yellow-text{ color: #8a6d00; font-weight:600; }
 .score-red-text{ color: #dc3545; font-weight:600; }
 
-/* keep responsiveness */
 @media (max-width: 576px){
   .score-badge{ width: 120px; height: 120px; }
   .score-number{ font-size: 2rem; }
@@ -218,24 +193,17 @@
 @section('js-extra')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  // bersihkan storage (opsional)
   try { sessionStorage.removeItem('jawabanSementara'); } catch(e) {}
-  // hapus localStorage keys kalau perlu
-  // try { localStorage.removeItem('quizStartTime_'+packetId); } catch(e) {}
 
-  // Buat satu history state supaya popstate tersedia, lalu tangani popstate
   try {
-    history.replaceState({}, '', window.location.href); // normalisasi
-    history.pushState({}, '', window.location.href);    // push satu state
+    history.replaceState({}, '', window.location.href);
+    history.pushState({}, '', window.location.href);
   } catch(e) {}
 
-  // Saat user tekan Back (popstate), langsung redirect ke home
   window.addEventListener('popstate', function (e) {
-    // ganti URL ke home langsung
     window.location.href = "{{ route('home') }}";
   });
 
-  // juga override any link/button yang mungkin mencoba ke /soal
   document.querySelectorAll('a[href*="/soal"]').forEach(function(a){
     a.addEventListener('click', function(e){
       e.preventDefault();
@@ -260,7 +228,6 @@ document.addEventListener('DOMContentLoaded', function () {
     } catch(e){}
   });
   try { sessionStorage.removeItem('jawabanSementara'); } catch(e){}
-  // Pastikan back dari halaman hasil mengarah ke home, bukan kembali ke /soal/simpan
   try {
     history.replaceState({}, '', window.location.href);
     history.pushState({}, '', window.location.href);

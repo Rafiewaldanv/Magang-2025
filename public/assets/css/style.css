@@ -1,6 +1,5 @@
 .option.active {
   background-color: rgb(247, 160, 79);
-
 }
 .bg-theme-1 {
   background-color: #ff8400 !important;
@@ -11,9 +10,7 @@
 .bg-header {
   background-color: #ff8400 !important;
 }
-
- /* Kotak navigasi soal */
- .nav-soal {
+.nav-soal {
   width: 45px;
   height: 30px;
   border-radius: 2px;
@@ -25,43 +22,32 @@
   border: 2px solid #ccc;
   transition: all 0.2s ease-in-out;
 }
-
-/* Soal aktif */
 .nav-soal.active {
   background-color: #198754;
   color: white;
   border-color: #6c757d;
 }
-
-/* Sudah dijawab */
 .nav-soal.answered {
   background-color: rgb(247, 160, 79);
   color: white;
   border-color: #6c757d;
 }
-
-/* Belum dijawab */
 .nav-soal.unanswered {
   background-color: #ffffff;
   color: #6c757d;
   border-color: #6c757d;
 }
-
-/* Hover effect */
 .nav-soal:hover {
   transform: scale(1.1);
 }
-/* Grid untuk opsi: isi baris dahulu (kekanan), lalu turun baris (responsive, fleksibel) */
 .options-grid {
   display: grid;
-  grid-auto-flow: row; /* isi ke kanan dulu, lalu ke baris berikutnya */
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /* fleksibel, tetap multi-kolom sampai min 140px */
+  grid-auto-flow: row;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   padding: 0;
   margin: 0;
 }
-
-/* Styling per item (tetap seperti list-group-item) */
 .options-grid .option-item {
   display: flex;
   align-items: center;
@@ -74,29 +60,21 @@
   transition: transform .08s ease, box-shadow .08s ease;
   min-height: 56px;
 }
-
-/* Hover / focus */
 .options-grid .option-item:hover,
 .options-grid .option-item:focus-within {
   transform: translateY(-2px);
   box-shadow: 0 6px 18px rgba(13,110,253,0.06);
 }
-
-/* Input styling (radio/checkbox) */
 .options-grid .form-check-input {
   flex: 0 0 auto;
   margin: 0;
 }
-
-/* text content */
 .options-grid .option-text {
   display: block;
   flex: 1 1 auto;
   white-space: normal;
   word-break: break-word;
 }
-
-/* images inside options — ukuran responsif */
 .options-grid .q-img {
   width: 84px;
   height: 84px;
@@ -105,18 +83,13 @@
   margin: 0;
   flex: 0 0 auto;
 }
-
-/* di layar sangat kecil, perkecil gambar agar muat */
 @media (max-width: 420px) {
   .options-grid .q-img { width: 60px; height: 60px; }
 }
-
-/* aksesibilitas: highlight saat keyboard fokus pada label */
 .options-grid .option-item:focus {
   outline: 3px solid rgba(13,110,253,0.12);
   outline-offset: 2px;
 }
-
 .dropside-btn {
   position: fixed;
   left: 12px;
@@ -127,21 +100,18 @@
   border-radius: 50%;
   background: #0d6efd;
   color: #fff;
-  display: none; /* visible only on mobile via media query */
+  display: none;
   align-items: center;
   justify-content: center;
   box-shadow: 0 6px 18px rgba(13,110,253,0.14);
   cursor: pointer;
   border: none;
 }
-
 .dropside-btn .icon { font-size: 20px; line-height: 1; }
-
-/* Panel that drops above the button */
 .dropside-panel {
   position: fixed;
   left: 12px;
-  bottom: 72px; /* above the button */
+  bottom: 72px;
   z-index: 1090;
   width: calc(100% - 36px);
   max-width: 420px;
@@ -153,8 +123,6 @@
   padding: 10px;
   display: none;
 }
-
-/* grid inside panel (compact buttons) */
 .dropside-panel .nav-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
@@ -162,31 +130,18 @@
   align-items: center;
   justify-items: center;
 }
-
-/* re-use .nav-soal classes inside panel (no extra rules needed) */
-
-/* show button on small screens only, and hide desktop grid nav on mobile */
 @media (max-width: 767.98px) {
   .dropside-btn { display: flex; }
-  /* hide desktop grid navigation on mobile (so only dropside is visible) */
   #soal-container { display: none !important; }
-  /* avoid overlap with floating button */
-  #soal-container + #mobile-nav-placeholder { display: block; } /* placeholder remains available */
-  /* provide extra bottom space so card content not overlapped if needed */
+  #soal-container + #mobile-nav-placeholder { display: block; }
   .card.soal { margin-bottom: 96px; }
 }
-
-/* ensure desktop shows soal-container normally */
 @media (min-width: 768px) {
   .dropside-btn { display: none !important; }
   .dropside-panel { display: none !important; }
   #soal-container { display: block !important; }
 }
-/* Packet name banner (orange) */
-/* Inline packet badge (kecil, di kiri timer) */
 .packet-left { display:flex; align-items:center; }
-
-/* Inline packet badge (kiri timer) - desktop */
 .packet-badge-inline{
   background: linear-gradient(90deg, #ff7a18 0%, #ffb347 100%);
   color: #fff;
@@ -200,15 +155,12 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-/* Badge khusus mobile (bisa sedikit lebih kecil) */
-/* Mobile badge: full width inside its container (card-body) */
 .packet-badge-inline-mobile {
-  display: block;          /* jadi block element */
-  width: 100%;             /* penuh sesuai parent (.card-body) */
-  box-sizing: border-box;  /* padding dihitung dalam 100% */
-  padding: 10px 12px;      /* ruang di dalam */
-  border-radius: 10px;     /* sudut rounded (ubah sesuai selera) */
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
   background: linear-gradient(90deg, #ff7a18 0%, #ffb347 100%);
   color: #fff;
   font-weight: 700;
@@ -219,8 +171,6 @@
   white-space: nowrap;
   text-align: center;
 }
-
-/* sedikit penyesuaian untuk layar sangat kecil */
 @media (max-width: 360px) {
   .packet-badge-inline-mobile {
     padding: 8px 10px;

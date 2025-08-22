@@ -4,557 +4,435 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Question;
-use App\Models\Option;
 use App\Models\TestTemporary;
 use App\Models\Packet;
 use App\Models\Result;
 use App\Models\Test;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log; 
-use Illuminate\Support\Facades\Storage;
+
 class SoalController extends Controller
 {
-
     public function home()
-{
-    \Log::info('[HOME] start request', [
-        'session_before' => session()->has('packet_id') ? session('packet_id') : null,
-        'session_all_keys' => array_keys(session()->all()),
-        'user_id' => auth()->check() ? auth()->id() : null,
-    ]);
+    {
+        $packets = Packet::all();
+        $ongoingTest = null;
 
-    $packets = Packet::all();
-    $ongoingTest = null;
-
-    // cek session dulu — jika ada, tampilkan ongoing
-    $packetId = session('packet_id');
-    if (!empty($packetId)) {
-        // lookup nama paket dari koleksi $packets dulu (lebih efisien)
-        $packetName = null;
-        if (!empty($packets)) {
-            $found = $packets->firstWhere('id', $packetId);
-            if ($found) {
-                $packetName = $found->name ?? null;
-            }
-        }
-
-        // fallback ke DB lookup jika koleksi tidak mengandung id (safety)
-        if (empty($packetName)) {
-            try {
-                $pkt = Packet::find($packetId);
-                if ($pkt) $packetName = $pkt->name ?? null;
-            } catch (\Throwable $e) {
-                \Log::warning('[HOME] packet DB lookup failed', ['packet_id' => $packetId, 'err' => $e->getMessage()]);
-            }
-        }
-
-        // final fallback text
-        if (empty($packetName)) $packetName = 'Paket Tes';
-
-        $ongoingTest = [
-            'packet_id'   => $packetId,
-            'packet_name' => $packetName,
-        ];
-
-        \Log::info('[HOME] detected packet_id in session -> show ongoing modal', ['packet_id' => $packetId, 'packet_name' => $packetName]);
-    } else {
-        // fallback: kalau mau, cek TestTemporary untuk user login
-        if (auth()->check()) {
-            $userId = auth()->id();
-            $latestTemp = TestTemporary::where('user_id', $userId)->orderBy('created_at','desc')->first();
-            if ($latestTemp && $latestTemp->packet_id) {
-                session(['packet_id' => $latestTemp->packet_id]);
-
-                // ambil nama paket dengan cara yang sama
-                $packetName = null;
-                if (!empty($packets)) {
-                    $found = $packets->firstWhere('id', $latestTemp->packet_id);
-                    if ($found) $packetName = $found->name ?? null;
+        $packetId = session('packet_id');
+        if (!empty($packetId)) {
+            $packetName = null;
+            if (!empty($packets)) {
+                $found = $packets->firstWhere('id', $packetId);
+                if ($found) {
+                    $packetName = $found->name ?? null;
                 }
-                if (empty($packetName)) {
-                    try {
-                        $pkt = Packet::find($latestTemp->packet_id);
-                        if ($pkt) $packetName = $pkt->name ?? null;
-                    } catch (\Throwable $e) {
-                        \Log::warning('[HOME] packet DB lookup failed in fallback', ['packet_id' => $latestTemp->packet_id, 'err' => $e->getMessage()]);
+            }
+
+            if (empty($packetName)) {
+                try {
+                    $pkt = Packet::find($packetId);
+                    if ($pkt) $packetName = $pkt->name ?? null;
+                } catch (\Throwable $e) {
+                }
+            }
+
+            if (empty($packetName)) $packetName = 'Paket Tes';
+
+            $ongoingTest = [
+                'packet_id'   => $packetId,
+                'packet_name' => $packetName,
+            ];
+        } else {
+            if (auth()->check()) {
+                $userId = auth()->id();
+                $latestTemp = TestTemporary::where('user_id', $userId)->orderBy('created_at','desc')->first();
+                if ($latestTemp && $latestTemp->packet_id) {
+                    session(['packet_id' => $latestTemp->packet_id]);
+
+                    $packetName = null;
+                    if (!empty($packets)) {
+                        $found = $packets->firstWhere('id', $latestTemp->packet_id);
+                        if ($found) $packetName = $found->name ?? null;
                     }
+                    if (empty($packetName)) {
+                        try {
+                            $pkt = Packet::find($latestTemp->packet_id);
+                            if ($pkt) $packetName = $pkt->name ?? null;
+                        } catch (\Throwable $e) {
+                        }
+                    }
+                    if (empty($packetName)) $packetName = 'Paket Tes';
+
+                    $ongoingTest = [
+                        'packet_id'   => $latestTemp->packet_id,
+                        'packet_name' => $packetName,
+                    ];
                 }
-                if (empty($packetName)) $packetName = 'Paket Tes';
-
-                $ongoingTest = [
-                    'packet_id'   => $latestTemp->packet_id,
-                    'packet_name' => $packetName,
-                ];
-
-                \Log::info('[HOME] fallback set session packet_id from TestTemporary', ['packet_id' => $latestTemp->packet_id, 'packet_name' => $packetName]);
             }
         }
+
+        return view('home', compact('packets', 'ongoingTest'));
     }
 
-    \Log::info('[HOME] result', ['packetId' => $packetId, 'ongoingTest' => $ongoingTest]);
-    return view('home', compact('packets', 'ongoingTest'));
-}
-
-
-public function SoalAdaptifAnalogi()
-{
-    $path = public_path('assets/soal/soal_adaptif_analogi.json');
-
-    if (!file_exists($path)) return 'File tidak ditemukan.';
-
-    $json = file_get_contents($path);
-    $data = json_decode($json, true);
-
-    if (!isset($data['soal']) || !is_array($data['soal'])) {
-        return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
+    public function SoalAdaptifAnalogi()
+    {
+        $path = public_path('assets/soal/soal_adaptif_analogi.json');
+        if (!file_exists($path)) return 'File tidak ditemukan.';
+        $json = file_get_contents($path);
+        $data = json_decode($json, true);
+        if (!isset($data['soal']) || !is_array($data['soal'])) {
+            return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
+        }
+        $packetId = 1;
+        foreach ($data['soal'] as $index => $soal) {
+            $deskripsiLengkap = [
+                'soal' => $soal,
+                'option_a' => $data['option_a'][$index] ?? null,
+                'option_b' => $data['option_b'][$index] ?? null,
+                'option_c' => $data['option_c'][$index] ?? null,
+                'option_d' => $data['option_d'][$index] ?? null,
+                'option_e' => $data['option_e'][$index] ?? null,
+            ];
+            Question::create([
+                'packet_id'   => $packetId,
+                'number'      => $index + 1,
+                'description' => json_encode($deskripsiLengkap),
+                'is_example'  => 0,
+            ]);
+        }
+        return "Import selesai!";
     }
 
-    $packetId = 1; // Sesuaikan jika perlu
-
-  foreach ($data['soal'] as $index => $soal) {
-    $deskripsiLengkap = [
-        'soal' => $soal,
-        'option_a' => $data['option_a'][$index] ?? null,
-        'option_b' => $data['option_b'][$index] ?? null,
-        'option_c' => $data['option_c'][$index] ?? null,
-        'option_d' => $data['option_d'][$index] ?? null,
-        'option_e' => $data['option_e'][$index] ?? null,
-    ];
-
-    Question::create([
-        'packet_id'   => $packetId,
-        'number'      => $index + 1,
-        'description' => json_encode($deskripsiLengkap),
-        'is_example'  => 0,
-    ]);
-}
-    return "Import selesai!";
-
-}
-public function SoalAdaptifPenalaran()
-{
-    $path = public_path('assets/soal/soal_adaptif_penalaran.json');
-
-    if (!file_exists($path)) return 'File tidak ditemukan.';
-
-    $json = file_get_contents($path);
-    $data = json_decode($json, true);
-
-    if (!isset($data['soal']) || !is_array($data['soal'])) {
-        return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
+    public function SoalAdaptifPenalaran()
+    {
+        $path = public_path('assets/soal/soal_adaptif_penalaran.json');
+        if (!file_exists($path)) return 'File tidak ditemukan.';
+        $json = file_get_contents($path);
+        $data = json_decode($json, true);
+        if (!isset($data['soal']) || !is_array($data['soal'])) {
+            return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
+        }
+        $packetId = 2;
+        foreach ($data['soal'] as $index => $soal) {
+            $deskripsiLengkap = [
+                'soal' => $soal,
+                'option_a' => $data['option_a'][$index] ?? null,
+                'option_b' => $data['option_b'][$index] ?? null,
+                'option_c' => $data['option_c'][$index] ?? null,
+                'option_d' => $data['option_d'][$index] ?? null,
+                'option_e' => $data['option_e'][$index] ?? null,
+            ];
+            Question::create([
+                'packet_id'   => $packetId,
+                'number'      => $index + 1,
+                'description' => json_encode($deskripsiLengkap),
+                'is_example'  => 0,
+            ]);
+        }
+        return "Import selesai!";
     }
 
-    $packetId = 2; // Sesuaikan jika perlu
-
-  foreach ($data['soal'] as $index => $soal) {
-    $deskripsiLengkap = [
-        'soal' => $soal,
-        'option_a' => $data['option_a'][$index] ?? null,
-        'option_b' => $data['option_b'][$index] ?? null,
-        'option_c' => $data['option_c'][$index] ?? null,
-        'option_d' => $data['option_d'][$index] ?? null,
-        'option_e' => $data['option_e'][$index] ?? null,
-    ];
-
-    Question::create([
-        'packet_id'   => $packetId,
-        'number'      => $index + 1,
-        'description' => json_encode($deskripsiLengkap),
-        'is_example'  => 0,
-    ]);
-}
-    return "Import selesai!";
-
-}
-
-public function SoalAdaptifSpasial3D()
-{
-    $path = public_path('assets/soal/soal_adaptif_spasial_3d.json');
-
-    if (!file_exists($path)) return 'File tidak ditemukan.';
-
-    $json = file_get_contents($path);
-    $data = json_decode($json, true);
-
-    if (!isset($data['soal']) || !is_array($data['soal'])) {
-        return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
+    public function SoalAdaptifSpasial3D()
+    {
+        $path = public_path('assets/soal/soal_adaptif_spasial_3d.json');
+        if (!file_exists($path)) return 'File tidak ditemukan.';
+        $json = file_get_contents($path);
+        $data = json_decode($json, true);
+        if (!isset($data['soal']) || !is_array($data['soal'])) {
+            return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
+        }
+        $packetId = 3;
+        foreach ($data['soal'] as $index => $soal) {
+            $deskripsiLengkap = [
+                'soal' => $soal,
+                'option_a' => $data['option_a'][$index] ?? null,
+                'option_b' => $data['option_b'][$index] ?? null,
+                'option_c' => $data['option_c'][$index] ?? null,
+                'option_d' => $data['option_d'][$index] ?? null,
+                'option_e' => $data['option_e'][$index] ?? null,
+            ];
+            Question::create([
+                'packet_id'   => $packetId,
+                'number'      => $index + 1,
+                'description' => json_encode($deskripsiLengkap),
+                'is_example'  => 0,
+            ]);
+        }
+        return "Import selesai!";
     }
 
-    $packetId = 3; // Ganti sesuai kebutuhan
+    public function SoalAdaptifSpasial()
+    {
+        $path = public_path('assets/soal/soal_adaptif_spasial.json');
+        if (!file_exists($path)) return 'File tidak ditemukan.';
+        $json = file_get_contents($path);
+        $data = json_decode($json, true);
+        if (!isset($data['soal']) || !is_array($data['soal'])) {
+            return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
+        }
+        $packetId = 4;
+        foreach ($data['soal'] as $index => $soal) {
+            $deskripsiLengkap = [
+                'soal' => $soal,
+                'option_a' => $data['option_a'][$index] ?? null,
+                'option_b' => $data['option_b'][$index] ?? null,
+                'option_c' => $data['option_c'][$index] ?? null,
+                'option_d' => $data['option_d'][$index] ?? null,
+                'option_e' => $data['option_e'][$index] ?? null,
+            ];
+            Question::create([
+                'packet_id'   => $packetId,
+                'number'      => $index + 1,
+                'description' => json_encode($deskripsiLengkap),
+                'is_example'  => 0,
+            ]);
+        }
+        return "Import selesai!";
+    }
 
-    foreach ($data['soal'] as $index => $soal) {
-        $deskripsiLengkap = [
-            'soal' => $soal,
-            'option_a' => $data['option_a'][$index] ?? null,
-            'option_b' => $data['option_b'][$index] ?? null,
-            'option_c' => $data['option_c'][$index] ?? null,
-            'option_d' => $data['option_d'][$index] ?? null,
-            'option_e' => $data['option_e'][$index] ?? null,
-        ];
+    public function SoalAkurasi()
+    {
+        $path = public_path('assets/soal/soal_akurasi.json');
+        if (!file_exists($path)) return 'File tidak ditemukan.';
+        $json = file_get_contents($path);
+        $data = json_decode($json, true);
+        if (!isset($data['soal']) || !is_array($data['soal'])) {
+            return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
+        }
+        $packetId = 5;
+        foreach ($data['soal'] as $index => $soal) {
+            $deskripsiLengkap = [
+                'soal'     => $data['soal'][$index] ?? null,
+                'option_a' => $data['option_a'][$index] ?? null,
+                'option_b' => $data['option_b'][$index] ?? null,
+                'option_c' => $data['option_c'][$index] ?? null,
+                'option_d' => $data['option_d'][$index] ?? null,
+                'option_e' => $data['option_e'][$index] ?? null,
+            ];
+            Question::create([
+                'packet_id'   => $packetId,
+                'number'      => $index + 1,
+                'description' => json_encode($deskripsiLengkap),
+                'is_example'  => 0,
+            ]);
+        }
+        return "Import selesai!";
+    }
 
-        Question::create([
-            'packet_id'   => $packetId,
-            'number'      => $index + 1,
-            'description' => json_encode($deskripsiLengkap),
-            'is_example'  => 0,
+    public function SoalPenalaran()
+    {
+        $path = public_path('assets/soal/soal_penalaran.json');
+        if (!file_exists($path)) return 'File tidak ditemukan.';
+        $json = file_get_contents($path);
+        $data = json_decode($json, true);
+        if (!isset($data['soal']) || !is_array($data['soal'])) {
+            return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
+        }
+        $packetId = 6;
+        foreach ($data['soal'] as $index => $soal) {
+            $deskripsiLengkap = [
+                'soal' => $soal,
+                'option_a' => $data['option_a'][$index] ?? null,
+                'option_b' => $data['option_b'][$index] ?? null,
+                'option_c' => $data['option_c'][$index] ?? null,
+                'option_d' => $data['option_d'][$index] ?? null,
+                'option_e' => $data['option_e'][$index] ?? null,
+                'option_f' => $data['option_f'][$index] ?? null,
+            ];
+            Question::create([
+                'packet_id'   => $packetId,
+                'number'      => $index + 1,
+                'description' => json_encode($deskripsiLengkap),
+                'is_example'  => 0,
+            ]);
+        }
+        return "Import selesai!";
+    }
+
+    public function SoalHollandRiasec()
+    {
+        $path = public_path('assets/soal/soal_holland_riasec.json');
+        if (!file_exists($path)) return 'File tidak ditemukan.';
+        $json = file_get_contents($path);
+        $data = json_decode($json, true);
+        if (!isset($data['soal']) || !is_array($data['soal'])) {
+            return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
+        }
+        $packetId = 8;
+        foreach ($data['soal'] as $index => $soal) {
+            $deskripsiLengkap = [
+                'soal' => $soal,
+                'option_a' => $data['option_a'][$index] ?? null,
+                'option_b' => $data['option_b'][$index] ?? null,
+                'option_c' => $data['option_c'][$index] ?? null,
+            ];
+            Question::create([
+                'packet_id'   => $packetId,
+                'number'      => $index + 1,
+                'description' => json_encode($deskripsiLengkap),
+                'is_example'  => 0,
+            ]);
+        }
+        return "Import selesai!";
+    }
+
+    public function SoalSpasial()
+    {
+        $path = public_path('assets/soal/soal_spasial.json');
+        if (!file_exists($path)) return 'File tidak ditemukan.';
+        $json = file_get_contents($path);
+        $data = json_decode($json, true);
+        if (!isset($data['soal']) || !is_array($data['soal'])) {
+            return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
+        }
+        $packetId = 7;
+        foreach ($data['soal'] as $index => $soal) {
+            $deskripsiLengkap = [
+                'soal' => $soal,
+                'option_a' => $data['option_a'][$index] ?? null,
+                'option_b' => $data['option_b'][$index] ?? null,
+                'option_c' => $data['option_c'][$index] ?? null,
+                'option_d' => $data['option_d'][$index] ?? null,
+                'option_e' => $data['option_e'][$index] ?? null,
+                'option_f' => $data['option_f'][$index] ?? null,
+            ];
+            Question::create([
+                'packet_id'   => $packetId,
+                'number'      => $index + 1,
+                'description' => json_encode($deskripsiLengkap),
+                'is_example'  => 0,
+            ]);
+        }
+        return "Import selesai!";
+    }
+
+    public function SoalSpasial3D()
+    {
+        $path = public_path('assets/soal/soal_spasial_3d.json');
+        if (!file_exists($path)) return 'File tidak ditemukan.';
+        $json = file_get_contents($path);
+        $data = json_decode($json, true);
+        if (!isset($data['soal']) || !is_array($data['soal'])) {
+            return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
+        }
+        $packetId = 9;
+        foreach ($data['soal'] as $index => $soal) {
+            $deskripsiLengkap = [
+                'soal' => $soal,
+                'option_a' => $data['option_a'][$index] ?? null,
+                'option_b' => $data['option_b'][$index] ?? null,
+                'option_c' => $data['option_c'][$index] ?? null,
+                'option_d' => $data['option_d'][$index] ?? null,
+                'option_e' => $data['option_e'][$index] ?? null,
+            ];
+            Question::create([
+                'packet_id'   => $packetId,
+                'number'      => $index + 1,
+                'description' => json_encode($deskripsiLengkap),
+                'is_example'  => 0,
+            ]);
+        }
+        return "Import selesai!";
+    }
+
+    public function SoalToeic()
+    {
+        $path = public_path('assets/soal/soal_toeic.json');
+        if (!file_exists($path)) return 'File tidak ditemukan.';
+        $json = file_get_contents($path);
+        $data = json_decode($json, true);
+        if (!isset($data['soal']) || !is_array($data['soal'])) {
+            return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
+        }
+        $packetId = 10;
+        foreach ($data['soal'] as $index => $soal) {
+            $deskripsiLengkap = [
+                'soal' => $soal,
+                'option_a' => $data['option_a'][$index] ?? null,
+                'option_b' => $data['option_b'][$index] ?? null,
+                'option_c' => $data['option_c'][$index] ?? null,
+                'option_d' => $data['option_d'][$index] ?? null,
+            ];
+            Question::create([
+                'packet_id'   => $packetId,
+                'number'      => $index + 1,
+                'description' => json_encode($deskripsiLengkap),
+                'is_example'  => 0,
+            ]);
+        }
+        return "Import selesai!";
+    }
+
+    public function prepareTes(Request $request)
+    {
+        $packetId = $request->input('packet_id');
+        $packet = Packet::find($packetId);
+        if (!$packet) {
+            return redirect()->route('home')
+                             ->with('error', 'Paket tes tidak valid.');
+        }
+        session(['selected_packet_id' => $packetId]);
+        return redirect()->route('soal.index', ['packetId' => $packetId]);
+    }
+
+    public function soalStart(Request $request)
+    {
+        $request->validate([
+            'packet_id' => 'required|exists:packets,id'
         ]);
+        session(['packet_id' => $request->packet_id]);
+        session(['test_started_at' => now()->toDateTimeString()]);
+        return redirect()->route('soal.index');
     }
 
-    return "Import selesai!";
-}
-public function SoalAdaptifSpasial()
-{
-    $path = public_path('assets/soal/soal_adaptif_spasial.json');
-
-    if (!file_exists($path)) return 'File tidak ditemukan.';
-
-    $json = file_get_contents($path);
-    $data = json_decode($json, true);
-
-    if (!isset($data['soal']) || !is_array($data['soal'])) {
-        return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
-    }
-
-    $packetId = 4; // Ganti sesuai kebutuhan
-
-    foreach ($data['soal'] as $index => $soal) {
-        $deskripsiLengkap = [
-            'soal' => $soal,
-            'option_a' => $data['option_a'][$index] ?? null,
-            'option_b' => $data['option_b'][$index] ?? null,
-            'option_c' => $data['option_c'][$index] ?? null,
-            'option_d' => $data['option_d'][$index] ?? null,
-            'option_e' => $data['option_e'][$index] ?? null,
-        ];
-
-        Question::create([
-            'packet_id'   => $packetId,
-            'number'      => $index + 1,
-            'description' => json_encode($deskripsiLengkap),
-            'is_example'  => 0,
-        ]);
-    }
-
-    return "Import selesai!";
-}
-public function SoalAkurasi()
-{
-    $path = public_path('assets/soal/soal_akurasi.json');
-
-    if (!file_exists($path)) return 'File tidak ditemukan.';
-
-    $json = file_get_contents($path);
-    $data = json_decode($json, true);
-
-    if (!isset($data['soal']) || !is_array($data['soal'])) {
-        return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
-    }
-
-    $packetId = 5; // Ganti sesuai kebutuhan
-
-    foreach ($data['soal'] as $index => $soal) {
-        $deskripsiLengkap = [
-            'soal'     => $data['soal'][$index] ?? null,
-            'option_a' => $data['option_a'][$index] ?? null,
-            'option_b' => $data['option_b'][$index] ?? null,
-            'option_c' => $data['option_c'][$index] ?? null,
-            'option_d' => $data['option_d'][$index] ?? null,
-            'option_e' => $data['option_e'][$index] ?? null,
-        ];
-
-        Question::create([
-            'packet_id'   => $packetId,
-            'number'      => $index + 1,
-            'description' => json_encode($deskripsiLengkap),
-            'is_example'  => 0,
-        ]);
-    }
-
-    return "Import selesai!";
-}
-
-public function SoalPenalaran()
-{
-    $path = public_path('assets/soal/soal_penalaran.json');
-
-    if (!file_exists($path)) return 'File tidak ditemukan.';
-
-    $json = file_get_contents($path);
-    $data = json_decode($json, true);
-
-    if (!isset($data['soal']) || !is_array($data['soal'])) {
-        return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
-    }
-
-    $packetId = 6; // Ganti sesuai kebutuhan
-
-    foreach ($data['soal'] as $index => $soal) {
-        $deskripsiLengkap = [
-            'soal' => $soal,
-            'option_a' => $data['option_a'][$index] ?? null,
-            'option_b' => $data['option_b'][$index] ?? null,
-            'option_c' => $data['option_c'][$index] ?? null,
-            'option_d' => $data['option_d'][$index] ?? null,
-            'option_e' => $data['option_e'][$index] ?? null,
-            'option_f' => $data['option_f'][$index] ?? null,
-        ];
-
-        Question::create([
-            'packet_id'   => $packetId,
-            'number'      => $index + 1,
-            'description' => json_encode($deskripsiLengkap),
-            'is_example'  => 0,
-        ]);
-    }
-
-    return "Import selesai!";
-}
-public function SoalHollandRiasec()
-{
-    $path = public_path('assets/soal/soal_holland_riasec.json');
-
-    if (!file_exists($path)) return 'File tidak ditemukan.';
-
-    $json = file_get_contents($path);
-    $data = json_decode($json, true);
-
-    if (!isset($data['soal']) || !is_array($data['soal'])) {
-        return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
-    }
-
-    $packetId = 8; // Ganti sesuai kebutuhan
-
-    foreach ($data['soal'] as $index => $soal) {
-        $deskripsiLengkap = [
-            'soal' => $soal,
-            'option_a' => $data['option_a'][$index] ?? null,
-            'option_b' => $data['option_b'][$index] ?? null,
-            'option_c' => $data['option_c'][$index] ?? null,
-        ];
-
-        Question::create([
-            'packet_id'   => $packetId,
-            'number'      => $index + 1,
-            'description' => json_encode($deskripsiLengkap),
-            'is_example'  => 0,
-        ]);
-    }
-
-    return "Import selesai!";
-}
-public function SoalSpasial()
-{
-    $path = public_path('assets/soal/soal_spasial.json');
-
-    if (!file_exists($path)) return 'File tidak ditemukan.';
-
-    $json = file_get_contents($path);
-    $data = json_decode($json, true);
-
-    if (!isset($data['soal']) || !is_array($data['soal'])) {
-        return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
-    }
-
-    $packetId = 7; // Ganti sesuai kebutuhan
-
-    foreach ($data['soal'] as $index => $soal) {
-        $deskripsiLengkap = [
-            'soal' => $soal,
-            'option_a' => $data['option_a'][$index] ?? null,
-            'option_b' => $data['option_b'][$index] ?? null,
-            'option_c' => $data['option_c'][$index] ?? null,
-            'option_d' => $data['option_d'][$index] ?? null,
-            'option_e' => $data['option_e'][$index] ?? null,
-            'option_f' => $data['option_f'][$index] ?? null,
-        ];
-
-        Question::create([
-            'packet_id'   => $packetId,
-            'number'      => $index + 1,
-            'description' => json_encode($deskripsiLengkap),
-            'is_example'  => 0,
-        ]);
-    }
-
-    return "Import selesai!";
-}
-public function SoalSpasial3D()
-{
-    $path = public_path('assets/soal/soal_spasial_3d.json');
-
-    if (!file_exists($path)) return 'File tidak ditemukan.';
-
-    $json = file_get_contents($path);
-    $data = json_decode($json, true);
-
-    if (!isset($data['soal']) || !is_array($data['soal'])) {
-        return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
-    }
-
-    $packetId = 9; // Ganti sesuai kebutuhan
-
-    foreach ($data['soal'] as $index => $soal) {
-        $deskripsiLengkap = [
-            'soal' => $soal,
-            'option_a' => $data['option_a'][$index] ?? null,
-            'option_b' => $data['option_b'][$index] ?? null,
-            'option_c' => $data['option_c'][$index] ?? null,
-            'option_d' => $data['option_d'][$index] ?? null,
-            'option_e' => $data['option_e'][$index] ?? null,
-        ];
-
-        Question::create([
-            'packet_id'   => $packetId,
-            'number'      => $index + 1,
-            'description' => json_encode($deskripsiLengkap),
-            'is_example'  => 0,
-        ]);
-    }
-
-    return "Import selesai!";
-}
-public function SoalToeic()
-{
-    $path = public_path('assets/soal/soal_toeic.json');
-
-    if (!file_exists($path)) return 'File tidak ditemukan.';
-
-    $json = file_get_contents($path);
-    $data = json_decode($json, true);
-
-    if (!isset($data['soal']) || !is_array($data['soal'])) {
-        return 'Format JSON salah. Key "soal" tidak ditemukan atau bukan array.';
-    }
-
-    $packetId = 10; // Ganti sesuai kebutuhan
-
-    foreach ($data['soal'] as $index => $soal) {
-        $deskripsiLengkap = [
-            'soal' => $soal,
-            'option_a' => $data['option_a'][$index] ?? null,
-            'option_b' => $data['option_b'][$index] ?? null,
-            'option_c' => $data['option_c'][$index] ?? null,
-            'option_d' => $data['option_d'][$index] ?? null,
-        ];
-
-        Question::create([
-            'packet_id'   => $packetId,
-            'number'      => $index + 1,
-            'description' => json_encode($deskripsiLengkap),
-            'is_example'  => 0,
-            
-        ]);
-    }
-
-    return "Import selesai!";
-}
-public function prepareTes(Request $request)
-{
-    $packetId = $request->input('packet_id');
-
-    // validasi packet_id
-    $packet = Packet::find($packetId);
-    if (!$packet) {
-        return redirect()->route('home')
-                         ->with('error', 'Paket tes tidak valid.');
-    }
-
-    // simpan session sekali pakai
-    session(['selected_packet_id' => $packetId]);
-
-    // redirect ke mulaiTes
-    return redirect()->route('soal.index', ['packetId' => $packetId]);
-}
-public function soalStart(Request $request)
-{
-    $request->validate([
-        'packet_id' => 'required|exists:packets,id'
-    ]);
-
-    session(['packet_id' => $request->packet_id]);
-    session(['test_started_at' => now()->toDateTimeString()]);
-
-    \Log::info('[soalStart] set session packet_id', [
-        'packet_id' => $request->packet_id,
-        'session_keys' => array_keys(session()->all()),
-        'user' => auth()->check() ? auth()->id() : null
-    ]);
-
-    return redirect()->route('soal.index');
-}
-
-
-
-    // Step 2: tampilkan soal
     public function mulaiTes()
-{
-    // 🔹 Ambil packet_id dari session
-    $packetId = session('packet_id');
-
-    // Kalau nggak ada, redirect balik
-    if (!$packetId) {
-        return redirect()->route('home')->with('error', 'Silakan pilih paket tes dulu.');
+    {
+        $packetId = session('packet_id');
+        if (!$packetId) {
+            return redirect()->route('home')->with('error', 'Silakan pilih paket tes dulu.');
+        }
+        $packet = Packet::find($packetId);
+        if (!$packet) {
+            return view('soal.error', ['message' => 'Paket tidak ditemukan.']);
+        }
+        $test = Test::find($packet->test_id);
+        if (!$test) {
+            return view('soal.error', ['message' => 'Tes tidak ditemukan.']);
+        }
+        $soal = Question::where('packet_id', $packet->id)->get();
+        $jumlah_soal = $soal->count();
+        return view('soal.index', [
+            'test_id'     => $test->id,
+            'soal'        => $soal,
+            'selection'   => null,
+            'path'        => $test->code,
+            'packet_id'   => $packet->id,
+            'packet'      => $packet,
+            'test'        => $test,
+            'jumlah_soal' => $jumlah_soal,
+            'part'        => $packet->part
+        ]);
     }
 
-    // 🔹 Cari packet
-    $packet = Packet::find($packetId);
-    if (!$packet) {
-        return view('soal.error', ['message' => 'Paket tidak ditemukan.']);
-    }
-
-    // 🔹 Cari test yang sesuai
-    $test = Test::find($packet->test_id);
-    if (!$test) {
-        return view('soal.error', ['message' => 'Tes tidak ditemukan.']);
-    }
-
-    // 🔹 Ambil semua soal dari packet
-    $soal = Question::where('packet_id', $packet->id)->get();
-    $jumlah_soal = $soal->count();
-
-    // 🔹 Render view
-    return view('soal.index', [
-        'test_id'     => $test->id,
-        'soal'        => $soal,
-        'selection'   => null,
-        'path'        => $test->code,
-        'packet_id'   => $packet->id,
-        'packet'      => $packet,
-        'test'        => $test,
-        'jumlah_soal' => $jumlah_soal,
-        'part'        => $packet->part
-    ]);
-}
-
-
-
-
-    // API: Ambil satu soal berdasarkan nomor
     public function getSoal($test_id, $packet_id, $number)
     {
-        Log::info('Memuat soal ke-', compact('test_id','packet_id','number'));
-    
         $question = Question::where('packet_id', $packet_id)
             ->where('number', $number)
             ->first();
-    
+
         if (!$question) {
             return response()->json(['error' => 'Soal tidak ditemukan'], 404);
         }
-    
-        // base folder berdasarkan packet id
+
         $baseFolder = "assets/images/{$packet_id}";
-    
-        // decode description
+
         $desc = is_string($question->description) && $this->isJson($question->description)
             ? json_decode($question->description, true)
             : ['soal' => $question->description, 'type' => $question->type];
-    
+
         $looksLikeImage = function($v) {
             return is_string($v) && preg_match('/\.(png|jpe?g|gif)$/i', trim($v));
         };
-    
-        // soal bisa berisi banyak gambar dipisah ":" atau teks
+
         $questionImages = [];
         $questionText = null;
         if (!empty($desc['soal'])) {
@@ -576,8 +454,7 @@ public function soalStart(Request $request)
                 }
             }
         }
-    
-        // opsi dari JSON description (buat URL kalau image)
+
         $options = [];
         foreach (['a','b','c','d','e','f'] as $code) {
             $key = 'option_' . $code;
@@ -597,7 +474,7 @@ public function soalStart(Request $request)
                 ];
             }
         }
-    
+
         return response()->json([
             'number' => $question->number,
             'questionText'  => $questionText,
@@ -605,407 +482,316 @@ public function soalStart(Request $request)
             'questionImages' => $questionImages,
             'multiSelect' => ($desc['type'] ?? $question->type ?? 'radio') === 'checkbox',
             'selection' => null,
-            'path' => (string)$packet_id, // opsional, kalau frontend butuh
+            'path' => (string)$packet_id,
             'options' => $options,
         ]);
     }
-    
 
-/**
- * Cek apakah string adalah JSON valid
- */
-private function isJson($string)
-{
-    json_decode($string);
-    return json_last_error() === JSON_ERROR_NONE;
-}
+    private function isJson($string)
+    {
+        json_decode($string);
+        return json_last_error() === JSON_ERROR_NONE;
+    }
 
-// Ambil hasil tes (result)
     public function getResult($test_id)
-{
-    $userId = Auth::id();
+    {
+        $userId = Auth::id();
 
-    $result = Result::where('user_id', $userId)
-                    ->where('test_id', $test_id)
-                    ->first();
+        $result = Result::where('user_id', $userId)
+                        ->where('test_id', $test_id)
+                        ->first();
 
-    if (!$result) {
-        return response()->json(['error' => 'Belum ada hasil tes.']);
-    }
-
-    return response()->json([
-        'score' => $result->score,
-        'total_correct' => $result->total_correct,
-        'total_wrong' => $result->total_wrong,
-        'total_question' => $result->total_question,
-    ]);
-}
-// Simpan Jawaban
-
-// Method simpanJawaban yang sudah diperbaiki
-public function cancelTest(Request $request)
-{
-    try {
-        $userId = auth()->id();
-
-        // optional: terima packet_id di request untuk hapus temp spesifik
-        $packetId = $request->input('packet_id');
-
-        // hapus session packet_id
-        session()->forget('packet_id');
-
-        // optional: hapus temporary answers server-side (jika mau)
-        if ($packetId && $userId) {
-            TestTemporary::where('user_id', $userId)
-                ->where('packet_id', $packetId)
-                ->delete();
+        if (!$result) {
+            return response()->json(['error' => 'Belum ada hasil tes.']);
         }
 
-        return response()->json(['ok' => true]);
-    } catch (\Throwable $e) {
-        \Log::error('cancelTest error: '.$e->getMessage());
-        return response()->json(['ok' => false, 'error' => 'Gagal membatalkan'], 500);
-    }
-}
-
-// Method simpanJawaban yang sudah diperbaiki
-public function simpanJawaban(Request $request)
-{  
-    // dd($request->all());
-    try {
-        // ✅ Validasi input
-        $request->validate([
-            'test_id' => 'required|integer|exists:tests,id',
-            'packet_id' => 'required|integer|exists:packets,id', 
-            'part' => 'required|integer',
-            'answers' => 'required|array'
+        return response()->json([
+            'score' => $result->score,
+            'total_correct' => $result->total_correct,
+            'total_wrong' => $result->total_wrong,
+            'total_question' => $result->total_question,
         ]);
+    }
 
-        $userId   = 1;
-        $packetId = $request->packet_id;
-        $testId   = $request->test_id;
-        $part     = $request->part;
-        $answers  = $request->input('answers', []);
+    public function cancelTest(Request $request)
+    {
+        try {
+            $userId = auth()->id();
+            $packetId = $request->input('packet_id');
+            session()->forget('packet_id');
 
-        // ✅ Ambil semua soal di packet ini (tanpa test_id dan part yang tidak ada di migration)
-        $questions = Question::where('packet_id', $packetId)->get();
-        
-        if ($questions->isEmpty()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Soal tidak ditemukan untuk packet ini.'
-            ], 404);
-        }
-
-        // ✅ Proses jawaban user
-        $finalAnswers = [];
-        $unanswered = [];
-        
-        foreach ($questions as $question) {
-            $number = $question->number;
-            
-            if (!isset($answers[$number]) || empty($answers[$number])) {
-                $finalAnswers[$number] = null;
-                $unanswered[] = $number;
-            } else {
-                // Pastikan jawaban dalam format array untuk konsistensi
-                $finalAnswers[$number] = is_array($answers[$number]) 
-                    ? $answers[$number] 
-                    : [$answers[$number]];
+            if ($packetId && $userId) {
+                TestTemporary::where('user_id', $userId)
+                    ->where('packet_id', $packetId)
+                    ->delete();
             }
+
+            return response()->json(['ok' => true]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'error' => 'Gagal membatalkan'], 500);
         }
+    }
 
-        // ✅ Cek apakah semua soal sudah dijawab
-        // if (count($unanswered) > 0) {
-        //     return response()->json([
-        //         'status' => 'belum_lengkap',
-        //         'message' => 'Harap mengisi semua soal untuk melakukan submit.',
-        //         'unanswered' => $unanswered
-        //     ], 422);
-        // }
-
-        // ✅ Simpan ke test_temporary (update atau create)
-        TestTemporary::updateOrCreate(
-            [
-                'user_id' => $userId,
-                'test_id' => $testId,
-                'packet_id' => $packetId,
-                'part' => $part,
-            ],
-            [
-                'json' => json_encode($finalAnswers),
-                'result_temp' => null,
-            ]
-        );
-
-        // ✅ Cek apakah ada part selanjutnya
-        $nextPacket = Packet::where('test_id', $testId)
-                            ->where('part', '>', $part)
-                            ->orderBy('part')
-                            ->first();
-
-        if ($nextPacket) {
-            return response()->json([
-                'status' => 'lanjut',
-                'message' => 'Part berhasil disimpan. Lanjut ke part berikutnya.',
-                'next_part' => $nextPacket->part,
-                'next_packet_id' => $nextPacket->id,
+    public function simpanJawaban(Request $request)
+    {
+        try {
+            $request->validate([
+                'test_id' => 'required|integer|exists:tests,id',
+                'packet_id' => 'required|integer|exists:packets,id',
+                'part' => 'required|integer',
+                'answers' => 'required|array'
             ]);
-        }
 
-        // ✅ Tidak ada part lagi, hitung skor final
-        return $this->calculateFinalScore($userId, $testId);
+            $userId   = 1;
+            $packetId = $request->packet_id;
+            $testId   = $request->test_id;
+            $part     = $request->part;
+            $answers  = $request->input('answers', []);
 
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Validation failed',
-            'errors' => $e->errors()
-        ], 422);
-        
-    } catch (\Exception $e) {
-        Log::error('Error in simpanJawaban: ' . $e->getMessage(), [
-            'user_id' => Auth::id(),
-            'test_id' => $request->test_id ?? null,
-            'packet_id' => $request->packet_id ?? null,
-            'trace' => $e->getTraceAsString()
-        ]);
-        
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Terjadi kesalahan server. Silakan coba lagi.',
-            'debug' => config('app.debug') ? $e->getMessage() : null
-        ], 500);
-    }
-    // ✅ Tandai bahwa user sudah menyelesaikan tes
+            $questions = Question::where('packet_id', $packetId)->get();
 
-
-}
-
-// ✅ Method terpisah untuk menghitung skor final
-// ✅ Method terpisah untuk menghitung skor final
-private function calculateFinalScore($userId, $testId)
-{
-    try {
-        Log::info('calculateFinalScore called', [
-            'user_id' => $userId,
-            'test_id' => $testId
-        ]);
-
-        $temps = TestTemporary::where('user_id', $userId)
-                    ->where('test_id', $testId)
-                    ->orderBy('packet_id')
-                    ->get();
-
-        if ($temps->isEmpty()) {
-            Log::error('No temporary data found', compact('userId','testId'));
-            return redirect()->route('home')->with('error', 'Data jawaban tidak ditemukan.');
-        }
-
-        // Kelompokkan per packet_id
-        $byPacket = $temps->groupBy('packet_id');
-
-        // Buat agregat untuk ditampilkan di view (total semua packet)
-        $grandTotalQuestions = 0;
-        $grandTotalCorrect   = 0;
-
-        // simpan packet ids yang terproses (untuk cleanup client & redirect)
-        $processedPacketIds = [];
-        // simpan nama paket per packet id supaya bisa dikirim ke view setelah session dihapus
-        $processedPacketNames = [];
-
-        foreach ($byPacket as $packetId => $rows) {
-            if (empty($packetId)) {
-                Log::warning('Found temporary row without packet_id', [
-                    'user_id' => $userId,
-                    'test_id' => $testId
-                ]);
-                continue; // lewati yang packet_id nya null
+            if ($questions->isEmpty()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Soal tidak ditemukan untuk packet ini.'
+                ], 404);
             }
 
-            $processedPacketIds[] = $packetId;
+            $finalAnswers = [];
+            $unanswered = [];
 
-            // Ambil nama paket (jika ada) — gunakan model Packet
-            try {
-                $pkt = \App\Models\Packet::find($packetId);
-                $processedPacketNames[$packetId] = $pkt ? $pkt->name : null;
-            } catch (\Throwable $e) {
-                // jika model tidak tersedia atau gagal, set null dan lanjut
-                $processedPacketNames[$packetId] = null;
-            }
-
-            $answers = [];
-            $totalQuestions = 0;
-            $score = 0;
-
-            foreach ($rows as $temp) {
-                $partAnswers = json_decode($temp->json, true) ?: [];
-                foreach ($partAnswers as $number => $userAnswer) {
-                    // simpan jawaban terakhir untuk nomor yang sama
-                    $answers[$number] = $userAnswer;
-                    $totalQuestions++;
-
-                    $correctAnswer = $this->getCorrectAnswer($packetId, $number);
-                    if ($correctAnswer && $this->isAnswerCorrect($userAnswer, $correctAnswer)) {
-                        $score++;
-                    }
+            foreach ($questions as $question) {
+                $number = $question->number;
+                if (!isset($answers[$number]) || empty($answers[$number])) {
+                    $finalAnswers[$number] = null;
+                    $unanswered[] = $number;
+                } else {
+                    $finalAnswers[$number] = is_array($answers[$number])
+                        ? $answers[$number]
+                        : [$answers[$number]];
                 }
             }
 
-            // Simpan hasil (history)
-            Result::create([
-                'user_id' => $userId,
-                'test_id' => $testId,
-                'packet_id' => $packetId,
-                'json' => json_encode([
-                    'answers'        => $answers,
-                    'score'          => $score,
-                    'total_correct'  => $score,
-                    'total_wrong'    => $totalQuestions - $score,
-                    'total_question' => $totalQuestions,
-                ]),
-            ]);
+            TestTemporary::updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'test_id' => $testId,
+                    'packet_id' => $packetId,
+                    'part' => $part,
+                ],
+                [
+                    'json' => json_encode($finalAnswers),
+                    'result_temp' => null,
+                ]
+            );
 
-            $grandTotalQuestions += $totalQuestions;
-            $grandTotalCorrect   += $score;
+            $nextPacket = Packet::where('test_id', $testId)
+                                ->where('part', '>', $part)
+                                ->orderBy('part')
+                                ->first();
+
+            if ($nextPacket) {
+                return response()->json([
+                    'status' => 'lanjut',
+                    'message' => 'Part berhasil disimpan. Lanjut ke part berikutnya.',
+                    'next_part' => $nextPacket->part,
+                    'next_packet_id' => $nextPacket->id,
+                ]);
+            }
+
+            return $this->calculateFinalScore($userId, $testId);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan server. Silakan coba lagi.'
+            ], 500);
+        }
+    }
+
+    private function calculateFinalScore($userId, $testId)
+    {
+        try {
+            $temps = TestTemporary::where('user_id', $userId)
+                        ->where('test_id', $testId)
+                        ->orderBy('packet_id')
+                        ->get();
+
+            if ($temps->isEmpty()) {
+                return redirect()->route('home')->with('error', 'Data jawaban tidak ditemukan.');
+            }
+
+            $byPacket = $temps->groupBy('packet_id');
+
+            $grandTotalQuestions = 0;
+            $grandTotalCorrect   = 0;
+
+            $processedPacketIds = [];
+            $processedPacketNames = [];
+
+            foreach ($byPacket as $packetId => $rows) {
+                if (empty($packetId)) {
+                    continue;
+                }
+
+                $processedPacketIds[] = $packetId;
+
+                try {
+                    $pkt = Packet::find($packetId);
+                    $processedPacketNames[$packetId] = $pkt ? $pkt->name : null;
+                } catch (\Throwable $e) {
+                    $processedPacketNames[$packetId] = null;
+                }
+
+                $answers = [];
+                $totalQuestions = 0;
+                $score = 0;
+
+                foreach ($rows as $temp) {
+                    $partAnswers = json_decode($temp->json, true) ?: [];
+                    foreach ($partAnswers as $number => $userAnswer) {
+                        $answers[$number] = $userAnswer;
+                        $totalQuestions++;
+
+                        $correctAnswer = $this->getCorrectAnswer($packetId, $number);
+                        if ($correctAnswer && $this->isAnswerCorrect($userAnswer, $correctAnswer)) {
+                            $score++;
+                        }
+                    }
+                }
+
+                Result::create([
+                    'user_id' => $userId,
+                    'test_id' => $testId,
+                    'packet_id' => $packetId,
+                    'json' => json_encode([
+                        'answers'        => $answers,
+                        'score'          => $score,
+                        'total_correct'  => $score,
+                        'total_wrong'    => $totalQuestions - $score,
+                        'total_question' => $totalQuestions,
+                    ]),
+                ]);
+
+                $grandTotalQuestions += $totalQuestions;
+                $grandTotalCorrect   += $score;
+            }
+
+            TestTemporary::where('user_id', $userId)
+                ->where('test_id', $testId)
+                ->delete();
+
+            session()->forget('packet_id');
+
+            $finalScorePercent = $grandTotalQuestions > 0
+                ? round(($grandTotalCorrect / $grandTotalQuestions) * 100)
+                : 0;
+
+            $firstPacketId = !empty($processedPacketIds) ? $processedPacketIds[0] : null;
+            $firstPacketName = null;
+            if ($firstPacketId && isset($processedPacketNames[$firstPacketId])) {
+                $firstPacketName = $processedPacketNames[$firstPacketId];
+            }
+
+            $hasilPayload = [
+                'status'  => 'selesai',
+                'message' => 'Test berhasil diselesaikan!',
+                'result'  => [
+                    'score'          => $finalScorePercent,
+                    'total_correct'  => $grandTotalCorrect,
+                    'total_wrong'    => $grandTotalQuestions - $grandTotalCorrect,
+                    'total_question' => $grandTotalQuestions,
+                ],
+                'redirect' => route('home'),
+                'packet_id'   => $firstPacketId,
+                'packet_name' => $firstPacketName ?? null,
+            ];
+
+            session()->flash('hasil_payload', $hasilPayload);
+            session()->flash('processed_packet_ids', $processedPacketIds);
+            session()->flash('processed_packet_names', $processedPacketNames);
+
+            if ($firstPacketId) {
+                return redirect()->route('soal.hasil', ['packet_id' => $firstPacketId]);
+            }
+
+            return redirect()->route('home')->with('message', 'Test selesai, namun tidak ada packet untuk ditampilkan.');
+
+        } catch (\Throwable $e) {
+            return redirect()->route('home')->with('error', 'Gagal menghitung skor final.');
+        }
+    }
+
+    public function hasil(Request $request, $packet_id = null)
+    {
+        $payload = session('hasil_payload');
+        $packetIds = session('processed_packet_ids', []);
+        $processedNames = session('processed_packet_names', []);
+
+        if (empty($payload)) {
+            return redirect()->route('home')->with('error', 'Hasil tidak ditemukan atau sudah kadaluarsa.');
         }
 
-        // Bersihkan temporary jawaban
-        TestTemporary::where('user_id', $userId)
-            ->where('test_id', $testId)
-            ->delete();
-
-        // Hapus packet_id dari session agar user tidak bisa kembali ke /soal
-        session()->forget('packet_id');
-
-        // Data hasil agregat (nilai keseluruhan across packets)
-        $finalScorePercent = $grandTotalQuestions > 0
-            ? round(($grandTotalCorrect / $grandTotalQuestions) * 100)
-            : 0;
-
-        // Jika ada packet yang diproses, ambil yang pertama sebagai target route hasil (packet-based route)
-        $firstPacketId = !empty($processedPacketIds) ? $processedPacketIds[0] : null;
-        $firstPacketName = null;
-        if ($firstPacketId && isset($processedPacketNames[$firstPacketId])) {
-            $firstPacketName = $processedPacketNames[$firstPacketId];
+        if ($packet_id && !in_array($packet_id, $packetIds)) {
+            return redirect()->route('home')->with('error', 'Packet tidak ditemukan untuk hasil ini.');
         }
 
-        // Siapkan payload hasil untuk ditampilkan di view hasil
-        $hasilPayload = [
-            'status'  => 'selesai',
-            'message' => 'Test berhasil diselesaikan!',
-            'result'  => [
-                'score'          => $finalScorePercent,
-                'total_correct'  => $grandTotalCorrect,
-                'total_wrong'    => $grandTotalQuestions - $grandTotalCorrect,
-                'total_question' => $grandTotalQuestions,
+        $packetName = $payload['packet_name'] ?? null;
+        if (empty($packetName) && $packet_id && !empty($processedNames) && isset($processedNames[$packet_id])) {
+            $packetName = $processedNames[$packet_id];
+        }
+        if (empty($packetName) && $packet_id) {
+            try {
+                $pkt = Packet::find($packet_id);
+                $packetName = $pkt ? $pkt->name : null;
+            } catch (\Throwable $e) {
+                $packetName = null;
+            }
+        }
+
+        session()->forget('hasil_payload');
+        session()->forget('processed_packet_ids');
+        session()->forget('processed_packet_names');
+
+        $payload['packet_name'] = $packetName ?? ($payload['packet_name'] ?? null);
+
+        return view('soal.hasil', array_merge($payload, [
+            'packetId' => $packet_id,
+            'packetIds' => $packetIds,
+        ]));
+    }
+
+    private function getCorrectAnswer($packetId, $questionNumber)
+    {
+        $answerKeys = [
+            1 => [
+                1 => 'A', 2 => 'B', 3 => 'C', 4 => 'D', 5 => 'A',
+                6 => 'B', 7 => 'C', 8 => 'D', 9 => 'A', 10 => 'B',
+                11 => 'C', 12 => 'D', 13 => 'A', 14 => 'B', 15 => 'C',
+                16 => 'D', 17 => 'A', 18 => 'B', 19 => 'C', 20 => 'D',
+                21 => 'A', 22 => 'B', 23 => 'C', 24 => 'D', 25 => 'A',
+                26 => 'B'
             ],
-            'redirect' => route('home'),
-            // tambahkan packet info agar view tidak tergantung session yang dihapus
-            'packet_id'   => $firstPacketId,
-            'packet_name' => $firstPacketName ?? null,
         ];
 
-        // Flash payload dan processed packet ids ke session (tersedia untuk request GET berikutnya)
-        session()->flash('hasil_payload', $hasilPayload);
-        session()->flash('processed_packet_ids', $processedPacketIds);
-        // juga simpan nama paket map bila butuh (opsional)
-        session()->flash('processed_packet_names', $processedPacketNames);
-
-        if ($firstPacketId) {
-            return redirect()->route('soal.hasil', ['packet_id' => $firstPacketId]);
-        }
-
-        // fallback: jika tidak ada packet id (hentikan di home)
-        return redirect()->route('home')->with('message', 'Test selesai, namun tidak ada packet untuk ditampilkan.');
-
-    } catch (\Throwable $e) {
-        Log::error('Error in calculateFinalScore: ' . $e->getMessage(), [
-            'user_id' => $userId,
-            'test_id' => $testId,
-            'trace'   => $e->getTraceAsString(),
-        ]);
-
-        return redirect()->route('home')->with('error', 'Gagal menghitung skor final.');
-    }
-}
-public function hasil(Request $request, $packet_id = null)
-{
-    // ambil payload yang di-flash oleh calculateFinalScore
-    $payload = session('hasil_payload');
-    $packetIds = session('processed_packet_ids', []);
-    $processedNames = session('processed_packet_names', []);
-
-    if (empty($payload)) {
-        // jika user akses langsung atau flash sudah kedaluwarsa
-        return redirect()->route('home')->with('error', 'Hasil tidak ditemukan atau sudah kadaluarsa.');
+        return $answerKeys[$packetId][$questionNumber] ?? null;
     }
 
-    // pastikan packet_id route cocok atau fallback
-    if ($packet_id && !in_array($packet_id, $packetIds)) {
-        // jika route packet_id tidak ada di processed list, redirect home
-        return redirect()->route('home')->with('error', 'Packet tidak ditemukan untuk hasil ini.');
+    private function isAnswerCorrect($userAnswer, $correctAnswer)
+    {
+        $userAnswerArray = is_array($userAnswer) ? $userAnswer : [$userAnswer];
+        $correctAnswerArray = is_array($correctAnswer) ? $correctAnswer : [$correctAnswer];
+
+        sort($userAnswerArray);
+        sort($correctAnswerArray);
+
+        return $userAnswerArray === $correctAnswerArray;
     }
-
-    // get packet_name: prioritas dari payload, lalu dari processed names, lalu DB lookup
-    $packetName = $payload['packet_name'] ?? null;
-    if (empty($packetName) && $packet_id && !empty($processedNames) && isset($processedNames[$packet_id])) {
-        $packetName = $processedNames[$packet_id];
-    }
-    if (empty($packetName) && $packet_id) {
-        try {
-            $pkt = \App\Models\Packet::find($packet_id);
-            $packetName = $pkt ? $pkt->name : null;
-        } catch (\Throwable $e) {
-            $packetName = null;
-        }
-    }
-
-    // optional: hapus flash agar tidak tersisa
-    session()->forget('hasil_payload');
-    session()->forget('processed_packet_ids');
-    session()->forget('processed_packet_names');
-
-    // tambahkan packetName ke payload yang dikirim ke view
-    $payload['packet_name'] = $packetName ?? ($payload['packet_name'] ?? null);
-
-    // render view hasil, sertakan packet_id agar view tahu konteks route
-    return view('soal.hasil', array_merge($payload, [
-        'packetId' => $packet_id,
-        'packetIds' => $packetIds,
-    ]));
 }
-
-
-
-
-private function getCorrectAnswer($packetId, $questionNumber)
-{
-    // Contoh hardcoded sementara
-    $answerKeys = [
-        1 => [ // packet_id = 1
-            1 => 'A', 2 => 'B', 3 => 'C', 4 => 'D', 5 => 'A',
-            6 => 'B', 7 => 'C', 8 => 'D', 9 => 'A', 10 => 'B',
-            11 => 'C', 12 => 'D', 13 => 'A', 14 => 'B', 15 => 'C',
-            16 => 'D', 17 => 'A', 18 => 'B', 19 => 'C', 20 => 'D',
-            21 => 'A', 22 => 'B', 23 => 'C', 24 => 'D', 25 => 'A',
-            26 => 'B'
-        ],
-        // Tambahkan packet lain jika perlu
-    ];
-
-    return $answerKeys[$packetId][$questionNumber] ?? null;
-}
-
-private function isAnswerCorrect($userAnswer, $correctAnswer)
-{
-    $userAnswerArray = is_array($userAnswer) ? $userAnswer : [$userAnswer];
-    $correctAnswerArray = is_array($correctAnswer) ? $correctAnswer : [$correctAnswer];
-
-    sort($userAnswerArray);
-    sort($correctAnswerArray);
-
-    return $userAnswerArray === $correctAnswerArray;
-}
-}
-
