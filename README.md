@@ -44,8 +44,8 @@
 1. Clone repo
 
 ```bash
-git clone https://github.com/<org-or-user>/test-online.git
-cd test-online
+git clone --branch final --single-branch https://github.com/Rafiewaldanv/Magang-2025.git
+cd Magang-2025
 ```
 
 2. Install dependency
