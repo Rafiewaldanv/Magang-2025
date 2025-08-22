@@ -140,25 +140,15 @@ Buka `http://127.0.0.1:8000` atau sesuai `APP_URL`.
 
 ## Lisensi
 
-Lisensi proyek ini: **MIT** (ubah bila perlu)
+Lisensi proyek ini: **MIT** 
+All Right Reserved to PT Campus Digital Indonesia
 
 ---
 
 ## Kontak
 
-* **Farhan Nasrullah** — Frontend & Integrator — `replace-with-email@example.com`
+* **Farhan Nasrullah** — Frontend & Integrator — `farhannasrullah3@gmail.com`
 * **Rafie Waldan Valerie** — Backend & Database — `replace-with-email@example.com`
 
 > Ganti kontak di atas dengan alamat email yang valid sebelum publish.
 
----
-
-## File Tambahan yang Direkomendasikan
-
-* `CONTRIBUTING.md` — panduan kontribusi singkat
-* `ISSUE_TEMPLATE.md` / `PULL_REQUEST_TEMPLATE.md` — template untuk konsistensi issue/PR
-* `DEVELOPMENT.md` — catatan teknis (konvensi, script build, environment)
-
----
-
-Terima kasih! Jika mau, saya bisa tambahkan `CONTRIBUTING.md` atau template Issue/PR siap pakai.
